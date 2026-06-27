@@ -633,6 +633,35 @@ const DECK = {
     { q: 'Vad i den andras röst eller sätt får dig att känna dig hemma, var du än är?', f: 'När kände du det senast?' },
     { q: 'Vad skulle du vilja att den andra visste om hur mycket de finns med i dina tankar?', f: 'Hur skulle du vilja visa det oftare?' },
   ],
+  // Diskussion: filosofiska citat + diskussionspunkt, graderade per djup.
+  quotes: {
+    ytan: [
+      { q: 'Jag har aldrig provat det förut, så det klarar jag säkert.', by: 'Astrid Lindgren (Pippi Långstrump)', f: 'Vad är något du kastade dig in i helt utan en aning om hur det skulle gå — och som blev förvånansvärt bra?' },
+      { q: 'Allt är mycket osäkert, och det är just det som lugnar mig.', by: 'Tove Jansson (Too-ticki)', f: 'När kände du senast ett oväntat lugn mitt i något du inte alls kunde förutse?' },
+      { q: 'Ibland är de minsta sakerna som tar störst plats i hjärtat.', by: 'A.A. Milne (Nalle Puh)', f: 'Vilken liten, nästan obetydlig sak har tagit oväntat stor plats i ditt hjärta den senaste tiden?' },
+      { q: 'Det spelar ingen roll hur långsamt du går, så länge du inte stannar.', by: 'Ofta tillskrivet Konfucius', f: 'Vad rör du dig framåt med i ren snigelfart just nu — men vägrar ge upp?' },
+      { q: 'En dag utan skratt är en bortkastad dag.', by: 'Charlie Chaplin', f: 'När skrattade du senast så att det gjorde ont i magen, och vad var det egentligen som utlöste det?' },
+      { q: 'Fall sju gånger, res dig åtta.', by: 'Japanskt ordspråk', f: 'Berätta om en gång du reste dig igen fast det hade varit enklare att bli liggande.' },
+      { q: 'Vi lider oftare i inbillningen än i verkligheten.', by: 'Seneca', f: 'Vilken oro har du burit på som sedan visade sig vara fullkomligt ofarlig?' },
+      { q: 'Mänskligheten har ett enda verkligt verksamt vapen, och det är skrattet.', by: 'Mark Twain', f: 'Vilket välplacerat skratt har hjälpt dig att avväpna en spänd eller jobbig situation?' },
+      { q: 'Naturen har ingen brådska, ändå blir allting färdigt.', by: 'Ofta tillskrivet Lao Zi', f: 'Var i ditt liv skulle det göra mest gott att ha lite mindre brådska just nu?' },
+      { q: 'Lycka är inte något färdigt — den kommer från dina egna handlingar.', by: 'Dalai Lama', f: 'Vilken liten handling gör dig nästan garanterat på gott humör, varje gång?' },
+      { q: 'Var dig själv — alla andra är redan upptagna.', by: 'Ofta tillskrivet Oscar Wilde', f: 'I vilket sällskap eller vilken situation känner du dig som allra mest dig själv?' },
+      { q: 'Det finns två sätt att leva sitt liv: som om ingenting är ett mirakel, eller som om allt är det.', by: 'Ofta tillskrivet Albert Einstein', f: 'Vad såg du senast som, om man stannar upp en sekund, faktiskt är ett litet mirakel?' },
+      { q: 'Rikedom är förmågan att fullt ut uppleva livet.', by: 'Henry David Thoreau', f: 'Om rikedom mäts i upplevelser snarare än kronor — när kände du dig riktigt rik senast?' },
+      { q: 'Döm inte varje dag efter skörden du bärgar, utan efter de frön du sår.', by: 'Robert Louis Stevenson', f: 'Vilket frö har du sått på sistone som ännu inte gett någon synlig skörd?' },
+      { q: 'Vi måste odla vår trädgård.', by: 'Voltaire (Candide)', f: 'Vad är "din trädgård" just nu — det lilla, näraliggande som du faktiskt kan vårda och påverka?' },
+      { q: 'Sälj din klokhet och köp häpnad.', by: 'Rumi', f: 'När häpnade du senast över något, lika öppet och oförställt som ett barn?' },
+      { q: 'Ting tar tid.', by: 'Piet Hein', f: 'Vad i ditt liv mår bäst av påminnelsen att saker faktiskt får ta sin tid?' },
+      { q: 'Förlora ingen tid, för det är just det som livet är gjort av.', by: 'Benjamin Franklin', f: 'Hur såg en riktigt välanvänd timme ut för dig den senaste veckan?' },
+      { q: 'Ett gott skratt och en lång sömn är de bästa botemedlen i läkarens bok.', by: 'Irländskt ordspråk', f: 'Vilket av de två behöver du mest av just nu — och vad står i vägen för det?' },
+      { q: 'Den som inte nöjer sig med lite, nöjer sig med ingenting.', by: 'Epikuros', f: 'Vad är det "lagom lite" som faktiskt räcker för att du ska känna dig nöjd en helt vanlig dag?' },
+    ],
+    grundvatten: [],
+    revet: [],
+    djupvatten: [],
+    djuphavet: [],
+  },
 };
 if (typeof window !== 'undefined') window.DECK = DECK;
 else if (typeof globalThis !== 'undefined') globalThis.DECK = DECK; // för servern (Cloudflare Worker)

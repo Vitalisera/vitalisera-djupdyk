@@ -177,6 +177,16 @@
     state.cardsRevealed += 1;
   }
 
+  // Diskussion: ett filosofiskt citat + författare, med en diskussionspunkt som
+  // följdfråga. Korten är graderade per djup; vi drar ur aktuellt djups pool.
+  function drawQuote(state) {
+    const pool = (DECK.quotes && DECK.quotes[state.levelId]) || [];
+    if (!pool.length) { drawCard(state); return; }
+    const r = pool[Math.floor(Math.random() * pool.length)];
+    state.card = { text: r.q, by: r.by, followupText: r.f, levelId: state.levelId, source: 'quote', followup: null };
+    state.cardsRevealed += 1;
+  }
+
   // Bläckbild: en symmetrisk bild som alla tolkar tillsammans. Fröet ger samma
   // bild på alla enheter; varje spelare räknar själv ut sin egen fråga.
   function drawInkblot(state) {
@@ -287,6 +297,7 @@
       if (DECK.inkblot && roll < 0.15) { drawInkblot(state); return; }
       if ((DECK.strommar || []).length && li >= 2 && connectedCount(state) >= 2 && roll < 0.25) { drawStrom(state); return; }
       if ((DECK.silence || []).length && connectedCount(state) >= 2 && roll < 0.29) { drawSilence(state); return; }
+      if (DECK.quotes && (DECK.quotes[state.levelId] || []).length && roll < 0.43) { drawQuote(state); return; }
     }
     drawCard(state);
   }

@@ -280,7 +280,8 @@
     const isSilence = src === 'silence';
     const isWhirl = src === 'whirl';
     const isAscent = src === 'ascent';
-    const isSpecial = isClosing || isReflection || isInkblot || isStrom || isSilence || isWhirl || isAscent;
+    const isQuote = src === 'quote';
+    const isSpecial = isClosing || isReflection || isInkblot || isStrom || isSilence || isWhirl || isAscent || isQuote;
     const noFollowup = isInkblot || isStrom || isSilence || isWhirl || isAscent;
     card.classList.toggle('closing', !!isClosing);
     card.classList.toggle('reflection', !!isReflection);
@@ -317,15 +318,17 @@
         : isSilence ? '🤫 Tystnad'
         : isWhirl ? '🌀 Strömvirvel'
         : isAscent ? '🫧 Uppstigning'
+        : isQuote ? '💬 Diskussion'
         : `${lvl.name} · ${lvl.depth}`;
       $('card-text').textContent = s.card.text;
       $('card-index').textContent = isAscent && s.ascent
         ? `Var och en i tur och ordning · ${Math.min(s.ascent.done, s.ascent.total)} av ${s.ascent.total}`
+        : isQuote ? `— ${s.card.by || ''}`
         : isSpecial ? '' : `Fråga ${s.cardsRevealed}`;
 
       const fu = $('card-followup');
       if (s.card.followup) {
-        fu.innerHTML = '<span class="fu-label">' + (isReflection ? 'Vad det kan betyda' : 'Följdfråga') + '</span>' + escapeHtml(s.card.followup);
+        fu.innerHTML = '<span class="fu-label">' + (isQuote ? 'Diskussion' : isReflection ? 'Vad det kan betyda' : 'Följdfråga') + '</span>' + escapeHtml(s.card.followup);
         fu.classList.add('show'); fu.classList.toggle('reveal', !!isReflection);
       } else { fu.classList.remove('show'); fu.classList.remove('reveal'); fu.textContent = ''; }
 
@@ -350,8 +353,8 @@
       // Följdfråge-/tolkningsknappen byter skepnad för speglingar
       const fLbl = $('btn-followup').querySelector('.ctrl-lbl');
       const fIco = $('btn-followup').querySelector('.ctrl-ico');
-      fLbl.textContent = isReflection ? 'Tolkning' : 'Följdfråga';
-      fIco.textContent = isReflection ? '✨' : '↳';
+      fLbl.textContent = isQuote ? 'Diskussion' : isReflection ? 'Tolkning' : 'Följdfråga';
+      fIco.textContent = isQuote ? '💬' : isReflection ? '✨' : '↳';
 
       // Vänd bara kortet när själva frågan byts (inte när följdfrågan visas)
       const flipKey = isInkblot ? 'inkblot|' + s.card.seed
