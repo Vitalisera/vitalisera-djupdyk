@@ -25,6 +25,9 @@ for (const font of ['fraunces-400.woff2', 'fraunces-600.woff2']) {
 // (undviker service-worker-/cache-strul; samma mönster som loggan och fonterna).
 const iconSvgUri = 'data:image/svg+xml;base64,' + fs.readFileSync(path.join(web, 'icons/icon.svg')).toString('base64');
 cssInlined = cssInlined.split('url(icons/icon.svg)').join('url("' + iconSvgUri + '")');
+// Bädda in topbar-loggans mark (riktiga Vitalisera-symbolen, beskuren utan ordmärke) som data-URI.
+const markUri = 'data:image/png;base64,' + fs.readFileSync(path.join(web, 'icons/vitalisera-mark.png')).toString('base64');
+cssInlined = cssInlined.split('url(icons/vitalisera-mark.png)').join('url("' + markUri + '")');
 
 const scripts = ['data/questions.js', 'game.js', 'net-ws.js', 'ocean.js', 'inkblot.js', 'app.js']
   .map((f) => `<script>\n${read(f)}\n</script>`)

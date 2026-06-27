@@ -242,6 +242,8 @@
     if (s.turnId && lastTurnId && s.turnId !== lastTurnId) {
       if (myTurn) { Snd.yourTurn(); if (navigator.vibrate) { try { navigator.vibrate([14, 40, 22]); } catch (_) {} } }
       else Snd.turn();
+      // Mjuk glöd-svep över turbannern vid varje turbyte.
+      const tb = $('turn'); if (tb) { tb.classList.remove('flash'); void tb.offsetWidth; tb.classList.add('flash'); }
     }
     lastTurnId = s.turnId;
 

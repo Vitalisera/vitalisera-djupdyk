@@ -16,6 +16,7 @@
   let bubbles = [];
   let motes = [];
   let rays = [];
+  let creature = null, creatureTimer = 12;   // sällsynt, faint siluett (manet)
   let running = true;
   let last = 0;
 
@@ -50,11 +51,12 @@
   function rnd(a, b) { return a + Math.random() * (b - a); }
 
   function seed() {
-    const bubbleCount = Math.round((W * H) / 26000);
+    const bubbleCount = Math.round((W * H) / 22000);
     bubbles = Array.from({ length: bubbleCount }, makeBubble);
-    const moteCount = Math.round((W * H) / 12000);
+    const moteCount = Math.round((W * H) / 10000);
     motes = Array.from({ length: moteCount }, makeMote);
-    rays = Array.from({ length: 5 }, (_, i) => ({
+    creature = null; creatureTimer = rnd(6, 16);
+    rays = Array.from({ length: 6 }, (_, i) => ({
       x: rnd(0, W),
       w: rnd(60, 160),
       speed: rnd(0.02, 0.06),
@@ -84,6 +86,19 @@
       alpha: rnd(0.05, 0.28),
     };
   }
+  // Sällsynt manet-siluett som långsamt driver förbi. Atmosfär, inte blickfång.
+  function makeCreature() {
+    const dir = Math.random() < 0.5 ? 1 : -1;
+    return {
+      x: dir > 0 ? -50 : W + 50,
+      y: rnd(H * 0.34, H * 0.86),
+      dir,
+      speed: rnd(7, 15),          // px/s, mycket långsam
+      size: rnd(16, 32),
+      bob: rnd(0, Math.PI * 2),
+      pulse: rnd(0, Math.PI * 2),
+    };
+  }
 
   function step(dt) {
     depthCur += (depth - depthCur) * Math.min(1, dt * 1.6);
@@ -100,6 +115,17 @@
       if (m.y < -4) m.y = H + 4; else if (m.y > H + 4) m.y = -4;
     }
     for (const r of rays) { r.phase += r.speed; }
+
+    // Manet: driver långsamt förbi, dyker upp sällan igen.
+    if (creature) {
+      creature.x += creature.dir * creature.speed * dt;
+      creature.bob += dt * 0.8;
+      creature.pulse += dt * 1.4;
+      if (creature.x < -100 || creature.x > W + 100) { creature = null; creatureTimer = rnd(28, 55); }
+    } else {
+      creatureTimer -= dt;
+      if (creatureTimer <= 0) creature = makeCreature();
+    }
   }
 
   function draw() {
@@ -140,6 +166,32 @@
         ctx.fill();
       }
       ctx.restore();
+    }
+
+    // Manet-siluett (faint, screen-blend så den glöder svagt mot djupet)
+    if (creature) {
+      const c = creature;
+      const yy = c.y + Math.sin(c.bob) * 9;
+      const a = (0.05 + depthCur * 0.08) * (0.82 + 0.18 * Math.sin(c.pulse));
+      const bw = c.size, bh = c.size * (0.66 + 0.08 * Math.sin(c.pulse));
+      ctx.save();
+      ctx.globalCompositeOperation = 'screen';
+      ctx.globalAlpha = Math.max(0, a);
+      ctx.fillStyle = 'rgba(150,210,216,0.55)';
+      ctx.strokeStyle = 'rgba(191,230,234,0.8)';
+      ctx.lineWidth = 1.3;
+      ctx.beginPath();
+      ctx.ellipse(c.x, yy, bw, bh, 0, Math.PI, 0); // övre halvan = manet-kupol
+      ctx.fill();
+      for (let i = -2; i <= 2; i++) {
+        const tx = c.x + i * (bw * 0.34);
+        ctx.beginPath();
+        ctx.moveTo(tx, yy);
+        ctx.quadraticCurveTo(tx + Math.sin(c.bob + i) * 5, yy + bh * 1.7, tx + Math.sin(c.bob + i) * 9, yy + bh * 2.7);
+        ctx.stroke();
+      }
+      ctx.restore();
+      ctx.globalAlpha = 1;
     }
 
     // Svävande partiklar
