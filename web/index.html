@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#08323f" />
+  <meta name="description" content="Ett samtalsspel där ni dyker djupare tillsammans, var och en på sin egen telefon." />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Djupdyk" />
+  <meta property="og:title" content="Vitalisera djupdyk" />
+  <meta property="og:description" content="Dyk djupare i samtalet, tillsammans och var och en på sin telefon." />
+  <meta property="og:type" content="website" />
+  <title>Vitalisera djupdyk</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" type="image/png" href="icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <canvas id="ocean" aria-hidden="true"></canvas>
+
+  <div id="app">
+
+    <!-- ============ START ============ -->
+    <section id="screen-home" class="screen active">
+      <div class="home-wrap">
+        <header class="brand">
+          <div class="brand-mark" id="brand-mark" role="img" aria-label="Vitalisera"></div>
+          <h1 class="brand-title">djupdyk</h1>
+          <p class="tagline">Ett samtalsspel där ni dyker djupare tillsammans, var och en på sin telefon.</p>
+        </header>
+
+        <div class="glass home-card">
+          <label class="field-label" for="name-input">Vad heter du?</label>
+          <input id="name-input" type="text" placeholder="Ditt namn" maxlength="24" autocomplete="given-name" enterkeyhint="done" />
+
+          <button id="btn-create" class="btn btn-primary btn-lg">
+            <span>Skapa nytt dyk</span>
+          </button>
+
+          <div class="or"><span>eller gå med i ett</span></div>
+
+          <div class="join-row">
+            <input id="code-input" type="text" placeholder="KOD" maxlength="4" autocomplete="off" autocapitalize="characters" inputmode="text" enterkeyhint="go" aria-label="Rumskod" />
+            <button id="btn-join" class="btn btn-glass">Gå med</button>
+          </div>
+        </div>
+
+        <p class="fineprint">I samma rum eller på distans. Den som skapar dyket delar koden, sedan ser alla samma kort i realtid.</p>
+        <button id="btn-help-home" class="help-link" type="button">Hur funkar det? ›</button>
+        <button id="btn-install" class="install-hint" type="button" hidden>
+          <span class="install-ico" aria-hidden="true">⤓</span>
+          <span>Lägg till på hemskärmen</span>
+        </button>
+        <a class="site-link" href="https://vitalisera.se" target="_blank" rel="noopener">En upplevelse från Vitalisera · vitalisera.se ↗</a>
+      </div>
+    </section>
+
+    <!-- ============ LOBBY ============ -->
+    <section id="screen-lobby" class="screen">
+      <div class="topbar">
+        <button class="icon-btn" id="btn-leave-lobby" aria-label="Lämna">‹</button>
+        <div class="code-pill" id="lobby-code-pill" role="button" tabindex="0">
+          <span class="code-pill-label">Rumskod</span>
+          <span class="code-pill-code" id="lobby-code">••••</span>
+          <span class="code-pill-copy" id="lobby-copy">Kopiera</span>
+        </div>
+        <button class="icon-btn" id="btn-share" aria-label="Dela">⤴</button>
+      </div>
+
+      <div class="lobby-body">
+        <h3 class="section-h">Hur träffas ni?</h3>
+        <div class="chips" id="format-chips">
+          <button class="chip" type="button" data-duet="0"><b>I samma rum</b><small>flera, på plats</small></button>
+          <button class="chip" type="button" data-duet="1"><b>På distans</b><small>ni två, var för sig</small></button>
+        </div>
+
+        <h2 class="lobby-title" id="lobby-title">Vem är med på dyket?</h2>
+        <div class="players-grid" id="lobby-players"></div>
+
+        <button id="btn-invite" class="btn btn-glass full invite-btn">🔗 Bjud in fler</button>
+        <p class="invite-hint" id="invite-hint">Den som öppnar länken hamnar direkt här i ert rum. Eller läs upp koden <b id="invite-code">••••</b> så skriver de in den själva.</p>
+
+        <p class="safe-note" id="safe-note">Det här är ett rum byggt på trygghet. Ingen tvingas till något. Du delar det du vill, i din takt, och får alltid säga pass. Att vara här är redan modigt.</p>
+
+        <h3 class="section-h">Hur lång stund har ni?</h3>
+        <p class="section-hint">Bara en känsla. Spelet föreslår varsamt när det kan vara dags att stiga upp, men ni bestämmer alltid själva.</p>
+        <div class="chips" id="session-chips">
+          <button class="chip" type="button" data-session="snorkel"><b>Snorkling</b><small>en kort stund</small></button>
+          <button class="chip" type="button" data-session="dyk"><b>Dyk</b><small>en hel kväll</small></button>
+          <button class="chip" type="button" data-session="expedition"><b>Expedition</b><small>så länge ni vill</small></button>
+        </div>
+
+        <div id="mode-group">
+          <h3 class="section-h">Vilka är ni för varandra?</h3>
+          <p class="section-hint">Det här finjusterar tonen, bland annat hur nära de ömsesidiga strömkorten vågar föra er.</p>
+          <div class="chips" id="mode-chips">
+            <button class="chip" type="button" data-mode="oppen"><b>Blandat</b></button>
+            <button class="chip" type="button" data-mode="par"><b>Par</b></button>
+            <button class="chip" type="button" data-mode="familj"><b>Familj</b></button>
+            <button class="chip" type="button" data-mode="vanner"><b>Nära vänner</b></button>
+            <button class="chip" type="button" data-mode="nya"><b>Nya bekanta</b></button>
+            <button class="chip" type="button" data-mode="kollegor"><b>Kollegor</b></button>
+          </div>
+        </div>
+
+        <h3 class="section-h">Välj startdjup</h3>
+        <p class="section-hint">Börja grunt och dyk djupare, eller hoppa rakt ner. Ni kan byta djup när som helst under spelet.</p>
+        <div class="levels" id="level-options"></div>
+      </div>
+
+      <div class="bottom-dock">
+        <button id="btn-start" class="btn btn-primary btn-lg">Starta dyket</button>
+        <p class="dock-note" id="dock-note">Alla kan starta. Vänta tills ni är samlade.</p>
+      </div>
+    </section>
+
+    <!-- ============ SPEL ============ -->
+    <section id="screen-game" class="screen">
+      <div class="descend-fx" id="descend-fx" aria-hidden="true"></div>
+
+      <!-- Vertikal djupmätare som rör sig nedåt med nivåerna -->
+      <div class="depth-gauge" id="depth-gauge" aria-hidden="true">
+        <span class="dg-tick" style="top:0%"></span>
+        <span class="dg-tick" style="top:25%"></span>
+        <span class="dg-tick" style="top:50%"></span>
+        <span class="dg-tick" style="top:75%"></span>
+        <span class="dg-tick" style="top:100%"></span>
+        <span class="dg-marker" id="dg-marker"></span>
+      </div>
+
+      <div class="topbar game-topbar">
+        <div class="depth-meter" id="depth-meter">
+          <span class="depth-meter-val" id="depth-val">0 m</span>
+          <span class="depth-meter-name" id="depth-name">Ytan</span>
+        </div>
+        <a class="game-brand" id="game-brand" href="https://vitalisera.se" target="_blank" rel="noopener" aria-label="Vitalisera, vitalisera.se"></a>
+        <button class="code-mini" id="game-code" aria-label="Dela rumskod och bjud in fler">••••</button>
+        <button class="icon-btn buoy-icon" id="btn-buoy" aria-label="Be om en paus, anonymt">🛟</button>
+        <button class="icon-btn" id="btn-menu" aria-label="Meny">⋯</button>
+      </div>
+
+      <div class="turn" id="turn">
+        <span class="turn-avatar" id="turn-avatar"></span>
+        <span class="turn-text" id="turn-text">Din tur</span>
+      </div>
+
+      <div class="card-stage">
+        <div class="card-deck" id="card-deck">
+          <div class="card" id="card">
+            <div class="card-inner">
+              <span class="card-eyebrow" id="card-eyebrow">Ytan · 0 m</span>
+              <p class="strom-pair" id="strom-pair" hidden></p>
+              <p class="card-text" id="card-text">…</p>
+              <span class="card-followup" id="card-followup"></span>
+              <div class="silence-ring" id="silence-ring" hidden><span class="silence-count" id="silence-count">20</span><small>sekunder</small></div>
+              <div class="strom-pick" id="strom-pick" hidden>
+                <span class="strom-pick-label">Vem vill du bjuda in?</span>
+                <div class="strom-pick-row" id="strom-pick-row"></div>
+              </div>
+              <div class="strom-invite" id="strom-invite" hidden>
+                <p class="strom-invite-text" id="strom-invite-text"></p>
+                <div class="strom-invite-actions">
+                  <button class="btn btn-primary" id="btn-strom-accept">Jag är med</button>
+                  <button class="btn btn-glass" id="btn-strom-decline">Hellre inte</button>
+                </div>
+              </div>
+              <p class="strom-wait" id="strom-wait" hidden></p>
+            </div>
+            <span class="card-index" id="card-index"></span>
+            <button class="shell-btn" id="btn-shell" aria-label="Spara den här stunden som en snäcka">🐚</button>
+            <div class="card-back" id="card-back" hidden>
+              <div class="card-back-mark"></div>
+              <span class="card-back-eyebrow">✨ Spegling</span>
+              <p class="card-back-text" id="card-back-text">Blunda och lyssna.</p>
+            </div>
+            <div class="card-blot" id="card-blot" hidden>
+              <span class="card-eyebrow blot-eyebrow">✦ Bläckbild</span>
+              <div class="blot-img" id="blot-img"></div>
+              <p class="blot-shared" id="blot-shared"></p>
+              <div class="blot-mine">
+                <span class="blot-cat" id="blot-cat"></span>
+                <p class="blot-q" id="blot-q"></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button id="btn-back" class="btn-back" hidden>↩ Föregående fråga</button>
+
+      <div class="controls" id="controls">
+        <button id="btn-followup" class="btn btn-glass btn-control" aria-label="Dyk djupare">
+          <span class="ctrl-ico">↓</span><span class="ctrl-lbl">Dyk djupare</span>
+        </button>
+        <button id="btn-next" class="btn btn-primary btn-control btn-control-main">
+          <span class="ctrl-lbl" id="next-lbl">Skicka vidare</span><span class="ctrl-ico">→</span>
+        </button>
+        <button id="btn-skip" class="btn btn-glass btn-control" aria-label="Byt fråga">
+          <span class="ctrl-ico">↻</span><span class="ctrl-lbl">Byt fråga</span>
+        </button>
+      </div>
+      <p class="controls-hint" id="controls-hint"></p>
+
+      <div class="players-strip" id="game-players"></div>
+    </section>
+
+    <!-- ============ SAMMANFATTNING ============ -->
+    <section id="screen-summary" class="screen">
+      <div class="summary-wrap">
+        <div class="summary-mark"></div>
+        <h2 class="summary-title">Ni dök tillsammans</h2>
+        <p class="summary-lede">Ni dök ner för en stund sedan och stiger upp en aning förändrade.</p>
+        <div class="summary-stats">
+          <div class="summary-stat"><span class="summary-num" id="sum-depth">•</span><span class="summary-lbl" id="sum-depth-name">djup</span></div>
+          <div class="summary-stat"><span class="summary-num" id="sum-cards">0</span><span class="summary-lbl" id="sum-cards-lbl">frågor</span></div>
+          <div class="summary-stat"><span class="summary-num" id="sum-players">0</span><span class="summary-lbl">dykare</span></div>
+        </div>
+        <p class="summary-quote">Det ni delade stannar mellan er. Var rädda om varandra. Tack för att ni vågade gå på djupet.</p>
+
+        <div class="shells-box" id="shells-box" hidden>
+          <h3 class="shells-h">🐚 Dina snäckor</h3>
+          <p class="shells-hint">Stunder du plockade upp under dyket. De stannar på din telefon, för dig.</p>
+          <ul class="shells-list" id="shells-list"></ul>
+        </div>
+
+        <div class="postcard-wrap">
+          <canvas id="postcard" class="postcard" width="1080" height="1350" aria-label="Vykort från djupet"></canvas>
+          <button id="btn-postcard" class="btn btn-glass full">📷 Dela vykort från djupet</button>
+        </div>
+
+        <a class="site-link" href="https://vitalisera.se" target="_blank" rel="noopener">Mer från Vitalisera · vitalisera.se ↗</a>
+      </div>
+      <div class="bottom-dock">
+        <button id="btn-again" class="btn btn-primary btn-lg">Dyk igen</button>
+        <button id="btn-summary-leave" class="btn btn-ghost full">Lämna</button>
+      </div>
+    </section>
+  </div>
+
+  <!-- ============ MENY-ARK ============ -->
+  <div id="sheet" class="sheet" aria-hidden="true">
+    <div class="sheet-panel glass">
+      <div class="sheet-handle"></div>
+      <h3 class="sheet-title">Justera dyket</h3>
+      <p class="sheet-note" id="sheet-note" hidden>Det är någon annans tur. Bara den som har turen, eller värden, kan ändra dyket just nu.</p>
+
+      <div id="sheet-depth">
+        <span class="sheet-label">Byt djup mitt i spelet</span>
+        <div class="levels levels-compact" id="sheet-levels"></div>
+      </div>
+
+      <div class="sheet-actions">
+        <button id="btn-sound" class="btn btn-glass full">🔊 Ljud: på</button>
+        <button id="btn-invite-game" class="btn btn-glass full"><span>🔗 Bjud in fler (kod <b id="game-invite-code">••••</b>)</span></button>
+        <button id="btn-help-game" class="btn btn-glass full">Så funkar det</button>
+        <button id="btn-reflection" class="btn btn-glass full">✨ Dra en spegling</button>
+        <button id="btn-inkblot" class="btn btn-glass full">✦ Visa en bläckbild</button>
+        <button id="btn-strom" class="btn btn-glass full">🌊 Para ihop två (Strömmar)</button>
+        <button id="btn-silence" class="btn btn-glass full">🤫 Bjud in tystnad</button>
+        <button id="btn-closing" class="btn btn-glass full">Dra ett avslutningskort</button>
+        <button id="btn-pass" class="btn btn-glass full">Skicka turen vidare</button>
+        <div class="sheet-divider" id="sheet-divider"></div>
+        <button id="btn-finish" class="btn btn-glass full">🫧 Stig upp och avsluta</button>
+        <button id="btn-restart" class="btn btn-glass full">Tillbaka till lobbyn</button>
+        <button id="btn-leave-game" class="btn btn-ghost full danger">Lämna dyket</button>
+      </div>
+      <button id="btn-close-sheet" class="btn btn-primary full">Klar</button>
+      <a class="site-link" href="https://vitalisera.se" target="_blank" rel="noopener">Mer från Vitalisera · vitalisera.se ↗</a>
+    </div>
+  </div>
+
+  <!-- ============ ONBOARDING / SÅ FUNKAR DET ============ -->
+  <div id="intro" class="intro" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="intro-title">
+    <div class="intro-panel glass">
+      <div class="intro-mark"></div>
+      <h2 class="intro-title" id="intro-title">Så funkar det</h2>
+      <p class="intro-lede">Ett samtal som börjar lätt och sjunker djupare. Ni turas om att läsa kort högt och pratar er ner genom fem djup, var och en på sin egen telefon.</p>
+
+      <section class="intro-block">
+        <h3 class="intro-h"><span class="intro-n">1</span> Kom igång</h3>
+        <ul class="intro-list">
+          <li>En skapar ett dyk och delar <b>rumskoden</b> eller länken. De andra går med, i samma rum eller på distans.</li>
+          <li>Välj <b>startdjup</b> och tryck Starta. Alla ser samma kort samtidigt.</li>
+        </ul>
+      </section>
+
+      <section class="intro-block intro-loop">
+        <h3 class="intro-h"><span class="intro-n">2</span> Varje runda</h3>
+        <ol class="intro-round">
+          <li><b>Läs högt.</b> Den vars tur det är läser kortet för de andra.</li>
+          <li><b>Samtala.</b> Prata fritt kring frågan, helt utan tidsgräns. Stanna kvar så länge det känns bra.</li>
+          <li><b>Skicka vidare.</b> När ni är klara går turen till nästa.</li>
+        </ol>
+        <div class="intro-actions">
+          <span class="intro-chip"><b class="ic">↓</b><span>Dyk djupare</span><em>en följdfråga på samma tema</em></span>
+          <span class="intro-chip"><b class="ic">↻</b><span>Byt fråga</span><em>nytt kort, din tur kvar</em></span>
+          <span class="intro-chip is-main"><b class="ic">→</b><span>Skicka vidare</span><em>turen och ett nytt kort till nästa</em></span>
+        </div>
+      </section>
+
+      <section class="intro-block">
+        <h3 class="intro-h"><span class="intro-n">3</span> Fem djup</h3>
+        <p class="intro-p">Från lätt småprat vid ytan till det som verkligen betyder något i djuphavet. Byt djup när ni vill via menyn <b>⋯</b>, och runda av med ett avslutningskort när det känns rätt.</p>
+      </section>
+
+      <section class="intro-block">
+        <h3 class="intro-h"><span class="intro-n">4</span> Oväntade kort</h3>
+        <p class="intro-p intro-p-lead">Då och då dyker ett annat slags kort upp, som en krydda i samtalet:</p>
+        <div class="intro-cards">
+          <span class="intro-card-chip"><b class="ic">✨</b><span class="nm">Spegling</span><em>en inre bild att tolka</em></span>
+          <span class="intro-card-chip"><b class="ic">✦</b><span class="nm">Bläckbild</span><em>en bild ni läser var för sig</em></span>
+          <span class="intro-card-chip"><b class="ic">🌊</b><span class="nm">Strömmar</span><em>två gör en liten sak ihop</em></span>
+          <span class="intro-card-chip"><b class="ic">🤫</b><span class="nm">Tystnad</span><em>en stund alldeles utan ord</em></span>
+        </div>
+      </section>
+
+      <p class="intro-safe">Här finns inga rätta svar. Du delar det du vill, i din takt, och får alltid säga pass. Behöver ni pausa kan vem som helst hissa <b>bojen</b> 🛟.</p>
+      <label class="intro-hide"><input type="checkbox" id="intro-hide" /> Visa inte det här igen</label>
+      <button id="btn-intro-start" class="btn btn-primary full">Sätt igång</button>
+    </div>
+  </div>
+
+  <!-- ============ FÖRSTA ANDETAGET (trygghetsritual) ============ -->
+  <div id="ritual" class="overlay ritual" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="overlay-panel glass">
+      <div class="breath-orb" aria-hidden="true"></div>
+      <h2 class="overlay-title">Första andetaget</h2>
+      <p class="overlay-lede">Innan ni dyker, ta ett lugnt andetag tillsammans. Lägg gärna ett finger mot skärmen och känn att ni är här, samtidigt. När alla är redo simmar ni ner i samtalet.</p>
+      <button id="btn-begin-dive" class="btn btn-primary full">Vi är redo, dyk</button>
+      <p class="overlay-fine">Vem som helst kan trycka när ni känner er samlade.</p>
+    </div>
+  </div>
+
+  <!-- ============ BOJEN (anonym paus) ============ -->
+  <div id="pause" class="overlay pause" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="overlay-panel glass">
+      <div class="buoy-mark" aria-hidden="true">🛟</div>
+      <h2 class="overlay-title">Någon hissade bojen</h2>
+      <p class="overlay-lede">Vi pausar en stund. Ingen behöver säga varför, och vi vet inte vem som bad om det. Sträck på er, hämta andan, drick lite vatten. Ni simmar vidare när ni vill.</p>
+      <button id="btn-resume" class="btn btn-primary full">Vi simmar vidare</button>
+    </div>
+  </div>
+
+  <!-- ============ LÄGG TILL PÅ HEMSKÄRMEN ============ -->
+  <div id="install" class="sheet" aria-hidden="true">
+    <div class="sheet-panel glass">
+      <div class="sheet-handle"></div>
+      <div class="install-mark" aria-hidden="true"></div>
+      <h3 class="sheet-title">Lägg till på hemskärmen</h3>
+      <p class="sheet-note install-lede">Då öppnas dyket i helskärm direkt från en egen ikon, utan adressfält. Det känns som en riktig app.</p>
+
+      <!-- iOS Safari: manuell delning -->
+      <ol class="install-steps" id="install-ios" hidden>
+        <li><span class="install-step-n">1</span><span>Tryck på <b>Dela</b> <span class="ios-share" aria-hidden="true"></span> i raden längst ner i Safari.</span></li>
+        <li><span class="install-step-n">2</span><span>Bläddra ner och välj <b>Lägg till på hemskärmen</b>.</span></li>
+        <li><span class="install-step-n">3</span><span>Tryck <b>Lägg till</b>. Klart, ikonen finns nu på hemskärmen.</span></li>
+      </ol>
+      <p class="install-ios-hint" id="install-ios-hint" hidden>Öppnar du den här sidan i en annan app? Öppna den i <b>Safari</b> först, så går det att lägga till.</p>
+
+      <!-- Android/Chrome: inbyggd installation -->
+      <div class="install-android" id="install-android" hidden>
+        <button id="btn-install-now" class="btn btn-primary full">Installera appen</button>
+      </div>
+
+      <button id="btn-close-install" class="btn btn-glass full">Inte nu</button>
+    </div>
+  </div>
+
+  <!-- ============ VÄND TILL STÅENDE ============ -->
+  <div id="rotate" class="rotate" aria-hidden="true">
+    <div class="rotate-inner">
+      <div class="rotate-phone" aria-hidden="true"></div>
+      <p class="rotate-title">Vänd enheten till stående läge</p>
+      <p class="rotate-sub">Djupdyk är gjort för att hållas upprätt, en telefon i taget.</p>
+    </div>
+  </div>
+
+  <!-- ============ STATUS / TOAST ============ -->
+  <div id="netbar" class="netbar" hidden></div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <!-- Spelets skript (realtid via WebSocket mot Cloudflare-servern) -->
+  <script src="data/questions.js"></script>
+  <script src="game.js"></script>
+  <script src="net-ws.js"></script>
+  <script src="ocean.js"></script>
+  <script src="inkblot.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

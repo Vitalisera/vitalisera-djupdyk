@@ -1,0 +1,13 @@
+{
+  "name": "djupdyk-room",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Vitalisera djupdyk realtidsserver (Cloudflare Worker + Durable Object)",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^3.90.0"
+  }
+}

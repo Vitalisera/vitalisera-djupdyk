@@ -1,0 +1,11 @@
+{
+  "name": "vitalisera-djupdyk",
+  "version": "1.0.0",
+  "description": "Vitalisera djupdyk — serverlöst flerspelar-samtalsspel (WebRTC). Statiska filer i web/.",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=16"
+  }
+}

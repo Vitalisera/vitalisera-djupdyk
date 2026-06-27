@@ -1,0 +1,17 @@
+# Vitalisera djupdyk, realtidsserver (Cloudflare Worker + Durable Object).
+# Ett rum = ett Durable Object som alltid ligger uppe och äger den
+# auktoritativa staten. Spelarna är tunna WebSocket-klienter. Ingen värd är
+# en telefonflik, så att någon byter app stör inte de andra.
+
+name = "djupdyk-room"
+main = "src/index.js"
+compatibility_date = "2025-06-01"
+
+# Ett Durable Object per rum. SQLite-backad klass (gratisnivå-vänlig).
+[[durable_objects.bindings]]
+name = "ROOM"
+class_name = "Room"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Room"]
