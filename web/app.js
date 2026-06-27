@@ -59,6 +59,16 @@
     }
   }, { passive: true });
 
+  // Hindra iOS-Safaris dubbeltap-zoom (touch-action räcker inte alltid där).
+  // Nyp-zoom med två fingrar är kvar för tillgänglighet — vi stoppar bara det
+  // andra snabba tappet inom 300 ms.
+  let _lastTouchEnd = 0;
+  document.addEventListener('touchend', (e) => {
+    const now = Date.now();
+    if (now - _lastTouchEnd <= 300) e.preventDefault();
+    _lastTouchEnd = now;
+  }, { passive: false });
+
   // ---- Tema & färger -------------------------------------------------------
   function levelIndex(id) { return Math.max(0, LEVELS.findIndex((l) => l.id === id)); }
   function levelMeta(id) { return LEVELS.find((l) => l.id === id) || LEVELS[0]; }

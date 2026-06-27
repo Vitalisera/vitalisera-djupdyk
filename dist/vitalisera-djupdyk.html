@@ -1354,13 +1354,12 @@ input:focus { border-color: var(--depth); box-shadow: 0 0 0 3px color-mix(in srg
         <h3 class="intro-h"><span class="intro-n">6</span> Specialkort</h3>
         <p class="intro-p">Då och då dyker ett annat slags kort upp, som en krydda i samtalet:</p>
         <div class="manual-cards">
-          <div class="manual-card-row"><span class="mc-ic">✨</span><span><b class="mc-nm">Spegling.</b> <span class="mc-desc">En inre bild eller scen att tolka tillsammans.</span></span></div>
-          <div class="manual-card-row"><span class="mc-ic">✦</span><span><b class="mc-nm">Bläckbild.</b> <span class="mc-desc">En bild ni läser var för sig och delar.</span></span></div>
-          <div class="manual-card-row"><span class="mc-ic">🌊</span><span><b class="mc-nm">Para ihop två.</b> <span class="mc-desc">Ett kort bara för er två, ömsesidigt. Kräver minst två deltagare.</span></span></div>
-          <div class="manual-card-row"><span class="mc-ic">🤫</span><span><b class="mc-nm">Tystnad.</b> <span class="mc-desc">En stund alldeles utan ord.</span></span></div>
-          <div class="manual-card-row"><span class="mc-ic">🌀</span><span><b class="mc-nm">Strömvirvel.</b> <span class="mc-desc">Ett oväntat kast i samtalet.</span></span></div>
-          <div class="manual-card-row"><span class="mc-ic">🍃</span><span><b class="mc-nm">Avslutningskort.</b> <span class="mc-desc">En varsam avrundning när det känns rätt.</span></span></div>
-          <div class="manual-card-row"><span class="mc-ic">🫧</span><span><b class="mc-nm">Uppstigning.</b> <span class="mc-desc">Ett avslutningsvarv där var och en får säga något innan ytan.</span></span></div>
+          <div class="manual-card-row"><span class="mc-ic">✨</span><span><b class="mc-nm">Spegling.</b> <span class="mc-desc">Du målar upp en inre scen (ett berg, en bro …) och beskriver den; sedan finns en tolkning att ta fram av vad den kan spegla hos dig.</span></span></div>
+          <div class="manual-card-row"><span class="mc-ic">✦</span><span><b class="mc-nm">Bläckbild.</b> <span class="mc-desc">En abstrakt bild — var och en tolkar den tyst utifrån en fråga, sedan delar ni vad ni såg.</span></span></div>
+          <div class="manual-card-row"><span class="mc-ic">🌊</span><span><b class="mc-nm">Para ihop två.</b> <span class="mc-desc">Den vars tur det är bjuder in en annan deltagare; ni två får ett kort bara för er, något ömsesidigt att säga eller göra. <i>(Minst två deltagare, och att ni nått Revet.)</i></span></span></div>
+          <div class="manual-card-row"><span class="mc-ic">🤫</span><span><b class="mc-nm">Tystnad.</b> <span class="mc-desc">En kort stund tillsammans, helt utan ord. <i>(Minst två deltagare.)</i></span></span></div>
+          <div class="manual-card-row"><span class="mc-ic">🍃</span><span><b class="mc-nm">Avslutningskort.</b> <span class="mc-desc">Spelledaren drar ett kort som varsamt rundar av kvällen.</span></span></div>
+          <div class="manual-card-row"><span class="mc-ic">🫧</span><span><b class="mc-nm">Uppstigning.</b> <span class="mc-desc">Ett sista varv där var och en får säga något innan ni stiger upp till ytan.</span></span></div>
         </div>
       </section>
 
@@ -2029,12 +2028,6 @@ const DECK = {
     { q: 'En tyst paus. Blunda om du vill och lyssna inåt. När nedräkningen är slut möts ni igen, kanske en aning närmare.' },
     { q: 'Sitt kvar i tystnaden tillsammans. Ingen behöver säga något klokt. Bara vara. Låt lugnet sänka sig över bordet.' },
   ],
-  // Strömvirvel: ett oväntat ögonblick. Havet vänder och turordningen kastas om.
-  whirl: [
-    { q: 'Strömvirvel. Havet vänder och turordningen går nu åt andra hållet. Den som nyss gav turen får den strax tillbaka.' },
-    { q: 'En virvel tar tag i er. Ordningen kastas om och riktningen är nu den motsatta. Låt er föras med.' },
-    { q: 'Strömmen byter riktning. Härifrån går turen åt andra hållet runt bordet. Inget annat ändras, bara flödet.' },
-  ],
   // Uppstigningen: den ömsesidiga avslutningen. Var och en får, i tur och ordning,
   // säga något till gruppen innan ni stiger upp till ytan igen.
   ascent: [
@@ -2347,16 +2340,6 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
     state.cardsRevealed += 1;
   }
 
-  // Strömvirvel: havet vänder. Turordningen kastas om på plats, samma person
-  // har kvar turen men nästa person blir en annan.
-  function drawWhirl(state) {
-    const list = DECK.whirl || [];
-    if (!list.length) { drawCard(state); return; }
-    state.order = state.order.slice().reverse();
-    const c = list[Math.floor(Math.random() * list.length)];
-    state.card = { source: 'whirl', text: c.q, levelId: state.levelId, followupText: null, followup: null };
-    state.cardsRevealed += 1;
-  }
 
   // Uppstigningen: ett avslutningskort per spelare, i tur och ordning.
   function drawAscent(state) {
@@ -2403,7 +2386,6 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
       if (DECK.inkblot && roll < 0.15) { drawInkblot(state); return; }
       if ((DECK.strommar || []).length && li >= 2 && connectedCount(state) >= 2 && roll < 0.25) { drawStrom(state); return; }
       if ((DECK.silence || []).length && connectedCount(state) >= 2 && roll < 0.29) { drawSilence(state); return; }
-      if ((DECK.whirl || []).length && connectedCount(state) >= 3 && roll < 0.32) { drawWhirl(state); return; }
     }
     drawCard(state);
   }
@@ -3171,6 +3153,16 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
       try { navigator.vibrate(6); } catch (_) {}
     }
   }, { passive: true });
+
+  // Hindra iOS-Safaris dubbeltap-zoom (touch-action räcker inte alltid där).
+  // Nyp-zoom med två fingrar är kvar för tillgänglighet — vi stoppar bara det
+  // andra snabba tappet inom 300 ms.
+  let _lastTouchEnd = 0;
+  document.addEventListener('touchend', (e) => {
+    const now = Date.now();
+    if (now - _lastTouchEnd <= 300) e.preventDefault();
+    _lastTouchEnd = now;
+  }, { passive: false });
 
   // ---- Tema & färger -------------------------------------------------------
   function levelIndex(id) { return Math.max(0, LEVELS.findIndex((l) => l.id === id)); }

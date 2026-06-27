@@ -571,12 +571,6 @@ const DECK = {
     { q: 'En tyst paus. Blunda om du vill och lyssna inåt. När nedräkningen är slut möts ni igen, kanske en aning närmare.' },
     { q: 'Sitt kvar i tystnaden tillsammans. Ingen behöver säga något klokt. Bara vara. Låt lugnet sänka sig över bordet.' },
   ],
-  // Strömvirvel: ett oväntat ögonblick. Havet vänder och turordningen kastas om.
-  whirl: [
-    { q: 'Strömvirvel. Havet vänder och turordningen går nu åt andra hållet. Den som nyss gav turen får den strax tillbaka.' },
-    { q: 'En virvel tar tag i er. Ordningen kastas om och riktningen är nu den motsatta. Låt er föras med.' },
-    { q: 'Strömmen byter riktning. Härifrån går turen åt andra hållet runt bordet. Inget annat ändras, bara flödet.' },
-  ],
   // Uppstigningen: den ömsesidiga avslutningen. Var och en får, i tur och ordning,
   // säga något till gruppen innan ni stiger upp till ytan igen.
   ascent: [

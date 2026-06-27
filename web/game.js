@@ -241,16 +241,6 @@
     state.cardsRevealed += 1;
   }
 
-  // Strömvirvel: havet vänder. Turordningen kastas om på plats, samma person
-  // har kvar turen men nästa person blir en annan.
-  function drawWhirl(state) {
-    const list = DECK.whirl || [];
-    if (!list.length) { drawCard(state); return; }
-    state.order = state.order.slice().reverse();
-    const c = list[Math.floor(Math.random() * list.length)];
-    state.card = { source: 'whirl', text: c.q, levelId: state.levelId, followupText: null, followup: null };
-    state.cardsRevealed += 1;
-  }
 
   // Uppstigningen: ett avslutningskort per spelare, i tur och ordning.
   function drawAscent(state) {
@@ -297,7 +287,6 @@
       if (DECK.inkblot && roll < 0.15) { drawInkblot(state); return; }
       if ((DECK.strommar || []).length && li >= 2 && connectedCount(state) >= 2 && roll < 0.25) { drawStrom(state); return; }
       if ((DECK.silence || []).length && connectedCount(state) >= 2 && roll < 0.29) { drawSilence(state); return; }
-      if ((DECK.whirl || []).length && connectedCount(state) >= 3 && roll < 0.32) { drawWhirl(state); return; }
     }
     drawCard(state);
   }
