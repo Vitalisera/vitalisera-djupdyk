@@ -133,6 +133,17 @@
     state.turnId = live[(i + 1) % live.length];
   }
 
+  // Ge tillbaka turen till föregående spelare (ångrar en felaktig "skicka vidare").
+  function regressTurn(state) {
+    const live = state.order.filter((id) => {
+      const p = state.players.find((x) => x.id === id);
+      return p && p.connected;
+    });
+    if (live.length === 0) { state.turnId = null; return; }
+    const i = live.indexOf(state.turnId);
+    state.turnId = live[(i - 1 + live.length) % live.length];
+  }
+
   // ---- Kortleksdragning -----------------------------------------------------
 
   function ensureQueue(state, levelId) {
@@ -297,6 +308,10 @@
   function canControl(state, actorId) {
     return !!actorId && (actorId === state.turnId || actorId === state.hostId);
   }
+  // Spelledar-bara: handlingar som formar hela sessionen (byt djup, avsluta, etc.).
+  function isHost(state, actorId) {
+    return !!actorId && actorId === state.hostId;
+  }
 
   function apply(state, action, actorId) {
     state = clone(state);
@@ -433,7 +448,7 @@
         break;
       }
       case 'setLevel': {
-        if (state.phase === 'playing' && !canControl(state, actorId)) break;
+        if (state.phase === 'playing' && !isHost(state, actorId)) break;
         if (state.phase === 'playing') pushHistory(state);
         state.levelId = levelById(action.levelId).id;
         state.deepest = Math.max(state.deepest || 0, levelIndexOf(state.levelId));
@@ -441,7 +456,7 @@
         break;
       }
       case 'closing': {
-        if (!canControl(state, actorId)) break;
+        if (!isHost(state, actorId)) break;
         pushHistory(state);
         const pool = (state.duet && (DECK.closingDuet || []).length) ? DECK.closingDuet : DECK.closing;
         const c = pool[Math.floor(Math.random() * pool.length)];
@@ -453,7 +468,7 @@
         // Avsluta dyket. Med fler än en dykare inleds Uppstigningen, ett
         // avslutningsvarv där var och en får säga något innan ytan. Andra
         // gången (eller ensam) går vi direkt till sammanfattningen.
-        if (state.phase !== 'playing' || !canControl(state, actorId)) break;
+        if (state.phase !== 'playing' || !isHost(state, actorId)) break;
         if (state.ascent) { finishGame(state); break; }
         if (connectedCount(state) >= 2) {
           pushHistory(state);
@@ -465,13 +480,20 @@
         }
         break;
       }
+      // Skicka vidare: vem som helst får knuffa turen (säkerhetsventil om någon lämnat/är borta).
       case 'passTurn': {
-        if (state.phase !== 'playing' || !canControl(state, actorId)) break;
+        if (state.phase !== 'playing') break;
         advanceTurn(state);
         break;
       }
+      // Ge tillbaka turen till föregående: vem som helst, ångrar en felaktig knuff.
+      case 'turnBack': {
+        if (state.phase !== 'playing') break;
+        regressTurn(state);
+        break;
+      }
       case 'restart': {
-        if (actorId !== state.hostId && !canControl(state, actorId)) break;
+        if (!isHost(state, actorId)) break;
         state.phase = 'lobby';
         state.card = null;
         state.queues = {};

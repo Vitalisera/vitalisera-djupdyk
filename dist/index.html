@@ -1068,8 +1068,8 @@ input:focus { border-color: var(--depth); box-shadow: 0 0 0 3px color-mix(in srg
       <button id="btn-back" class="btn-back" hidden>↩ Föregående fråga</button>
 
       <div class="controls" id="controls">
-        <button id="btn-followup" class="btn btn-glass btn-control" aria-label="Dyk djupare">
-          <span class="ctrl-ico">↓</span><span class="ctrl-lbl">Dyk djupare</span>
+        <button id="btn-followup" class="btn btn-glass btn-control" aria-label="Följdfråga">
+          <span class="ctrl-ico">↳</span><span class="ctrl-lbl">Följdfråga</span>
         </button>
         <button id="btn-next" class="btn btn-primary btn-control btn-control-main">
           <span class="ctrl-lbl" id="next-lbl">Skicka vidare</span><span class="ctrl-ico">→</span>
@@ -1134,10 +1134,11 @@ input:focus { border-color: var(--depth); box-shadow: 0 0 0 3px color-mix(in srg
         <button id="btn-help-game" class="btn btn-glass full">Så funkar det</button>
         <button id="btn-reflection" class="btn btn-glass full">✨ Dra en spegling</button>
         <button id="btn-inkblot" class="btn btn-glass full">✦ Visa en bläckbild</button>
-        <button id="btn-strom" class="btn btn-glass full">🌊 Para ihop två (Strömmar)</button>
+        <button id="btn-strom" class="btn btn-glass full">🌊 Para ihop två</button>
         <button id="btn-silence" class="btn btn-glass full">🤫 Bjud in tystnad</button>
         <button id="btn-closing" class="btn btn-glass full">Dra ett avslutningskort</button>
         <button id="btn-pass" class="btn btn-glass full">Skicka turen vidare</button>
+        <button id="btn-pass-back" class="btn btn-glass full">↩ Ge tillbaka turen</button>
         <div class="sheet-divider" id="sheet-divider"></div>
         <button id="btn-finish" class="btn btn-glass full">🫧 Stig upp och avsluta</button>
         <button id="btn-restart" class="btn btn-glass full">Tillbaka till lobbyn</button>
@@ -1171,7 +1172,7 @@ input:focus { border-color: var(--depth); box-shadow: 0 0 0 3px color-mix(in srg
           <li><b>Skicka vidare.</b> När ni är klara går turen till nästa.</li>
         </ol>
         <div class="intro-actions">
-          <span class="intro-chip"><b class="ic">↓</b><span>Dyk djupare</span><em>en följdfråga på samma tema</em></span>
+          <span class="intro-chip"><b class="ic">↳</b><span>Följdfråga</span><em>fördjupar samma kort, samma tema</em></span>
           <span class="intro-chip"><b class="ic">↻</b><span>Byt fråga</span><em>nytt kort, din tur kvar</em></span>
           <span class="intro-chip is-main"><b class="ic">→</b><span>Skicka vidare</span><em>turen och ett nytt kort till nästa</em></span>
         </div>
@@ -1188,7 +1189,7 @@ input:focus { border-color: var(--depth); box-shadow: 0 0 0 3px color-mix(in srg
         <div class="intro-cards">
           <span class="intro-card-chip"><b class="ic">✨</b><span class="nm">Spegling</span><em>en inre bild att tolka</em></span>
           <span class="intro-card-chip"><b class="ic">✦</b><span class="nm">Bläckbild</span><em>en bild ni läser var för sig</em></span>
-          <span class="intro-card-chip"><b class="ic">🌊</b><span class="nm">Strömmar</span><em>två gör en liten sak ihop</em></span>
+          <span class="intro-card-chip"><b class="ic">🌊</b><span class="nm">Para ihop två</span><em>en liten sak för er två</em></span>
           <span class="intro-card-chip"><b class="ic">🤫</b><span class="nm">Tystnad</span><em>en stund alldeles utan ord</em></span>
         </div>
       </section>
@@ -2042,6 +2043,17 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
     state.turnId = live[(i + 1) % live.length];
   }
 
+  // Ge tillbaka turen till föregående spelare (ångrar en felaktig "skicka vidare").
+  function regressTurn(state) {
+    const live = state.order.filter((id) => {
+      const p = state.players.find((x) => x.id === id);
+      return p && p.connected;
+    });
+    if (live.length === 0) { state.turnId = null; return; }
+    const i = live.indexOf(state.turnId);
+    state.turnId = live[(i - 1 + live.length) % live.length];
+  }
+
   // ---- Kortleksdragning -----------------------------------------------------
 
   function ensureQueue(state, levelId) {
@@ -2206,6 +2218,10 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
   function canControl(state, actorId) {
     return !!actorId && (actorId === state.turnId || actorId === state.hostId);
   }
+  // Spelledar-bara: handlingar som formar hela sessionen (byt djup, avsluta, etc.).
+  function isHost(state, actorId) {
+    return !!actorId && actorId === state.hostId;
+  }
 
   function apply(state, action, actorId) {
     state = clone(state);
@@ -2342,7 +2358,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
         break;
       }
       case 'setLevel': {
-        if (state.phase === 'playing' && !canControl(state, actorId)) break;
+        if (state.phase === 'playing' && !isHost(state, actorId)) break;
         if (state.phase === 'playing') pushHistory(state);
         state.levelId = levelById(action.levelId).id;
         state.deepest = Math.max(state.deepest || 0, levelIndexOf(state.levelId));
@@ -2350,7 +2366,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
         break;
       }
       case 'closing': {
-        if (!canControl(state, actorId)) break;
+        if (!isHost(state, actorId)) break;
         pushHistory(state);
         const pool = (state.duet && (DECK.closingDuet || []).length) ? DECK.closingDuet : DECK.closing;
         const c = pool[Math.floor(Math.random() * pool.length)];
@@ -2362,7 +2378,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
         // Avsluta dyket. Med fler än en dykare inleds Uppstigningen, ett
         // avslutningsvarv där var och en får säga något innan ytan. Andra
         // gången (eller ensam) går vi direkt till sammanfattningen.
-        if (state.phase !== 'playing' || !canControl(state, actorId)) break;
+        if (state.phase !== 'playing' || !isHost(state, actorId)) break;
         if (state.ascent) { finishGame(state); break; }
         if (connectedCount(state) >= 2) {
           pushHistory(state);
@@ -2374,13 +2390,20 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
         }
         break;
       }
+      // Skicka vidare: vem som helst får knuffa turen (säkerhetsventil om någon lämnat/är borta).
       case 'passTurn': {
-        if (state.phase !== 'playing' || !canControl(state, actorId)) break;
+        if (state.phase !== 'playing') break;
         advanceTurn(state);
         break;
       }
+      // Ge tillbaka turen till föregående: vem som helst, ångrar en felaktig knuff.
+      case 'turnBack': {
+        if (state.phase !== 'playing') break;
+        regressTurn(state);
+        break;
+      }
       case 'restart': {
-        if (actorId !== state.hostId && !canControl(state, actorId)) break;
+        if (!isHost(state, actorId)) break;
         state.phase = 'lobby';
         state.card = null;
         state.queues = {};
@@ -3143,7 +3166,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
       $('card-eyebrow').textContent =
         isClosing ? 'Avslutning'
         : isReflection ? '✨ Spegling'
-        : isStrom ? '🌊 Strömmar'
+        : isStrom ? '🌊 Para ihop två'
         : isSilence ? '🤫 Tystnad'
         : isWhirl ? '🌀 Strömvirvel'
         : isAscent ? '🫧 Uppstigning'
@@ -3180,8 +3203,8 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
       // Följdfråge-/tolkningsknappen byter skepnad för speglingar
       const fLbl = $('btn-followup').querySelector('.ctrl-lbl');
       const fIco = $('btn-followup').querySelector('.ctrl-ico');
-      fLbl.textContent = isReflection ? 'Tolkning' : 'Dyk djupare';
-      fIco.textContent = isReflection ? '✨' : '↓';
+      fLbl.textContent = isReflection ? 'Tolkning' : 'Följdfråga';
+      fIco.textContent = isReflection ? '✨' : '↳';
 
       // Vänd bara kortet när själva frågan byts (inte när följdfrågan visas)
       const flipKey = isInkblot ? 'inkblot|' + s.card.seed
@@ -3627,15 +3650,16 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
     const canDrive = isHost || myTurn;
     $('sheet-levels').innerHTML = LEVELS.map((l) => levelCard(l, l.id === s.levelId, true)).join('');
     bindLevelButtons('sheet-levels', (id) => { Net.dispatch({ type: 'setLevel', levelId: id }); closeSheet(); });
-    // Bara den som "kör" (har turen eller är värd) får ändra dyket.
-    $('sheet-depth').hidden = !canDrive;
+    // Spelledar-bara (formar sessionen) vs turspelare/värd (driver kortet) vs alla.
+    $('sheet-depth').hidden = !isHost;                 // byt djup = värd-bara
     $('btn-reflection').hidden = !canDrive;
     $('btn-inkblot').hidden = !canDrive;
-    $('btn-strom').hidden = !canDrive; // syns alltid, men kräver två (hanteras vid klick)
+    $('btn-strom').hidden = !canDrive || s.players.filter((p) => p.connected).length < 2; // kräver två
     $('btn-silence').hidden = !canDrive;
-    $('btn-closing').hidden = !canDrive;
-    $('btn-pass').hidden = !canDrive;
-    $('btn-finish').hidden = !canDrive;
+    $('btn-closing').hidden = !isHost;                 // avslutningskort = värd-bara
+    $('btn-pass').hidden = false;                      // skicka vidare = vem som helst
+    $('btn-pass-back').hidden = false;                 // ge tillbaka turen = vem som helst
+    $('btn-finish').hidden = !isHost;                  // avsluta = värd-bara
     $('btn-restart').hidden = !isHost;
     $('sheet-note').hidden = canDrive;
     updateSoundLabel();
@@ -3650,13 +3674,14 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
   $('btn-inkblot').onclick = () => { Net.dispatch({ type: 'inkblot' }); closeSheet(); };
   $('btn-strom').onclick = () => {
     const st = state();
-    if (st && st.players.filter((p) => p.connected).length < 2) { closeSheet(); toast('Strömmar är för två. Bjud in en dykare till först.'); return; }
+    if (st && st.players.filter((p) => p.connected).length < 2) { closeSheet(); toast('Det här är för två. Bjud in en dykare till först.'); return; }
     Net.dispatch({ type: 'strom' }); closeSheet();
   };
   $('btn-silence').onclick = () => { Net.dispatch({ type: 'silence' }); closeSheet(); };
   $('btn-postcard').onclick = savePostcard;
   $('btn-closing').onclick = () => { Net.dispatch({ type: 'closing' }); closeSheet(); };
   $('btn-pass').onclick = () => { Net.dispatch({ type: 'passTurn' }); closeSheet(); };
+  $('btn-pass-back').onclick = () => { Net.dispatch({ type: 'turnBack' }); closeSheet(); };
   $('btn-finish').onclick = () => { Net.dispatch({ type: 'finish' }); closeSheet(); };
   $('btn-restart').onclick = () => { Net.dispatch({ type: 'restart' }); closeSheet(); };
   $('btn-leave-game').onclick = () => { closeSheet(); leave(); };

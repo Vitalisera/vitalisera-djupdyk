@@ -301,7 +301,7 @@
       $('card-eyebrow').textContent =
         isClosing ? 'Avslutning'
         : isReflection ? '✨ Spegling'
-        : isStrom ? '🌊 Strömmar'
+        : isStrom ? '🌊 Para ihop två'
         : isSilence ? '🤫 Tystnad'
         : isWhirl ? '🌀 Strömvirvel'
         : isAscent ? '🫧 Uppstigning'
@@ -338,8 +338,8 @@
       // Följdfråge-/tolkningsknappen byter skepnad för speglingar
       const fLbl = $('btn-followup').querySelector('.ctrl-lbl');
       const fIco = $('btn-followup').querySelector('.ctrl-ico');
-      fLbl.textContent = isReflection ? 'Tolkning' : 'Dyk djupare';
-      fIco.textContent = isReflection ? '✨' : '↓';
+      fLbl.textContent = isReflection ? 'Tolkning' : 'Följdfråga';
+      fIco.textContent = isReflection ? '✨' : '↳';
 
       // Vänd bara kortet när själva frågan byts (inte när följdfrågan visas)
       const flipKey = isInkblot ? 'inkblot|' + s.card.seed
@@ -785,15 +785,16 @@
     const canDrive = isHost || myTurn;
     $('sheet-levels').innerHTML = LEVELS.map((l) => levelCard(l, l.id === s.levelId, true)).join('');
     bindLevelButtons('sheet-levels', (id) => { Net.dispatch({ type: 'setLevel', levelId: id }); closeSheet(); });
-    // Bara den som "kör" (har turen eller är värd) får ändra dyket.
-    $('sheet-depth').hidden = !canDrive;
+    // Spelledar-bara (formar sessionen) vs turspelare/värd (driver kortet) vs alla.
+    $('sheet-depth').hidden = !isHost;                 // byt djup = värd-bara
     $('btn-reflection').hidden = !canDrive;
     $('btn-inkblot').hidden = !canDrive;
-    $('btn-strom').hidden = !canDrive; // syns alltid, men kräver två (hanteras vid klick)
+    $('btn-strom').hidden = !canDrive || s.players.filter((p) => p.connected).length < 2; // kräver två
     $('btn-silence').hidden = !canDrive;
-    $('btn-closing').hidden = !canDrive;
-    $('btn-pass').hidden = !canDrive;
-    $('btn-finish').hidden = !canDrive;
+    $('btn-closing').hidden = !isHost;                 // avslutningskort = värd-bara
+    $('btn-pass').hidden = false;                      // skicka vidare = vem som helst
+    $('btn-pass-back').hidden = false;                 // ge tillbaka turen = vem som helst
+    $('btn-finish').hidden = !isHost;                  // avsluta = värd-bara
     $('btn-restart').hidden = !isHost;
     $('sheet-note').hidden = canDrive;
     updateSoundLabel();
@@ -808,13 +809,14 @@
   $('btn-inkblot').onclick = () => { Net.dispatch({ type: 'inkblot' }); closeSheet(); };
   $('btn-strom').onclick = () => {
     const st = state();
-    if (st && st.players.filter((p) => p.connected).length < 2) { closeSheet(); toast('Strömmar är för två. Bjud in en dykare till först.'); return; }
+    if (st && st.players.filter((p) => p.connected).length < 2) { closeSheet(); toast('Det här är för två. Bjud in en dykare till först.'); return; }
     Net.dispatch({ type: 'strom' }); closeSheet();
   };
   $('btn-silence').onclick = () => { Net.dispatch({ type: 'silence' }); closeSheet(); };
   $('btn-postcard').onclick = savePostcard;
   $('btn-closing').onclick = () => { Net.dispatch({ type: 'closing' }); closeSheet(); };
   $('btn-pass').onclick = () => { Net.dispatch({ type: 'passTurn' }); closeSheet(); };
+  $('btn-pass-back').onclick = () => { Net.dispatch({ type: 'turnBack' }); closeSheet(); };
   $('btn-finish').onclick = () => { Net.dispatch({ type: 'finish' }); closeSheet(); };
   $('btn-restart').onclick = () => { Net.dispatch({ type: 'restart' }); closeSheet(); };
   $('btn-leave-game').onclick = () => { closeSheet(); leave(); };
