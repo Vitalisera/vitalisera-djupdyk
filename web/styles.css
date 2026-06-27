@@ -1,5 +1,10 @@
 /* Vitalisera djupdyk, design. Djuphavs-tema, glas, mjuka rörelser. */
 
+/* Display-typografi: Fraunces (varm optisk serif, SIL OFL). Självhostad woff2,
+   bäddas in som data-URI av build-single.js (offline, inget CDN). */
+@font-face { font-family: 'Fraunces'; font-style: normal; font-weight: 400; font-display: swap; src: url(fonts/fraunces-400.woff2) format('woff2'); }
+@font-face { font-family: 'Fraunces'; font-style: normal; font-weight: 600; font-display: swap; src: url(fonts/fraunces-600.woff2) format('woff2'); }
+
 :root {
   /* Vitaliseras officiella palett: petrol #08445c, sekundär #357087,
      ljus aqua-grön #cce2e3, vit text på mörka partier. Spelkänslan kommer
@@ -7,6 +12,7 @@
   --brand-dark: #08445c;
   --brand-mid: #357087;
   --brand-light: #cce2e3;
+  --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
   --ink: #f3f9fa;             /* vit text på mörkt */
   --ink-soft: #d3e6e9;        /* höjd för WCAG AA på mörk petrol */
   --ink-dim: #a9c6cc;
@@ -856,3 +862,12 @@ input:focus { border-color: var(--depth); box-shadow: 0 0 0 3px color-mix(in srg
 @keyframes breathe { 0%, 100% { transform: scale(0.86); opacity: 0.85; } 50% { transform: scale(1.04); opacity: 1; } }
 @keyframes swirl-in { from { transform: rotate(-8deg) scale(0.92); opacity: 0; } to { transform: none; opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .breath-orb, .silence-ring { animation: none; } }
+
+/* ============ TYPOGRAFI: Fraunces på display-text ============ */
+/* Serif på rubriker och kortets fråga; brödtext, etiketter, knappar förblir sans. */
+.brand-title, .lobby-title, .card-text, .summary-title, .intro-title, .overlay-title, .rotate-title {
+  font-family: var(--font-display);
+}
+.card-text { font-weight: 400; letter-spacing: -0.005em; }
+.brand-title { font-weight: 400; letter-spacing: 0.01em; }
+.lobby-title, .summary-title, .intro-title, .overlay-title, .rotate-title { font-weight: 600; letter-spacing: -0.01em; }

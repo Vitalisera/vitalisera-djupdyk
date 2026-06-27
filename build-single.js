@@ -14,8 +14,13 @@ const css = read('styles.css');
 // strängen läggs den i en CSS-variabel som alla url(icons/vitalisera-logo.png) pekar mot.
 const logo = fs.readFileSync(path.join(web, 'icons/vitalisera-logo.png'));
 const logoDataUri = 'data:image/png;base64,' + logo.toString('base64');
-const cssInlined = (':root{--logo-img:url("' + logoDataUri + '")}\n' + css)
+let cssInlined = (':root{--logo-img:url("' + logoDataUri + '")}\n' + css)
   .split('url(icons/vitalisera-logo.png)').join('var(--logo-img)');
+// Bädda in display-fonterna (woff2) som data-URI så bygget blir självförsörjande (offline, inget CDN).
+for (const font of ['fraunces-400.woff2', 'fraunces-600.woff2']) {
+  const fontDataUri = 'data:font/woff2;base64,' + fs.readFileSync(path.join(web, 'fonts', font)).toString('base64');
+  cssInlined = cssInlined.split('url(fonts/' + font + ')').join('url("' + fontDataUri + '")');
+}
 
 const scripts = ['data/questions.js', 'game.js', 'net-ws.js', 'ocean.js', 'inkblot.js', 'app.js']
   .map((f) => `<script>\n${read(f)}\n</script>`)
