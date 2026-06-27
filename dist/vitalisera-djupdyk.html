@@ -892,6 +892,54 @@ input:focus { border-color: var(--depth); box-shadow: 0 0 0 3px color-mix(in srg
 .brand-title { font-weight: 400; letter-spacing: 0.01em; }
 .lobby-title, .summary-title, .intro-title, .overlay-title, .rotate-title { font-weight: 600; letter-spacing: -0.01em; }
 
+/* ============ KOMPLETT MANUAL (återanvänder .intro-overlayn) ============ */
+.manual .intro-panel { max-width: 640px; }
+.manual .intro-h { font-family: var(--font-display); font-weight: 600; }
+.manual-head { text-align: center; margin-bottom: 6px; }
+.manual-print { margin: 4px 0 20px; }
+.manual-section { margin: 0 0 22px; }
+.manual-depths { margin-top: 6px; }
+.manual-depth { display: flex; gap: 14px; align-items: baseline; padding: 10px 0; border-top: 1px solid var(--glass-brd); }
+.manual-depth:first-child { border-top: 0; padding-top: 2px; }
+.manual-depth .d-meta { flex: 0 0 104px; }
+.manual-depth .d-name { display: block; font-weight: 700; color: var(--ink); }
+.manual-depth .d-depth { font-size: 0.7rem; color: var(--depth-text); text-transform: uppercase; letter-spacing: 0.04em; }
+.manual-depth .d-desc { color: var(--ink-soft); font-size: 0.9rem; line-height: 1.45; }
+.manual-cards { margin-top: 6px; }
+.manual-card-row { display: flex; gap: 11px; padding: 7px 0; align-items: baseline; }
+.manual-card-row .mc-ic { flex: 0 0 1.4em; text-align: center; color: var(--depth-text); }
+.manual-card-row .mc-nm { color: var(--ink); }
+.manual-card-row .mc-desc { color: var(--ink-soft); font-size: 0.9rem; }
+.manual-section .intro-p a, .manual-section a { color: var(--depth-text); }
+.manual-link { display: block; width: 100%; margin: 10px auto 0; background: none; border: 0; color: var(--depth-text); font: inherit; font-size: 0.9rem; font-weight: 650; cursor: pointer; padding: 8px; text-align: center; }
+
+/* ============ UTSKRIFT: bara manualen, svart på vitt, A4 ============ */
+@media print {
+  @page { margin: 18mm; }
+  html, body { background: #fff !important; }
+  body > *:not(#manual) { display: none !important; }
+  #manual {
+    position: static !important; inset: auto !important; z-index: auto !important;
+    display: block !important; opacity: 1 !important; pointer-events: auto !important;
+    background: #fff !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+  }
+  #manual .intro-panel {
+    position: static !important; width: 100% !important; max-width: none !important;
+    max-height: none !important; overflow: visible !important; transform: none !important;
+    border-radius: 0 !important; padding: 0 !important; box-shadow: none !important; background: none !important;
+  }
+  #manual, #manual h2, #manual h3, #manual p, #manual li, #manual b, #manual em, #manual span, #manual a, #manual i {
+    color: #000 !important; text-shadow: none !important;
+  }
+  #manual .intro-title, #manual .intro-h { color: #08323f !important; }
+  #manual .intro-n { background: #08323f !important; color: #fff !important; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  #manual .intro-lede, #manual .intro-p, #manual .d-desc, #manual .mc-desc { color: #222 !important; }
+  #manual .intro-chip, #manual .intro-actions span { border: 0.5pt solid #999 !important; background: none !important; }
+  #manual-print, #btn-manual-print, #btn-manual-close { display: none !important; }
+  .manual-section, .manual-depth, .manual-card-row, #manual .intro-chip { page-break-inside: avoid; break-inside: avoid; }
+  #manual .intro-h { page-break-after: avoid; break-after: avoid; }
+}
+
 </style>
 </head>
 <body>
@@ -1132,6 +1180,7 @@ input:focus { border-color: var(--depth); box-shadow: 0 0 0 3px color-mix(in srg
         <button id="btn-sound" class="btn btn-glass full">🔊 Ljud: på</button>
         <button id="btn-invite-game" class="btn btn-glass full"><span>🔗 Bjud in fler (kod <b id="game-invite-code">••••</b>)</span></button>
         <button id="btn-help-game" class="btn btn-glass full">Så funkar det</button>
+        <button id="btn-manual-game" class="btn btn-glass full">📖 Hela manualen</button>
         <button id="btn-reflection" class="btn btn-glass full">✨ Dra en spegling</button>
         <button id="btn-inkblot" class="btn btn-glass full">✦ Visa en bläckbild</button>
         <button id="btn-strom" class="btn btn-glass full">🌊 Para ihop två</button>
@@ -1197,6 +1246,103 @@ input:focus { border-color: var(--depth); box-shadow: 0 0 0 3px color-mix(in srg
       <p class="intro-safe">Här finns inga rätta svar. Du delar det du vill, i din takt, och får alltid säga pass. Behöver ni pausa kan vem som helst hissa <b>bojen</b> 🛟.</p>
       <label class="intro-hide"><input type="checkbox" id="intro-hide" /> Visa inte det här igen</label>
       <button id="btn-intro-start" class="btn btn-primary full">Sätt igång</button>
+      <button id="btn-manual-intro" class="manual-link" type="button">📖 Läs hela manualen</button>
+    </div>
+  </div>
+
+  <!-- ============ KOMPLETT MANUAL (läsbar + utskrivbar som PDF) ============ -->
+  <div id="manual" class="intro manual" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="manual-title">
+    <div class="intro-panel glass">
+      <div class="manual-head">
+        <h2 class="intro-title manual-title" id="manual-title">Handbok</h2>
+        <p class="intro-lede">Allt om Vitalisera djupdyk, i lugn och ro. Läs här, eller skriv ut den som PDF att ha bredvid er.</p>
+        <button id="btn-manual-print" class="btn btn-glass full manual-print" type="button">🖨 Skriv ut / spara som PDF</button>
+      </div>
+
+      <section class="manual-section">
+        <h3 class="intro-h"><span class="intro-n">1</span> Välkommen</h3>
+        <p class="intro-p">Djupdyk är ett samtalsspel där ni dyker djupare tillsammans, var och en på sin egen telefon, med samma kort och samma vy i realtid. Ni turas om att läsa frågor högt och pratar er sakta ner genom fem djup, från lätt och ytligt till det som betyder mest.</p>
+        <p class="intro-p">Det finns inga rätta svar, ingen tävling och ingen brådska. Du delar det du vill, i din takt, och får alltid säga pass. Att vara med är redan modigt.</p>
+      </section>
+
+      <section class="manual-section">
+        <h3 class="intro-h"><span class="intro-n">2</span> Kom igång</h3>
+        <p class="intro-p">En av er skapar ett dyk och får en fyrteckens <b>rumskod</b> och en länk. Dela koden eller länken med de andra. De skriver in koden, eller öppnar länken och hamnar direkt i ert rum.</p>
+        <p class="intro-p">Ni kan sitta i <b>samma rum</b> eller vara <b>på distans</b>, det fungerar lika bra. Välj startdjup och tryck Starta. Sedan ser alla samma kort samtidigt.</p>
+      </section>
+
+      <section class="manual-section">
+        <h3 class="intro-h"><span class="intro-n">3</span> Roller</h3>
+        <p class="intro-p"><b>Spelledaren</b> är den som skapade dyket. Spelledaren styr det som formar hela stunden: byter djup, drar avslutningskort, avslutar dyket och går tillbaka till lobbyn.</p>
+        <p class="intro-p"><b>Alla deltagare</b> kan läsa sin egen fråga, skicka turen vidare, ge tillbaka turen och be om en paus med bojen. Den som har turen driver sitt eget kort: följdfråga, byt fråga och specialkort.</p>
+      </section>
+
+      <section class="manual-section">
+        <h3 class="intro-h"><span class="intro-n">4</span> Spelets gång</h3>
+        <p class="intro-p">Den vars tur det är läser kortet högt och svarar först. Sedan pratar ni fritt kring frågan, helt utan tidsgräns. Stanna kvar så länge det känns bra.</p>
+        <div class="intro-actions">
+          <span class="intro-chip is-main"><b class="ic">→</b><span>Skicka vidare</span><em>turen och ett nytt kort till nästa</em></span>
+          <span class="intro-chip"><b class="ic">↩</b><span>Ge tillbaka turen</span><em>om någon knuffade fel, eller någon lämnat</em></span>
+          <span class="intro-chip"><b class="ic">↳</b><span>Följdfråga</span><em>fördjupar samma kort, samma tema</em></span>
+          <span class="intro-chip"><b class="ic">↻</b><span>Byt fråga</span><em>nytt kort, din tur kvar</em></span>
+        </div>
+      </section>
+
+      <section class="manual-section">
+        <h3 class="intro-h"><span class="intro-n">5</span> De fem djupen</h3>
+        <p class="intro-p">Ni kan byta djup när som helst via menyn ⋯, och börja på vilket djup ni vill.</p>
+        <div class="manual-depths">
+          <div class="manual-depth"><span class="d-meta"><span class="d-name">Ytan</span><span class="d-depth">0 m · Uppvärmning</span></span><span class="d-desc">Vi börjar där det känns tryggt. Inga djupdyk än, bara ett första andetag tillsammans. Du delar det du vill, i din takt.</span></div>
+          <div class="manual-depth"><span class="d-meta"><span class="d-name">Grundvatten</span><span class="d-depth">10 m · Lite djupare</span></span><span class="d-desc">Här under ytan finns det som formar oss utan att vi märker det. Vi sänker oss långsamt. Känn efter i kroppen, inte bara i huvudet.</span></div>
+          <div class="manual-depth"><span class="d-meta"><span class="d-name">Revet</span><span class="d-depth">25 m · Mellan oss</span></span><span class="d-desc">Nu blir vattnet rikare och lite mer levande. Här möter du frågor som rör vid något. Det får skava lite. Du är i trygga händer.</span></div>
+          <div class="manual-depth"><span class="d-meta"><span class="d-name">Djupvatten</span><span class="d-depth">50 m · Det ärliga</span></span><span class="d-desc">Vi har kommit långt tillsammans. Här nere talar vi om det som betyder mest: det du burit, det du längtar efter. Du behöver inte ha svaren färdiga.</span></div>
+          <div class="manual-depth"><span class="d-meta"><span class="d-name">Djuphavet</span><span class="d-depth">100 m · Det djupaste</span></span><span class="d-desc">Längst ner är det stilla. Här möter du dig själv på djupet, kanske den modigaste platsen av alla. Det finns ett före och ett efter den här stunden.</span></div>
+        </div>
+      </section>
+
+      <section class="manual-section">
+        <h3 class="intro-h"><span class="intro-n">6</span> Specialkort</h3>
+        <p class="intro-p">Då och då dyker ett annat slags kort upp, som en krydda i samtalet:</p>
+        <div class="manual-cards">
+          <div class="manual-card-row"><span class="mc-ic">✨</span><span><b class="mc-nm">Spegling.</b> <span class="mc-desc">En inre bild eller scen att tolka tillsammans.</span></span></div>
+          <div class="manual-card-row"><span class="mc-ic">✦</span><span><b class="mc-nm">Bläckbild.</b> <span class="mc-desc">En bild ni läser var för sig och delar.</span></span></div>
+          <div class="manual-card-row"><span class="mc-ic">🌊</span><span><b class="mc-nm">Para ihop två.</b> <span class="mc-desc">Ett kort bara för er två, ömsesidigt. Kräver minst två deltagare.</span></span></div>
+          <div class="manual-card-row"><span class="mc-ic">🤫</span><span><b class="mc-nm">Tystnad.</b> <span class="mc-desc">En stund alldeles utan ord.</span></span></div>
+          <div class="manual-card-row"><span class="mc-ic">🌀</span><span><b class="mc-nm">Strömvirvel.</b> <span class="mc-desc">Ett oväntat kast i samtalet.</span></span></div>
+          <div class="manual-card-row"><span class="mc-ic">🍃</span><span><b class="mc-nm">Avslutningskort.</b> <span class="mc-desc">En varsam avrundning när det känns rätt.</span></span></div>
+          <div class="manual-card-row"><span class="mc-ic">🫧</span><span><b class="mc-nm">Uppstigning.</b> <span class="mc-desc">Ett avslutningsvarv där var och en får säga något innan ytan.</span></span></div>
+        </div>
+      </section>
+
+      <section class="manual-section">
+        <h3 class="intro-h"><span class="intro-n">7</span> Trygghet</h3>
+        <p class="intro-p">Du får alltid säga <b>pass</b>. Det finns inga rätta svar och ingen behöver dela mer än hen vill.</p>
+        <p class="intro-p">Behöver ni pausa kan vem som helst hissa <b>bojen</b> 🛟, helt anonymt. Och vem som helst kan simma vidare igen när det känns bra.</p>
+      </section>
+
+      <section class="manual-section">
+        <h3 class="intro-h"><span class="intro-n">8</span> Inställningar</h3>
+        <p class="intro-p"><b>Längd.</b> Snorkling (en kort stund), Dyk (en hel kväll) eller Expedition (så länge ni vill). Spelet föreslår varsamt när det kan vara dags att stiga upp, men ni bestämmer alltid själva.</p>
+        <p class="intro-p"><b>Vilka är ni för varandra?</b> Finjusterar bara hur nära <i>Para ihop två</i>-korten vågar föra er, från Kollegor (grundast) till Par och Nära vänner (djupast). Den påverkar inte huvudfrågorna.</p>
+      </section>
+
+      <section class="manual-section">
+        <h3 class="intro-h"><span class="intro-n">9</span> Tips för en fin stund</h3>
+        <ul class="intro-list">
+          <li>Skapa lugn först. Ingen brådska, ingen prestation.</li>
+          <li>Läs långsamt och låt frågan landa innan någon svarar.</li>
+          <li>Låt tystnaden finnas. Det är ofta där det viktiga kommer.</li>
+          <li>Börja grunt om ni är en ny grupp, och sänk er i takt med tryggheten.</li>
+          <li>Avsluta medan det fortfarande känns bra, hellre för tidigt än för sent.</li>
+        </ul>
+      </section>
+
+      <section class="manual-section">
+        <h3 class="intro-h"><span class="intro-n">10</span> Om Vitalisera</h3>
+        <p class="intro-p">Djupdyk är skapat av Vitalisera. Mer om oss finns på <a href="https://vitalisera.se" target="_blank" rel="noopener">vitalisera.se</a>.</p>
+      </section>
+
+      <button id="btn-manual-close" class="btn btn-primary full" type="button">Stäng</button>
     </div>
   </div>
 
@@ -3704,6 +3850,23 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
   $('btn-help-home').onclick = openIntro;
   $('btn-help-game').onclick = () => { closeSheet(); openIntro(); };
 
+  // ---- Komplett manual + PDF-utskrift -------------------------------------
+  function openManual() {
+    $('manual').classList.add('open'); $('manual').setAttribute('aria-hidden', 'false');
+    const p = $('manual').querySelector('.intro-panel'); if (p) p.scrollTop = 0;
+  }
+  function closeManual() { $('manual').classList.remove('open'); $('manual').setAttribute('aria-hidden', 'true'); }
+  $('btn-manual-close').onclick = closeManual;
+  $('manual').addEventListener('click', (e) => { if (e.target.id === 'manual') closeManual(); });
+  $('btn-manual-intro').onclick = openManual;
+  $('btn-manual-game').onclick = () => { closeSheet(); openManual(); };
+  $('btn-manual-print').onclick = () => {
+    // iOS-PWA i standalone kan inte printa direkt: öppna i en vanlig flik som auto-printar.
+    const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+    if (standalone) { window.open(location.origin + location.pathname + '?print=manual', '_blank'); return; }
+    setTimeout(() => { try { window.print(); } catch (_) {} }, 60);
+  };
+
   // ---- Lägg till på hemskärmen (PWA-installation) --------------------------
   (function installPrompt() {
     const sheet = $('install');
@@ -3786,6 +3949,13 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
   function boot() {
     applyTheme(LEVELS[0].id);
     const params = new URLSearchParams(location.search);
+    // Utskriftsläge (öppnas i ny flik från iOS-PWA): visa bara manualen och printa.
+    if (params.get('print') === 'manual') {
+      showScreen('home');
+      openManual();
+      setTimeout(() => { try { window.print(); } catch (_) {} }, 450);
+      return;
+    }
     const joinCode = (params.get('join') || '').toUpperCase();
 
     const session = Net.loadSession && Net.loadSession();

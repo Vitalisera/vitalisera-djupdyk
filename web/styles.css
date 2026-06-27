@@ -871,3 +871,51 @@ input:focus { border-color: var(--depth); box-shadow: 0 0 0 3px color-mix(in srg
 .card-text { font-weight: 400; letter-spacing: -0.005em; }
 .brand-title { font-weight: 400; letter-spacing: 0.01em; }
 .lobby-title, .summary-title, .intro-title, .overlay-title, .rotate-title { font-weight: 600; letter-spacing: -0.01em; }
+
+/* ============ KOMPLETT MANUAL (återanvänder .intro-overlayn) ============ */
+.manual .intro-panel { max-width: 640px; }
+.manual .intro-h { font-family: var(--font-display); font-weight: 600; }
+.manual-head { text-align: center; margin-bottom: 6px; }
+.manual-print { margin: 4px 0 20px; }
+.manual-section { margin: 0 0 22px; }
+.manual-depths { margin-top: 6px; }
+.manual-depth { display: flex; gap: 14px; align-items: baseline; padding: 10px 0; border-top: 1px solid var(--glass-brd); }
+.manual-depth:first-child { border-top: 0; padding-top: 2px; }
+.manual-depth .d-meta { flex: 0 0 104px; }
+.manual-depth .d-name { display: block; font-weight: 700; color: var(--ink); }
+.manual-depth .d-depth { font-size: 0.7rem; color: var(--depth-text); text-transform: uppercase; letter-spacing: 0.04em; }
+.manual-depth .d-desc { color: var(--ink-soft); font-size: 0.9rem; line-height: 1.45; }
+.manual-cards { margin-top: 6px; }
+.manual-card-row { display: flex; gap: 11px; padding: 7px 0; align-items: baseline; }
+.manual-card-row .mc-ic { flex: 0 0 1.4em; text-align: center; color: var(--depth-text); }
+.manual-card-row .mc-nm { color: var(--ink); }
+.manual-card-row .mc-desc { color: var(--ink-soft); font-size: 0.9rem; }
+.manual-section .intro-p a, .manual-section a { color: var(--depth-text); }
+.manual-link { display: block; width: 100%; margin: 10px auto 0; background: none; border: 0; color: var(--depth-text); font: inherit; font-size: 0.9rem; font-weight: 650; cursor: pointer; padding: 8px; text-align: center; }
+
+/* ============ UTSKRIFT: bara manualen, svart på vitt, A4 ============ */
+@media print {
+  @page { margin: 18mm; }
+  html, body { background: #fff !important; }
+  body > *:not(#manual) { display: none !important; }
+  #manual {
+    position: static !important; inset: auto !important; z-index: auto !important;
+    display: block !important; opacity: 1 !important; pointer-events: auto !important;
+    background: #fff !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+  }
+  #manual .intro-panel {
+    position: static !important; width: 100% !important; max-width: none !important;
+    max-height: none !important; overflow: visible !important; transform: none !important;
+    border-radius: 0 !important; padding: 0 !important; box-shadow: none !important; background: none !important;
+  }
+  #manual, #manual h2, #manual h3, #manual p, #manual li, #manual b, #manual em, #manual span, #manual a, #manual i {
+    color: #000 !important; text-shadow: none !important;
+  }
+  #manual .intro-title, #manual .intro-h { color: #08323f !important; }
+  #manual .intro-n { background: #08323f !important; color: #fff !important; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  #manual .intro-lede, #manual .intro-p, #manual .d-desc, #manual .mc-desc { color: #222 !important; }
+  #manual .intro-chip, #manual .intro-actions span { border: 0.5pt solid #999 !important; background: none !important; }
+  #manual-print, #btn-manual-print, #btn-manual-close { display: none !important; }
+  .manual-section, .manual-depth, .manual-card-row, #manual .intro-chip { page-break-inside: avoid; break-inside: avoid; }
+  #manual .intro-h { page-break-after: avoid; break-after: avoid; }
+}

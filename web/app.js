@@ -839,6 +839,23 @@
   $('btn-help-home').onclick = openIntro;
   $('btn-help-game').onclick = () => { closeSheet(); openIntro(); };
 
+  // ---- Komplett manual + PDF-utskrift -------------------------------------
+  function openManual() {
+    $('manual').classList.add('open'); $('manual').setAttribute('aria-hidden', 'false');
+    const p = $('manual').querySelector('.intro-panel'); if (p) p.scrollTop = 0;
+  }
+  function closeManual() { $('manual').classList.remove('open'); $('manual').setAttribute('aria-hidden', 'true'); }
+  $('btn-manual-close').onclick = closeManual;
+  $('manual').addEventListener('click', (e) => { if (e.target.id === 'manual') closeManual(); });
+  $('btn-manual-intro').onclick = openManual;
+  $('btn-manual-game').onclick = () => { closeSheet(); openManual(); };
+  $('btn-manual-print').onclick = () => {
+    // iOS-PWA i standalone kan inte printa direkt: öppna i en vanlig flik som auto-printar.
+    const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+    if (standalone) { window.open(location.origin + location.pathname + '?print=manual', '_blank'); return; }
+    setTimeout(() => { try { window.print(); } catch (_) {} }, 60);
+  };
+
   // ---- Lägg till på hemskärmen (PWA-installation) --------------------------
   (function installPrompt() {
     const sheet = $('install');
@@ -921,6 +938,13 @@
   function boot() {
     applyTheme(LEVELS[0].id);
     const params = new URLSearchParams(location.search);
+    // Utskriftsläge (öppnas i ny flik från iOS-PWA): visa bara manualen och printa.
+    if (params.get('print') === 'manual') {
+      showScreen('home');
+      openManual();
+      setTimeout(() => { try { window.print(); } catch (_) {} }, 450);
+      return;
+    }
     const joinCode = (params.get('join') || '').toUpperCase();
 
     const session = Net.loadSession && Net.loadSession();
