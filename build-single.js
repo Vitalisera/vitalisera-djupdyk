@@ -50,7 +50,7 @@ fs.writeFileSync(path.join(outDir, 'index.html'), html); // samma fil, för mapp
 // PWA-syskonfiler.
 fs.copyFileSync(path.join(web, 'manifest.webmanifest'), path.join(outDir, 'manifest.webmanifest'));
 fs.copyFileSync(path.join(web, 'sw.js'), path.join(outDir, 'sw.js'));
-for (const icon of ['icon-192.png', 'icon-512.png', 'maskable-512.png', 'apple-touch-icon.png']) {
+for (const icon of ['icon-192.png', 'icon-512.png', 'maskable-512.png', 'apple-touch-icon.png', 'icon.svg']) {
   fs.copyFileSync(path.join(web, 'icons', icon), path.join(outDir, 'icons', icon));
 }
 

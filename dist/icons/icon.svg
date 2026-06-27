@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5fc8d6"/>
+      <stop offset="0.5" stop-color="#357087"/>
+      <stop offset="1" stop-color="#08445c"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.28" r="0.75">
+      <stop offset="0" stop-color="#d7f0f2" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#d7f0f2" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="vg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#e0f6f7"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="116" fill="url(#bg)"/>
+  <rect width="512" height="512" rx="116" fill="url(#glow)"/>
+  <!-- sonar-/djupbågar -->
+  <g fill="none" stroke="#e0f6f7" stroke-linecap="round" opacity="0.5">
+    <path d="M150 132 q106 -54 212 0" stroke-width="14" opacity="0.35"/>
+    <path d="M176 178 q80 -40 160 0" stroke-width="14" opacity="0.55"/>
+  </g>
+  <!-- dyk-V (dubblar som nedåtpil) -->
+  <path d="M150 196 L256 392 L362 196 L300 196 L256 286 L212 196 Z" fill="url(#vg)"/>
+  <!-- stigande bubblor i Vitalisera-gult -->
+  <circle cx="256" cy="430" r="15" fill="#fdd314" opacity="0.95"/>
+  <circle cx="300" cy="452" r="9" fill="#fdd314" opacity="0.7"/>
+  <circle cx="214" cy="450" r="7" fill="#fdd314" opacity="0.6"/>
+</svg>

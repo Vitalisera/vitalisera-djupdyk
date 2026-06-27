@@ -607,8 +607,8 @@ input:focus { border-color: var(--depth); box-shadow: 0 0 0 3px color-mix(in srg
 /* Vitalisera-logga inne i spelet (toppraden) + länk till hemsidan */
 .game-brand {
   width: 40px; height: 40px; flex: 0 0 auto; border-radius: 12px; margin-left: 10px;
-  background: var(--logo-img, url(icons/vitalisera-logo.png)) center/74% no-repeat, var(--brand-light);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.34), inset 0 1px 0 rgba(255,255,255,0.55), 0 0 0 1px rgba(255,255,255,0.10); display: block; position: relative;
+  background: url(icons/icon.svg) center/cover no-repeat;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.34), inset 0 1px 0 rgba(255,255,255,0.22), 0 0 0 1px rgba(255,255,255,0.12); display: block; position: relative;
 }
 /* Osynlig 44x44-tryckyta runt den lilla loggan (HIG) utan att förstora den. */
 .game-brand::before { content: ''; position: absolute; inset: -7px; }
