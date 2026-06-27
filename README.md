@@ -9,7 +9,7 @@ telefoner visar exakt samma kort, vems tur det är och spelets gång i realtid.
 
 ## Spela
 
-**På webben:** öppna den publicerade adressen (GitHub Pages), skriv ditt namn och tryck
+**På webben:** öppna [djupdyk.vitalisera.se](https://djupdyk.vitalisera.se), skriv ditt namn och tryck
 **Skapa nytt dyk**. Dela den fyrteckens **rumskoden** (eller inbjudningslänken) med de andra
 — de skriver in koden och är med direkt. Välj startdjup och tryck **Starta dyket**.
 
@@ -40,35 +40,49 @@ Inga konton, ingen databas, ingen molntjänst — bara statiska filer.
 ## Projektstruktur
 
 ```
-dialogdyk/
-  web/                     ← den statiska appen som publiceras
+djupdyk/
+  web/                     ← den statiska appen (källkod)
     index.html
     styles.css             djuphavstema, glas, mjuka animationer
     app.js                 gränssnitt + rendering
     game.js                ren, auktoritativ spellogik (reducer)
     net.js                 peer-to-peer-lager (WebRTC/PeerJS)
+    net-ws.js              alternativt nätlager: WebSocket mot realtidsservern
     ocean.js               levande undervattensscen på canvas (reagerar på djup)
+    inkblot.js             bläckfisk-/bläckanimation
     sw.js                  service worker (app-skal offline)
     manifest.webmanifest   PWA-manifest
     data/questions.js      frågebanken (150 frågor i 5 djup)
     vendor/peerjs.min.js   PeerJS lokalt (inget körtidsberoende av CDN)
     icons/                 app-ikoner
+  build-single.js          bygger web/ → dist/ (enfils + PWA-syskonfiler)
+  dist/                    byggoutput som publiceras (skapas av build-single.js)
   server.js                liten beroendefri server för lokal förhandsvisning
+  server/                  valfri Cloudflare Worker (realtidsrelä, behövs ej för ren P2P)
+  deploy.sh                bygger + deployar + verifierar
   package.json
 ```
 
-## Publicering (GitHub Pages)
+## Publicering (Cloudflare Pages)
 
-Workflowen `.github/workflows/pages.yml` publicerar `dialogdyk/web/` automatiskt till
-GitHub Pages vid push. Sidan nås på `https://<organisation>.github.io/<repo>/`.
-Alla sökvägar i appen är relativa, så den fungerar även under en underväg.
+Spelet ligger live på **[djupdyk.vitalisera.se](https://djupdyk.vitalisera.se)** — egen subdomän
+med giltigt SSL. Hostas av **Cloudflare Pages**, kopplat till GitHub-repot
+`Vitalisera/vitalisera-djupdyk`: varje **push till `main`** bygger om automatiskt och deployar.
+Ingen manuell deploy behövs.
+
+- Pages-projekt: `vitalisera-djupdyk` · build-kommando `node build-single.js` · output-mapp `dist`
+- Råadress (utan subdomän): `vitalisera-djupdyk.pages.dev`
+- DNS: subdomänen är en **CNAME** hos Loopia (`djupdyk` → `vitalisera-djupdyk.pages.dev`)
+
+Den gamla adressen `vitalisera-djupdyk.surge.sh` vidarebefordrar till den nya (se `surge-redirect/`).
+Alla sökvägar i appen är relativa, så den fungerar oförändrad på vilken statisk host som helst.
 
 ## Köra lokalt
 
 Kräver bara Node (≥16), inga beroenden att installera:
 
 ```bash
-cd dialogdyk
+cd djupdyk
 npm start        # startar förhandsvisning på http://localhost:5173
 ```
 

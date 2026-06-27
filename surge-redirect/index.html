@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex" />
+  <title>Vitalisera djupdyk har flyttat</title>
+  <script>
+    // Surge är bara en vidarebefordran till den nya adressen.
+    // Bevara sökväg, ?join=KOD och ev. hash så gamla inbjudningslänkar
+    // hamnar i rätt rum på djupdyk.vitalisera.se.
+    (function () {
+      var dest = 'https://djupdyk.vitalisera.se' + location.pathname + location.search + location.hash;
+      location.replace(dest);
+    })();
+  </script>
+  <!-- Reserv om JavaScript är av (tappar ?join, men kommer till startsidan). -->
+  <meta http-equiv="refresh" content="0;url=https://djupdyk.vitalisera.se/" />
+  <style>
+    body { font-family: system-ui, -apple-system, sans-serif; background: #03141b; color: #eaf6f8;
+           display: grid; place-items: center; min-height: 100vh; margin: 0; text-align: center; padding: 24px; }
+    a { color: #7fd4e6; }
+  </style>
+</head>
+<body>
+  <p>Vitalisera djupdyk har flyttat till en ny adress.<br />
+     Om du inte skickas vidare automatiskt,
+     <a href="https://djupdyk.vitalisera.se/">öppna&nbsp;djupdyk.vitalisera.se</a>.</p>
+</body>
+</html>
