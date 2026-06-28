@@ -187,6 +187,16 @@
     state.cardsRevealed += 1;
   }
 
+  // Visdomsberättelse: en kort sedelärande historia + en öppen eftertanke som
+  // avslöjas efteråt. En flat pool (som speglingarna), dras oberoende av djup.
+  function drawParable(state) {
+    const list = DECK.parables || [];
+    if (!list.length) { drawCard(state); return; }
+    const r = list[Math.floor(Math.random() * list.length)];
+    state.card = { text: r.q, by: r.by, followupText: r.f, levelId: state.levelId, source: 'parable', followup: null };
+    state.cardsRevealed += 1;
+  }
+
   // Bläckbild: en symmetrisk bild som alla tolkar tillsammans. Fröet ger samma
   // bild på alla enheter; varje spelare räknar själv ut sin egen fråga.
   function drawInkblot(state) {
@@ -298,6 +308,7 @@
       if ((DECK.strommar || []).length && li >= 2 && connectedCount(state) >= 2 && roll < 0.25) { drawStrom(state); return; }
       if ((DECK.silence || []).length && connectedCount(state) >= 2 && roll < 0.29) { drawSilence(state); return; }
       if (DECK.quotes && (DECK.quotes[state.levelId] || []).length && roll < 0.43) { drawQuote(state); return; }
+      if ((DECK.parables || []).length && roll < 0.50) { drawParable(state); return; }
     }
     drawCard(state);
   }
@@ -416,6 +427,12 @@
         drawQuote(state);
         break;
       }
+      case 'parable': {
+        if (state.phase !== 'playing' || !canControl(state, actorId)) break;
+        pushHistory(state);
+        drawParable(state);
+        break;
+      }
       case 'inkblot': {
         if (state.phase !== 'playing' || !canControl(state, actorId)) break;
         pushHistory(state);
@@ -429,6 +446,8 @@
         // spegling vill man ha en ny spegling, inte plötsligt ett vanligt kort.
         const src = state.card && state.card.source;
         if (src === 'reflection') drawReflection(state);
+        else if (src === 'quote') drawQuote(state);
+        else if (src === 'parable') drawParable(state);
         else if (src === 'inkblot') drawInkblot(state);
         else if (src === 'strom') drawStrom(state);
         else if (src === 'silence') drawSilence(state);

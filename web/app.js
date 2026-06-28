@@ -281,7 +281,8 @@
     const isWhirl = src === 'whirl';
     const isAscent = src === 'ascent';
     const isQuote = src === 'quote';
-    const isSpecial = isClosing || isReflection || isInkblot || isStrom || isSilence || isWhirl || isAscent || isQuote;
+    const isParable = src === 'parable';
+    const isSpecial = isClosing || isReflection || isInkblot || isStrom || isSilence || isWhirl || isAscent || isQuote || isParable;
     const noFollowup = isInkblot || isStrom || isSilence || isWhirl || isAscent;
     card.classList.toggle('closing', !!isClosing);
     card.classList.toggle('reflection', !!isReflection);
@@ -291,6 +292,7 @@
     card.classList.toggle('whirl', !!isWhirl);
     card.classList.toggle('ascent', !!isAscent);
     card.classList.toggle('quote', !!isQuote);
+    card.classList.toggle('parable', !!isParable);
     if (s.card) {
       // Bläckbild: alla ser samma bild + gemensam fråga, plus en egen fråga
       $('card-blot').hidden = !isInkblot;
@@ -320,16 +322,17 @@
         : isWhirl ? '🌀 Strömvirvel'
         : isAscent ? '🫧 Uppstigning'
         : isQuote ? '💬 Diskussion'
+        : isParable ? '🪷 Visdomsberättelse'
         : `${lvl.name} · ${lvl.depth}`;
       $('card-text').textContent = s.card.text;
       $('card-index').textContent = isAscent && s.ascent
         ? `Var och en i tur och ordning · ${Math.min(s.ascent.done, s.ascent.total)} av ${s.ascent.total}`
-        : isQuote ? `— ${s.card.by || ''}`
+        : (isQuote || isParable) ? `— ${s.card.by || ''}`
         : isSpecial ? '' : `Fråga ${s.cardsRevealed}`;
 
       const fu = $('card-followup');
       if (s.card.followup) {
-        fu.innerHTML = '<span class="fu-label">' + (isQuote ? 'Diskussion' : isReflection ? 'Vad det kan betyda' : 'Följdfråga') + '</span>' + escapeHtml(s.card.followup);
+        fu.innerHTML = '<span class="fu-label">' + (isQuote ? 'Diskussion' : isParable ? 'Eftertanke' : isReflection ? 'Vad det kan betyda' : 'Följdfråga') + '</span>' + escapeHtml(s.card.followup);
         fu.classList.add('show'); fu.classList.toggle('reveal', !!isReflection);
       } else { fu.classList.remove('show'); fu.classList.remove('reveal'); fu.textContent = ''; }
 
@@ -354,8 +357,8 @@
       // Följdfråge-/tolkningsknappen byter skepnad för speglingar
       const fLbl = $('btn-followup').querySelector('.ctrl-lbl');
       const fIco = $('btn-followup').querySelector('.ctrl-ico');
-      fLbl.textContent = isQuote ? 'Diskussion' : isReflection ? 'Tolkning' : 'Följdfråga';
-      fIco.textContent = isQuote ? '💬' : isReflection ? '✨' : '↳';
+      fLbl.textContent = isQuote ? 'Diskussion' : isParable ? 'Eftertanke' : isReflection ? 'Tolkning' : 'Följdfråga';
+      fIco.textContent = isQuote ? '💬' : isParable ? '🪷' : isReflection ? '✨' : '↳';
 
       // Vänd bara kortet när själva frågan byts (inte när följdfrågan visas)
       const flipKey = isInkblot ? 'inkblot|' + s.card.seed
@@ -805,6 +808,7 @@
     $('sheet-depth').hidden = !isHost;                 // byt djup = värd-bara
     $('btn-reflection').hidden = !canDrive;
     $('btn-quote').hidden = !canDrive;
+    $('btn-parable').hidden = !canDrive;
     $('btn-inkblot').hidden = !canDrive;
     $('btn-strom').hidden = !canDrive || s.players.filter((p) => p.connected).length < 2; // kräver två
     $('btn-silence').hidden = !canDrive;
@@ -824,6 +828,7 @@
   $('sheet').addEventListener('click', (e) => { if (e.target.id === 'sheet') closeSheet(); });
   $('btn-reflection').onclick = () => { Net.dispatch({ type: 'reflection' }); closeSheet(); };
   $('btn-quote').onclick = () => { Net.dispatch({ type: 'quote' }); closeSheet(); };
+  $('btn-parable').onclick = () => { Net.dispatch({ type: 'parable' }); closeSheet(); };
   $('btn-inkblot').onclick = () => { Net.dispatch({ type: 'inkblot' }); closeSheet(); };
   $('btn-strom').onclick = () => {
     const st = state();

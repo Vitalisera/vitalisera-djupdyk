@@ -705,12 +705,15 @@ input:focus { border-color: var(--depth); box-shadow: 0 0 0 3px color-mix(in srg
    (flex:1 + min-height:0), ingen höjdkapning på diskussionspunkten. Författar-raden
    (card-index) är syskon till scroll-ytan och läggs under den (static) så att den
    alltid syns utan att överlappa den skrollande texten. */
-.card.quote { justify-content: flex-start; overflow: hidden; }
-.card.quote .card-inner { width: 100%; flex: 1 1 auto; min-height: 0; max-height: none; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 2px 2px 8px; }
-.card.quote .card-followup.show { max-height: none; overflow: visible; }
-.card.quote .card-index { position: static; margin-top: 14px; }
-.card.quote .card-inner::-webkit-scrollbar { width: 4px; }
-.card.quote .card-inner::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--depth-text) 40%, transparent); border-radius: 4px; }
+.card.quote, .card.parable { justify-content: flex-start; overflow: hidden; }
+.card.quote .card-inner, .card.parable .card-inner { width: 100%; flex: 1 1 auto; min-height: 0; max-height: none; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 2px 2px 8px; }
+.card.quote .card-followup.show, .card.parable .card-followup.show { max-height: none; overflow: visible; }
+.card.quote .card-index, .card.parable .card-index { position: static; margin-top: 14px; }
+.card.quote .card-inner::-webkit-scrollbar, .card.parable .card-inner::-webkit-scrollbar { width: 4px; }
+.card.quote .card-inner::-webkit-scrollbar-thumb, .card.parable .card-inner::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--depth-text) 40%, transparent); border-radius: 4px; }
+/* Berättelsen är längre prosa än ett citat → något mindre, luftigare brödtext för läsbarhet. */
+.card.parable .card-text { font-size: clamp(1.04rem, 4vw, 1.3rem); line-height: 1.55; font-weight: 600; text-align: left; }
+.card.parable .card-eyebrow { color: var(--depth-text); }
 /* mjuk bottenskugga som antyder att det finns mer att skrolla */
 .card.reflection::after {
   content: ''; position: absolute; left: 12px; right: 12px; bottom: 0; height: 38px;
