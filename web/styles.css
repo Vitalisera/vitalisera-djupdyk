@@ -699,6 +699,18 @@ input:focus { border-color: var(--depth); box-shadow: 0 0 0 3px color-mix(in srg
 /* liten skroll-ledtråd längst ned på reflektionskort */
 .card.reflection .card-inner::-webkit-scrollbar { width: 4px; }
 .card.reflection .card-inner::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--brand-light) 40%, transparent); border-radius: 4px; }
+
+/* ---------- Diskussionskort ---------- */
+/* Citat + diskussionspunkt kan bli långt. Samma pålitliga scroll-yta som speglingar
+   (flex:1 + min-height:0), ingen höjdkapning på diskussionspunkten. Författar-raden
+   (card-index) är syskon till scroll-ytan och läggs under den (static) så att den
+   alltid syns utan att överlappa den skrollande texten. */
+.card.quote { justify-content: flex-start; overflow: hidden; }
+.card.quote .card-inner { width: 100%; flex: 1 1 auto; min-height: 0; max-height: none; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 2px 2px 8px; }
+.card.quote .card-followup.show { max-height: none; overflow: visible; }
+.card.quote .card-index { position: static; margin-top: 14px; }
+.card.quote .card-inner::-webkit-scrollbar { width: 4px; }
+.card.quote .card-inner::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--depth-text) 40%, transparent); border-radius: 4px; }
 /* mjuk bottenskugga som antyder att det finns mer att skrolla */
 .card.reflection::after {
   content: ''; position: absolute; left: 12px; right: 12px; bottom: 0; height: 38px;

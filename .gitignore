@@ -4,3 +4,6 @@ npm-debug.log*
 
 # Temporära testharnesser (render/QA), aldrig del av bygget
 __*.html
+
+# Lokal code-review-state (review-gate-hook)
+.review-gates/

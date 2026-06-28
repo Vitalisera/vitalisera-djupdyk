@@ -67,15 +67,23 @@ djupdyk/
 
 Spelet ligger live på **[djupdyk.vitalisera.se](https://djupdyk.vitalisera.se)** — egen subdomän
 med giltigt SSL. Hostas av **Cloudflare Pages**, kopplat till GitHub-repot
-`Vitalisera/vitalisera-djupdyk`: varje **push till `main`** bygger om automatiskt och deployar.
-Ingen manuell deploy behövs.
+`Vitalisera/vitalisera-djupdyk`: varje **push till `main`** bygger om automatiskt och deployar webb-appen.
 
 - Pages-projekt: `vitalisera-djupdyk` · build-kommando `node build-single.js` · output-mapp `dist`
 - Råadress (utan subdomän): `vitalisera-djupdyk.pages.dev`
 - DNS: subdomänen är en **CNAME** hos Loopia (`djupdyk` → `vitalisera-djupdyk.pages.dev`)
 
-Den gamla adressen `vitalisera-djupdyk.surge.sh` vidarebefordrar till den nya (se `surge-redirect/`).
-Alla sökvägar i appen är relativa, så den fungerar oförändrad på vilken statisk host som helst.
+> ⚠️ **Realtidsservern deployas separat.** Den byggda appen kör via WebSocket-relän
+> `net-ws.js` mot Cloudflare-workern i `server/` (`wss://djupdyk-room.vitalisera.workers.dev`),
+> som äger den auktoritativa spelstaten. Workern bäddar in `web/game.js` + `web/data/questions.js`
+> vid byggtid. Pages auto-deploy rör **aldrig** workern — efter varje ändring i spellogiken eller
+> frågebanken måste den deployas om manuellt: `cd server && npx wrangler deploy` (kräver
+> `npx wrangler login`). Annars syns ändringen i klienten men spelet beter sig enligt gammal logik.
+
+Den gamla adressen `vitalisera-djupdyk.surge.sh` ligger kvar med en äldre version. Surge-kontot
+(skapat i en tidigare session) är inte längre åtkomligt, så den kan varken uppdateras eller
+vidarebefordras — dela `djupdyk.vitalisera.se` framåt. (`surge-redirect/` finns kvar ifall åtkomsten
+återfås.) Alla sökvägar i appen är relativa, så den fungerar oförändrad på vilken statisk host som helst.
 
 ## Köra lokalt
 

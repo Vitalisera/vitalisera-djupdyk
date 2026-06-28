@@ -719,6 +719,18 @@ input:focus { border-color: var(--depth); box-shadow: 0 0 0 3px color-mix(in srg
 /* liten skroll-ledtråd längst ned på reflektionskort */
 .card.reflection .card-inner::-webkit-scrollbar { width: 4px; }
 .card.reflection .card-inner::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--brand-light) 40%, transparent); border-radius: 4px; }
+
+/* ---------- Diskussionskort ---------- */
+/* Citat + diskussionspunkt kan bli långt. Samma pålitliga scroll-yta som speglingar
+   (flex:1 + min-height:0), ingen höjdkapning på diskussionspunkten. Författar-raden
+   (card-index) är syskon till scroll-ytan och läggs under den (static) så att den
+   alltid syns utan att överlappa den skrollande texten. */
+.card.quote { justify-content: flex-start; overflow: hidden; }
+.card.quote .card-inner { width: 100%; flex: 1 1 auto; min-height: 0; max-height: none; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 2px 2px 8px; }
+.card.quote .card-followup.show { max-height: none; overflow: visible; }
+.card.quote .card-index { position: static; margin-top: 14px; }
+.card.quote .card-inner::-webkit-scrollbar { width: 4px; }
+.card.quote .card-inner::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--depth-text) 40%, transparent); border-radius: 4px; }
 /* mjuk bottenskugga som antyder att det finns mer att skrolla */
 .card.reflection::after {
   content: ''; position: absolute; left: 12px; right: 12px; bottom: 0; height: 38px;
@@ -1069,7 +1081,7 @@ input:focus { border-color: var(--depth); box-shadow: 0 0 0 3px color-mix(in srg
 
         <div id="mode-group">
           <h3 class="section-h">Vilka är ni för varandra?</h3>
-          <p class="section-hint">Det här finjusterar tonen, bland annat hur nära de ömsesidiga strömkorten vågar föra er.</p>
+          <p class="section-hint">Det här finjusterar tonen, bland annat hur nära korten "Para ihop två" vågar föra er.</p>
           <div class="chips" id="mode-chips">
             <button class="chip" type="button" data-mode="oppen"><b>Blandat</b></button>
             <button class="chip" type="button" data-mode="par"><b>Par</b></button>
@@ -1246,7 +1258,7 @@ input:focus { border-color: var(--depth); box-shadow: 0 0 0 3px color-mix(in srg
       </div>
       <button id="btn-close-sheet" class="btn btn-primary full">Klar</button>
       <a class="site-link" href="https://vitalisera.se" target="_blank" rel="noopener">Mer från Vitalisera · vitalisera.se ↗</a>
-      <div style="text-align:center;font-size:0.68rem;color:var(--ink-dim);opacity:0.65;margin-top:6px;letter-spacing:0.04em;">version 2026-06-28 10:54</div>
+      <div style="text-align:center;font-size:0.68rem;color:var(--ink-dim);opacity:0.65;margin-top:6px;letter-spacing:0.04em;">version 2026-06-28 11:45</div>
     </div>
   </div>
 
@@ -3517,6 +3529,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
     card.classList.toggle('silence', !!isSilence);
     card.classList.toggle('whirl', !!isWhirl);
     card.classList.toggle('ascent', !!isAscent);
+    card.classList.toggle('quote', !!isQuote);
     if (s.card) {
       // Bläckbild: alla ser samma bild + gemensam fråga, plus en egen fråga
       $('card-blot').hidden = !isInkblot;
@@ -3668,7 +3681,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
       const opts = s.players.filter((p) => p.connected && p.id !== card.chooserId);
       row.innerHTML = opts.length
         ? opts.map((p) => `<button class="strom-opt" data-pid="${p.id}"><span class="pavatar" style="background:${avatarBg(p.name)}">${escapeHtml(initials(p.name))}</span>${escapeHtml(p.name)}</button>`).join('')
-        : '<span class="strom-wait">Strömkort behöver minst två dykare. Tryck Byt fråga så länge.</span>';
+        : '<span class="strom-wait">Para ihop två behöver minst två dykare. Tryck Byt fråga så länge.</span>';
       row.querySelectorAll('.strom-opt').forEach((b) => { b.onclick = () => Net.dispatch({ type: 'invitePartner', playerId: b.dataset.pid }); });
     } else {
       wait.hidden = false;

@@ -290,6 +290,7 @@
     card.classList.toggle('silence', !!isSilence);
     card.classList.toggle('whirl', !!isWhirl);
     card.classList.toggle('ascent', !!isAscent);
+    card.classList.toggle('quote', !!isQuote);
     if (s.card) {
       // Bläckbild: alla ser samma bild + gemensam fråga, plus en egen fråga
       $('card-blot').hidden = !isInkblot;
@@ -441,7 +442,7 @@
       const opts = s.players.filter((p) => p.connected && p.id !== card.chooserId);
       row.innerHTML = opts.length
         ? opts.map((p) => `<button class="strom-opt" data-pid="${p.id}"><span class="pavatar" style="background:${avatarBg(p.name)}">${escapeHtml(initials(p.name))}</span>${escapeHtml(p.name)}</button>`).join('')
-        : '<span class="strom-wait">Strömkort behöver minst två dykare. Tryck Byt fråga så länge.</span>';
+        : '<span class="strom-wait">Para ihop två behöver minst två dykare. Tryck Byt fråga så länge.</span>';
       row.querySelectorAll('.strom-opt').forEach((b) => { b.onclick = () => Net.dispatch({ type: 'invitePartner', playerId: b.dataset.pid }); });
     } else {
       wait.hidden = false;
