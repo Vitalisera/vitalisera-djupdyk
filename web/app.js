@@ -60,7 +60,7 @@
   }, { passive: true });
 
   // Hindra iOS-Safaris dubbeltap-zoom (touch-action räcker inte alltid där).
-  // Nyp-zoom med två fingrar är kvar för tillgänglighet — vi stoppar bara det
+  // Nyp-zoom med två fingrar är kvar för tillgänglighet. Vi stoppar bara det
   // andra snabba tappet inom 300 ms.
   let _lastTouchEnd = 0;
   document.addEventListener('touchend', (e) => {
@@ -327,7 +327,7 @@
       $('card-text').textContent = s.card.text;
       $('card-index').textContent = isAscent && s.ascent
         ? `Var och en i tur och ordning · ${Math.min(s.ascent.done, s.ascent.total)} av ${s.ascent.total}`
-        : (isQuote || isParable) ? `— ${s.card.by || ''}`
+        : (isQuote || isParable) ? `${s.card.by || ''}`
         : isSpecial ? '' : `Fråga ${s.cardsRevealed}`;
 
       const fu = $('card-followup');
@@ -385,7 +385,9 @@
     $('btn-skip').disabled = !myTurn;
     $('btn-skip').hidden = isAscent;
     $('btn-followup').disabled = !myTurn || followupShown || noFollowup;
-    $('btn-followup').hidden = noFollowup;
+    // När följdfrågan/diskussionen/eftertanken redan är framme har knappen gjort sitt
+    // → dölj den helt (i stället för en bleknad spökknapp) och låt raden balansera om.
+    $('btn-followup').hidden = noFollowup || followupShown;
     $('btn-back').hidden = !(myTurn && canGoBack);
     $('controls').classList.toggle('locked', !myTurn);
     const nextName = nextConnectedName(s);

@@ -513,9 +513,11 @@ input:focus { border-color: var(--depth); box-shadow: 0 0 0 3px color-mix(in srg
 .card-index { position: absolute; bottom: 18px; left: 0; right: 0; text-align: center; color: var(--ink-dim); font-size: 0.76rem; letter-spacing: 0.05em; }
 
 /* Kontroller */
-.controls { display: flex; gap: 10px; margin: 16px 0 6px; align-items: stretch; transition: opacity 0.25s; }
+.controls { display: flex; gap: 10px; margin: 16px 0 0; align-items: stretch; transition: opacity 0.25s; }
 .controls.locked { opacity: 0.72; }
-.controls-hint { text-align: center; color: var(--ink-soft); font-size: 0.82rem; line-height: 1.4; margin: 0 0 10px; min-height: 1.1em; }
+/* Rejäl luft över hinten så att den primära knappens nedåtskugga (0 11px 24px)
+   inte faller över texten. Smal radbredd ger jämnare, lugnare radbrytning. */
+.controls-hint { text-align: center; color: var(--ink-soft); font-size: 0.82rem; line-height: 1.45; margin: 26px auto 12px; max-width: 33ch; min-height: 1.1em; }
 .btn-control { flex: 1 1 0; flex-direction: column; gap: 5px; padding: 12px 10px; min-width: 84px; }
 .btn-control .ctrl-ico { font-size: 1.2rem; line-height: 1; }
 .btn-control .ctrl-lbl { font-size: 0.78rem; }

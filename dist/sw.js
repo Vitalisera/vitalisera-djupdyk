@@ -2,7 +2,7 @@
 // Den driftsatta appen är en enda fil (allt inbäddat i index.html), så vi cachar
 // skalet plus ikoner och manifest. Då startar appen direkt och fungerar offline.
 // Realtidsspelet kräver förstås internet (WebSocket mot servern).
-const CACHE = 'vd-2026-06-28 15:39';  // 2026-06-28 15:39 stämplas av build-single.js → ny SW vid varje deploy
+const CACHE = 'vd-2026-06-28 21:26';  // 2026-06-28 21:26 stämplas av build-single.js → ny SW vid varje deploy
 const ASSETS = [
   './',
   './index.html',
