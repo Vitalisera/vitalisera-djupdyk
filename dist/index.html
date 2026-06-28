@@ -1232,6 +1232,7 @@ input:focus { border-color: var(--depth); box-shadow: 0 0 0 3px color-mix(in srg
         <button id="btn-help-game" class="btn btn-glass full">Så funkar det</button>
         <button id="btn-manual-game" class="btn btn-glass full">📖 Hela manualen</button>
         <button id="btn-reflection" class="btn btn-glass full">✨ Dra en spegling</button>
+        <button id="btn-quote" class="btn btn-glass full">💬 Dra ett diskussionskort</button>
         <button id="btn-inkblot" class="btn btn-glass full">✦ Visa en bläckbild</button>
         <button id="btn-strom" class="btn btn-glass full">🌊 Para ihop två</button>
         <button id="btn-silence" class="btn btn-glass full">🤫 Bjud in tystnad</button>
@@ -1245,7 +1246,7 @@ input:focus { border-color: var(--depth); box-shadow: 0 0 0 3px color-mix(in srg
       </div>
       <button id="btn-close-sheet" class="btn btn-primary full">Klar</button>
       <a class="site-link" href="https://vitalisera.se" target="_blank" rel="noopener">Mer från Vitalisera · vitalisera.se ↗</a>
-      <div style="text-align:center;font-size:0.68rem;color:var(--ink-dim);opacity:0.65;margin-top:6px;letter-spacing:0.04em;">version 2026-06-28 09:15</div>
+      <div style="text-align:center;font-size:0.68rem;color:var(--ink-dim);opacity:0.65;margin-top:6px;letter-spacing:0.04em;">version 2026-06-28 10:54</div>
     </div>
   </div>
 
@@ -2621,6 +2622,12 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
         if (state.phase !== 'playing' || !canControl(state, actorId)) break;
         pushHistory(state);
         drawReflection(state);
+        break;
+      }
+      case 'quote': {
+        if (state.phase !== 'playing' || !canControl(state, actorId)) break;
+        pushHistory(state);
+        drawQuote(state);
         break;
       }
       case 'inkblot': {
@@ -4023,6 +4030,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
     // Spelledar-bara (formar sessionen) vs turspelare/värd (driver kortet) vs alla.
     $('sheet-depth').hidden = !isHost;                 // byt djup = värd-bara
     $('btn-reflection').hidden = !canDrive;
+    $('btn-quote').hidden = !canDrive;
     $('btn-inkblot').hidden = !canDrive;
     $('btn-strom').hidden = !canDrive || s.players.filter((p) => p.connected).length < 2; // kräver två
     $('btn-silence').hidden = !canDrive;
@@ -4041,6 +4049,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
   $('btn-close-sheet').onclick = closeSheet;
   $('sheet').addEventListener('click', (e) => { if (e.target.id === 'sheet') closeSheet(); });
   $('btn-reflection').onclick = () => { Net.dispatch({ type: 'reflection' }); closeSheet(); };
+  $('btn-quote').onclick = () => { Net.dispatch({ type: 'quote' }); closeSheet(); };
   $('btn-inkblot').onclick = () => { Net.dispatch({ type: 'inkblot' }); closeSheet(); };
   $('btn-strom').onclick = () => {
     const st = state();

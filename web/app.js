@@ -803,6 +803,7 @@
     // Spelledar-bara (formar sessionen) vs turspelare/värd (driver kortet) vs alla.
     $('sheet-depth').hidden = !isHost;                 // byt djup = värd-bara
     $('btn-reflection').hidden = !canDrive;
+    $('btn-quote').hidden = !canDrive;
     $('btn-inkblot').hidden = !canDrive;
     $('btn-strom').hidden = !canDrive || s.players.filter((p) => p.connected).length < 2; // kräver två
     $('btn-silence').hidden = !canDrive;
@@ -821,6 +822,7 @@
   $('btn-close-sheet').onclick = closeSheet;
   $('sheet').addEventListener('click', (e) => { if (e.target.id === 'sheet') closeSheet(); });
   $('btn-reflection').onclick = () => { Net.dispatch({ type: 'reflection' }); closeSheet(); };
+  $('btn-quote').onclick = () => { Net.dispatch({ type: 'quote' }); closeSheet(); };
   $('btn-inkblot').onclick = () => { Net.dispatch({ type: 'inkblot' }); closeSheet(); };
   $('btn-strom').onclick = () => {
     const st = state();

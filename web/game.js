@@ -410,6 +410,12 @@
         drawReflection(state);
         break;
       }
+      case 'quote': {
+        if (state.phase !== 'playing' || !canControl(state, actorId)) break;
+        pushHistory(state);
+        drawQuote(state);
+        break;
+      }
       case 'inkblot': {
         if (state.phase !== 'playing' || !canControl(state, actorId)) break;
         pushHistory(state);
