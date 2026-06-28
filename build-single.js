@@ -9,6 +9,13 @@ const path = require('path');
 const web = path.join(__dirname, 'web');
 const read = (p) => fs.readFileSync(path.join(web, p), 'utf8');
 
+// Bygg-version (UTC-tidsstämpel). Stämplas in i sw.js cache-namn (→ ny service worker
+// vid varje deploy, slut på cache-staleness) och visas i appens meny så att man kan
+// bekräfta vilken version som faktiskt laddats. Ändras varje bygge.
+const _bd = new Date();
+const _p = (n) => String(n).padStart(2, '0');
+const buildVer = `${_bd.getUTCFullYear()}-${_p(_bd.getUTCMonth() + 1)}-${_p(_bd.getUTCDate())} ${_p(_bd.getUTCHours())}:${_p(_bd.getUTCMinutes())}`;
+
 const css = read('styles.css');
 // Bädda in Vitalisera-loggan (PNG) som data-URI. För att inte dubblera den stora
 // strängen läggs den i en CSS-variabel som alla url(icons/vitalisera-logo.png) pekar mot.
@@ -46,6 +53,9 @@ const startIdx = html.indexOf(startMarker);
 const endIdx = html.indexOf(endMarker) + endMarker.length;
 html = html.slice(0, startIdx) + scripts + html.slice(endIdx);
 
+// Stämpla in bygg-versionen (visas i menyn).
+html = html.split('__BUILD__').join(buildVer);
+
 const outDir = path.join(__dirname, 'dist');
 fs.rmSync(outDir, { recursive: true, force: true });
 fs.mkdirSync(path.join(outDir, 'icons'), { recursive: true });
@@ -56,9 +66,9 @@ fs.writeFileSync(path.join(outDir, 'index.html'), html); // samma fil, för mapp
 
 // PWA-syskonfiler.
 fs.copyFileSync(path.join(web, 'manifest.webmanifest'), path.join(outDir, 'manifest.webmanifest'));
-fs.copyFileSync(path.join(web, 'sw.js'), path.join(outDir, 'sw.js'));
+fs.writeFileSync(path.join(outDir, 'sw.js'), read('sw.js').split('__BUILD__').join(buildVer));
 for (const icon of ['icon-192.png', 'icon-512.png', 'maskable-512.png', 'apple-touch-icon.png', 'icon.svg']) {
   fs.copyFileSync(path.join(web, 'icons', icon), path.join(outDir, 'icons', icon));
 }
 
-console.log('Skrev', outFile, '(' + Math.round(html.length / 1024) + ' kB) + dist/index.html + PWA-filer (manifest, sw.js, icons/)');
+console.log('Skrev', outFile, '(' + Math.round(html.length / 1024) + ' kB) · version ' + buildVer + ' + dist/index.html + PWA-filer (manifest, sw.js, icons/)');
