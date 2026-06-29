@@ -46,6 +46,10 @@
             <input id="code-input" type="text" placeholder="KOD" maxlength="4" autocomplete="off" autocapitalize="characters" inputmode="text" enterkeyhint="go" aria-label="Rumskod" />
             <button id="btn-join" class="btn btn-glass">Gå med</button>
           </div>
+
+          <div class="or"><span>eller en telefon</span></div>
+
+          <button id="btn-local" class="btn btn-glass btn-lg">🍵 Runt bordet</button>
         </div>
 
         <p class="fineprint">I samma rum eller på distans. Den som skapar dyket delar koden, sedan ser alla samma kort i realtid.</p>
@@ -55,6 +59,35 @@
           <span>Lägg till på hemskärmen</span>
         </button>
         <a class="site-link" href="https://vitalisera.se" target="_blank" rel="noopener">En upplevelse från Vitalisera · vitalisera.se ↗</a>
+      </div>
+    </section>
+
+    <!-- ============ RUNT BORDET (lokalt, en telefon) ============ -->
+    <section id="screen-local" class="screen">
+      <div class="home-wrap">
+        <header class="brand">
+          <div class="brand-mark" role="img" aria-label="Vitalisera"></div>
+          <h1 class="brand-title">Runt bordet</h1>
+          <p class="tagline">En telefon. Den vars tur det är läser kortet högt. Sedan räcker ni vidare, eller låter telefonen ligga i mitten.</p>
+        </header>
+
+        <div class="glass home-card">
+          <label class="field-label">Vilka är med?</label>
+          <div id="local-players"></div>
+          <button id="btn-local-add" class="btn btn-glass full">+ Lägg till spelare</button>
+
+          <h3 class="section-h">Hur lång stund har ni?</h3>
+          <div class="chips" id="local-session-chips">
+            <button class="chip" type="button" data-session="snorkel"><b>Snorkling</b><small>en kort stund</small></button>
+            <button class="chip" type="button" data-session="dyk"><b>Dyk</b><small>en hel kväll</small></button>
+            <button class="chip" type="button" data-session="expedition"><b>Expedition</b><small>så länge ni vill</small></button>
+          </div>
+        </div>
+
+        <div class="bottom-dock">
+          <button id="btn-local-start" class="btn btn-primary btn-lg">Börja</button>
+          <button id="btn-local-back" class="help-link" type="button">‹ Tillbaka</button>
+        </div>
       </div>
     </section>
 
@@ -205,6 +238,16 @@
       <p class="controls-hint" id="controls-hint"></p>
 
       <div class="players-strip" id="game-players"></div>
+
+      <!-- Runt bordet: lugn överlämning mellan turerna -->
+      <div class="handoff" id="handoff" hidden>
+        <div class="handoff-inner">
+          <span class="handoff-eyebrow">Nästa tur</span>
+          <p class="handoff-name" id="handoff-name">Astrid</p>
+          <p class="handoff-sub">Räck telefonen vidare, eller låt den ligga i mitten.</p>
+          <button id="btn-handoff-show" class="btn btn-primary btn-lg">Visa frågan</button>
+        </div>
+      </div>
     </section>
 
     <!-- ============ SAMMANFATTNING ============ -->

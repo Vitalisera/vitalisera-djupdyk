@@ -33,6 +33,8 @@
     _retryTimer: null,
     _clientRetry: 0,
     _pending: [],
+    local: false,        // "Runt bordet": en enhet, alla spelare, ingen server
+    _localHost: null,
 
     on(event, fn) { this.handlers[event] = fn; return this; },
     _emit(event, payload) { if (this.handlers[event]) this.handlers[event](payload); },
@@ -59,6 +61,7 @@
     join(code, name) { this._enter('client', String(code).toUpperCase(), name); },
 
     _enter(role, code, name) {
+      this.local = false;   // säkerställ att ett ev. lokalt läge inte hänger kvar
       this.role = role;
       this.code = code;
       this.me = { id: this._myPlayerId(), name: name || 'Gäst' };
@@ -119,8 +122,53 @@
       if (down && !this._retryTimer) this._connect(false);
     },
 
+    // ---- Lokalt läge: "Runt bordet" ----------------------------------------
+    // En enda enhet, alla spelare, ingen server. Reducern (Game) kör i sidan.
+    // För att den enda enheten ska kunna göra ALLT kör vi varje handling som
+    // värden (actorId = hostId, allsmäktig). me speglar däremot den vars tur
+    // det är, så att gränssnittets "din tur" alltid stämmer på enheten.
+    startLocal(players, opts = {}) {
+      this.local = true;
+      this.role = 'local';
+      this.code = null;
+      this._alive = true;
+      let st = Game.create('LOKAL', null);
+      (players || []).forEach((p) => Game.addPlayer(st, { id: p.id || makeId(), name: p.name }));
+      st = Game.apply(st, { type: 'start', levelId: opts.levelId, session: opts.session || 'dyk', mode: opts.mode || 'oppen', duet: false }, st.hostId);
+      this.state = st;
+      this._localHost = st.hostId;
+      this._syncLocalMe();
+      this._saveLocal();
+      this._emit('open', { code: null, role: 'local' });
+      this._emit('status', { phase: 'connected' });
+      this._emit('state', this.state);
+    },
+    _syncLocalMe() {
+      const t = (this.state && (this.state.turnId || this.state.hostId)) || null;
+      const p = this.state && this.state.players.find((x) => x.id === t);
+      this.me = { id: t, name: p ? p.name : '' };
+    },
+    _saveLocal() { try { localStorage.setItem('vd_local', JSON.stringify(this.state)); } catch (_) {} },
+    loadLocal() { try { return JSON.parse(localStorage.getItem('vd_local')); } catch (_) { return null; } },
+    resumeLocal(state) {
+      this.local = true; this.role = 'local'; this.code = null; this._alive = true;
+      this.state = state; this._localHost = state && state.hostId;
+      this._syncLocalMe();
+      this._emit('open', { code: null, role: 'local' });
+      this._emit('status', { phase: 'connected' });
+      this._emit('state', this.state);
+    },
+
     // ---- Handlingar --------------------------------------------------------
     dispatch(action) {
+      if (this.local) {
+        try { this.state = Game.apply(this.state, action, this._localHost || (this.state && this.state.hostId)); }
+        catch (_) {}
+        this._syncLocalMe();
+        this._saveLocal();
+        this._emit('state', this.state);
+        return;
+      }
       if (this._ws && this._open && this._ws.readyState === WebSocket.OPEN) {
         try { this._ws.send(JSON.stringify({ type: 'action', action })); }
         catch (_) { this._queue(action); this._emit('dropped'); }
@@ -154,6 +202,8 @@
       try { if (this._ws) { this._ws.onclose = null; this._ws.onerror = null; this._ws.close(); } } catch (_) {}
       this._ws = null;
       this.role = null; this.code = null; this.state = null;
+      this.local = false; this._localHost = null;
+      try { localStorage.removeItem('vd_local'); } catch (_) {}
       this.clearSession();
     },
   };

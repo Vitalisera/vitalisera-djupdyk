@@ -228,6 +228,31 @@ input:focus { border-color: var(--depth); box-shadow: 0 0 0 3px color-mix(in srg
 .join-row { display: flex; gap: 10px; }
 .join-row input { flex: 1; text-transform: uppercase; text-align: center; letter-spacing: 0.5em; font-weight: 700; font-size: 1.15rem; padding-left: 0.5em; }
 .join-row .btn { white-space: nowrap; flex: 0 0 auto; padding-inline: 22px; }
+
+/* Runt bordet: lokal spelaruppställning + överlämning mellan turerna */
+#local-players { display: flex; flex-direction: column; gap: 8px; }
+.local-row { display: flex; gap: 8px; align-items: center; }
+.local-name { flex: 1 1 auto; }
+.local-del {
+  flex: 0 0 auto; width: 44px; height: 44px; border-radius: 12px;
+  border: 1px solid var(--glass-brd); background: rgba(255, 255, 255, 0.04);
+  color: var(--ink-soft); font-size: 1.3rem; line-height: 1; cursor: pointer;
+}
+.local-del:active { background: rgba(255, 255, 255, 0.09); }
+.handoff {
+  position: fixed; inset: 0; z-index: 70;
+  display: flex; align-items: center; justify-content: center; padding: 28px;
+  background: rgba(2, 14, 20, 0.86);
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+  animation: handoff-in 0.45s var(--ease);
+}
+.handoff[hidden] { display: none; }
+.handoff-inner { text-align: center; max-width: 22rem; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.handoff-eyebrow { text-transform: uppercase; letter-spacing: 0.2em; font-size: 0.72rem; font-weight: 800; color: var(--depth-text); }
+.handoff-name { font-family: var(--font-display); font-weight: 600; font-size: clamp(2.2rem, 11vw, 3.4rem); margin: 0; line-height: 1.05; }
+.handoff-sub { color: var(--ink-soft); font-size: 0.96rem; line-height: 1.5; margin: 0 0 10px; }
+.handoff .btn { min-width: 200px; }
+@keyframes handoff-in { from { opacity: 0; } to { opacity: 1; } }
 .fineprint { text-align: center; color: var(--ink-dim); font-size: 0.84rem; line-height: 1.5; margin: 0; }
 .help-link {
   display: flex; align-items: center; justify-content: center; min-height: 44px; margin: 8px auto 0; padding: 8px 14px;
@@ -1037,6 +1062,10 @@ input:focus { border-color: var(--depth); box-shadow: 0 0 0 3px color-mix(in srg
             <input id="code-input" type="text" placeholder="KOD" maxlength="4" autocomplete="off" autocapitalize="characters" inputmode="text" enterkeyhint="go" aria-label="Rumskod" />
             <button id="btn-join" class="btn btn-glass">Gå med</button>
           </div>
+
+          <div class="or"><span>eller en telefon</span></div>
+
+          <button id="btn-local" class="btn btn-glass btn-lg">🍵 Runt bordet</button>
         </div>
 
         <p class="fineprint">I samma rum eller på distans. Den som skapar dyket delar koden, sedan ser alla samma kort i realtid.</p>
@@ -1046,6 +1075,35 @@ input:focus { border-color: var(--depth); box-shadow: 0 0 0 3px color-mix(in srg
           <span>Lägg till på hemskärmen</span>
         </button>
         <a class="site-link" href="https://vitalisera.se" target="_blank" rel="noopener">En upplevelse från Vitalisera · vitalisera.se ↗</a>
+      </div>
+    </section>
+
+    <!-- ============ RUNT BORDET (lokalt, en telefon) ============ -->
+    <section id="screen-local" class="screen">
+      <div class="home-wrap">
+        <header class="brand">
+          <div class="brand-mark" role="img" aria-label="Vitalisera"></div>
+          <h1 class="brand-title">Runt bordet</h1>
+          <p class="tagline">En telefon. Den vars tur det är läser kortet högt. Sedan räcker ni vidare, eller låter telefonen ligga i mitten.</p>
+        </header>
+
+        <div class="glass home-card">
+          <label class="field-label">Vilka är med?</label>
+          <div id="local-players"></div>
+          <button id="btn-local-add" class="btn btn-glass full">+ Lägg till spelare</button>
+
+          <h3 class="section-h">Hur lång stund har ni?</h3>
+          <div class="chips" id="local-session-chips">
+            <button class="chip" type="button" data-session="snorkel"><b>Snorkling</b><small>en kort stund</small></button>
+            <button class="chip" type="button" data-session="dyk"><b>Dyk</b><small>en hel kväll</small></button>
+            <button class="chip" type="button" data-session="expedition"><b>Expedition</b><small>så länge ni vill</small></button>
+          </div>
+        </div>
+
+        <div class="bottom-dock">
+          <button id="btn-local-start" class="btn btn-primary btn-lg">Börja</button>
+          <button id="btn-local-back" class="help-link" type="button">‹ Tillbaka</button>
+        </div>
       </div>
     </section>
 
@@ -1196,6 +1254,16 @@ input:focus { border-color: var(--depth); box-shadow: 0 0 0 3px color-mix(in srg
       <p class="controls-hint" id="controls-hint"></p>
 
       <div class="players-strip" id="game-players"></div>
+
+      <!-- Runt bordet: lugn överlämning mellan turerna -->
+      <div class="handoff" id="handoff" hidden>
+        <div class="handoff-inner">
+          <span class="handoff-eyebrow">Nästa tur</span>
+          <p class="handoff-name" id="handoff-name">Astrid</p>
+          <p class="handoff-sub">Räck telefonen vidare, eller låt den ligga i mitten.</p>
+          <button id="btn-handoff-show" class="btn btn-primary btn-lg">Visa frågan</button>
+        </div>
+      </div>
     </section>
 
     <!-- ============ SAMMANFATTNING ============ -->
@@ -1264,7 +1332,7 @@ input:focus { border-color: var(--depth); box-shadow: 0 0 0 3px color-mix(in srg
       </div>
       <button id="btn-close-sheet" class="btn btn-primary full">Klar</button>
       <a class="site-link" href="https://vitalisera.se" target="_blank" rel="noopener">Mer från Vitalisera · vitalisera.se ↗</a>
-      <div style="text-align:center;font-size:0.68rem;color:var(--ink-dim);opacity:0.65;margin-top:6px;letter-spacing:0.04em;">version 2026-06-28 21:26</div>
+      <div style="text-align:center;font-size:0.68rem;color:var(--ink-dim);opacity:0.65;margin-top:6px;letter-spacing:0.04em;">version 2026-06-29 10:53</div>
     </div>
   </div>
 
@@ -2852,6 +2920,8 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
     _retryTimer: null,
     _clientRetry: 0,
     _pending: [],
+    local: false,        // "Runt bordet": en enhet, alla spelare, ingen server
+    _localHost: null,
 
     on(event, fn) { this.handlers[event] = fn; return this; },
     _emit(event, payload) { if (this.handlers[event]) this.handlers[event](payload); },
@@ -2878,6 +2948,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
     join(code, name) { this._enter('client', String(code).toUpperCase(), name); },
 
     _enter(role, code, name) {
+      this.local = false;   // säkerställ att ett ev. lokalt läge inte hänger kvar
       this.role = role;
       this.code = code;
       this.me = { id: this._myPlayerId(), name: name || 'Gäst' };
@@ -2938,8 +3009,53 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
       if (down && !this._retryTimer) this._connect(false);
     },
 
+    // ---- Lokalt läge: "Runt bordet" ----------------------------------------
+    // En enda enhet, alla spelare, ingen server. Reducern (Game) kör i sidan.
+    // För att den enda enheten ska kunna göra ALLT kör vi varje handling som
+    // värden (actorId = hostId, allsmäktig). me speglar däremot den vars tur
+    // det är, så att gränssnittets "din tur" alltid stämmer på enheten.
+    startLocal(players, opts = {}) {
+      this.local = true;
+      this.role = 'local';
+      this.code = null;
+      this._alive = true;
+      let st = Game.create('LOKAL', null);
+      (players || []).forEach((p) => Game.addPlayer(st, { id: p.id || makeId(), name: p.name }));
+      st = Game.apply(st, { type: 'start', levelId: opts.levelId, session: opts.session || 'dyk', mode: opts.mode || 'oppen', duet: false }, st.hostId);
+      this.state = st;
+      this._localHost = st.hostId;
+      this._syncLocalMe();
+      this._saveLocal();
+      this._emit('open', { code: null, role: 'local' });
+      this._emit('status', { phase: 'connected' });
+      this._emit('state', this.state);
+    },
+    _syncLocalMe() {
+      const t = (this.state && (this.state.turnId || this.state.hostId)) || null;
+      const p = this.state && this.state.players.find((x) => x.id === t);
+      this.me = { id: t, name: p ? p.name : '' };
+    },
+    _saveLocal() { try { localStorage.setItem('vd_local', JSON.stringify(this.state)); } catch (_) {} },
+    loadLocal() { try { return JSON.parse(localStorage.getItem('vd_local')); } catch (_) { return null; } },
+    resumeLocal(state) {
+      this.local = true; this.role = 'local'; this.code = null; this._alive = true;
+      this.state = state; this._localHost = state && state.hostId;
+      this._syncLocalMe();
+      this._emit('open', { code: null, role: 'local' });
+      this._emit('status', { phase: 'connected' });
+      this._emit('state', this.state);
+    },
+
     // ---- Handlingar --------------------------------------------------------
     dispatch(action) {
+      if (this.local) {
+        try { this.state = Game.apply(this.state, action, this._localHost || (this.state && this.state.hostId)); }
+        catch (_) {}
+        this._syncLocalMe();
+        this._saveLocal();
+        this._emit('state', this.state);
+        return;
+      }
       if (this._ws && this._open && this._ws.readyState === WebSocket.OPEN) {
         try { this._ws.send(JSON.stringify({ type: 'action', action })); }
         catch (_) { this._queue(action); this._emit('dropped'); }
@@ -2973,6 +3089,8 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
       try { if (this._ws) { this._ws.onclose = null; this._ws.onerror = null; this._ws.close(); } } catch (_) {}
       this._ws = null;
       this.role = null; this.code = null; this.state = null;
+      this.local = false; this._localHost = null;
+      try { localStorage.removeItem('vd_local'); } catch (_) {}
       this.clearSession();
     },
   };
@@ -3449,10 +3567,10 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
   // ---- Rendering -----------------------------------------------------------
   function render(state) {
     if (!state) return;
-    if (state.phase !== 'playing') { toggleOverlay('ritual', false); toggleOverlay('pause', false); stopSilence(); }
+    if (state.phase !== 'playing') { toggleOverlay('ritual', false); toggleOverlay('pause', false); stopSilence(); $('handoff').hidden = true; }
     if (state.phase === 'lobby') { lastLevelRendered = null; lastTurnId = null; renderLobby(state); showScreen('lobby'); }
     else if (state.phase === 'summary') { renderSummary(state); showScreen('summary'); }
-    else { renderGame(state); showScreen('game'); }
+    else { renderGame(state); showScreen('game'); maybeHandoff(state); }
   }
 
   function nextConnectedName(s) {
@@ -3520,6 +3638,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
     $('depth-val').textContent = lvl.depth;
     $('depth-name').textContent = lvl.name;
     $('game-code').textContent = s.code;
+    $('game-code').hidden = Net.role === 'local';   // ingen rumskod att dela lokalt
 
     // Djupmätare, markören rör sig nedåt med nivån
     $('dg-marker').style.top = (LEVELS.length > 1 ? (li / (LEVELS.length - 1)) * 100 : 0) + '%';
@@ -4062,6 +4181,67 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
     Net.join(code, currentName());
   }
 
+  // ---- Runt bordet (lokalt läge, en telefon) -------------------------------
+  let localSession = 'dyk';
+  let localPrevTurn = null;   // för överlämningen mellan turerna
+  let localStarted = false;   // hoppa över överlämning för allra första turen
+  function localRow() {
+    return '<div class="local-row"><input class="local-name" type="text" maxlength="24" placeholder="Namn" enterkeyhint="next" /><button class="local-del" type="button" aria-label="Ta bort">×</button></div>';
+  }
+  function bindLocalRow(row) {
+    const box = $('local-players');
+    row.querySelector('.local-del').onclick = () => { if (box.querySelectorAll('.local-row').length > 2) row.remove(); };
+    row.querySelector('.local-name').addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter') return;
+      e.preventDefault();
+      const rows = Array.from(box.querySelectorAll('.local-row'));
+      const next = rows[rows.indexOf(row) + 1];
+      if (next) next.querySelector('.local-name').focus(); else addLocalRow();
+    });
+  }
+  function addLocalRow() {
+    const box = $('local-players');
+    box.insertAdjacentHTML('beforeend', localRow());
+    const row = box.lastElementChild;
+    bindLocalRow(row);
+    row.querySelector('.local-name').focus();
+  }
+  function openLocalSetup() {
+    localSession = 'dyk';
+    const box = $('local-players');
+    box.innerHTML = localRow() + localRow();
+    box.querySelectorAll('.local-row').forEach(bindLocalRow);
+    syncChips('local-session-chips', 'session', localSession);
+    showScreen('local');
+  }
+  $('btn-local').onclick = () => { Snd.resume(); openLocalSetup(); };
+  $('btn-local-add').onclick = addLocalRow;
+  $('btn-local-back').onclick = () => showScreen('home');
+  $('local-session-chips').querySelectorAll('.chip').forEach((el) => {
+    el.onclick = () => { localSession = el.dataset.session; syncChips('local-session-chips', 'session', localSession); };
+  });
+  $('btn-local-start').onclick = () => {
+    Snd.resume();
+    const names = Array.from($('local-players').querySelectorAll('.local-name')).map((i) => i.value.trim()).filter(Boolean);
+    if (names.length < 2) { toast('Skriv in minst två namn.'); return; }
+    const players = names.slice(0, 8).map((n) => ({ id: 'L' + Math.random().toString(36).slice(2, 8), name: n }));
+    localPrevTurn = null; localStarted = false;
+    Net.startLocal(players, { levelId: LEVELS[0].id, session: localSession, mode: 'oppen' });
+  };
+  // Överlämning: när turen byter på den enda enheten, visa en lugn "nästa tur"-skärm.
+  function maybeHandoff(s) {
+    if (Net.role !== 'local') return;
+    if (s.phase !== 'playing' || !s.turnId) return;
+    if (s.turnId === localPrevTurn) return;
+    const first = !localStarted;
+    localPrevTurn = s.turnId; localStarted = true;
+    if (first || s.ritual) return;            // ingen överlämning för första turen / under ritualen
+    const p = s.players.find((x) => x.id === s.turnId);
+    $('handoff-name').textContent = p ? p.name : '';
+    $('handoff').hidden = false;
+  }
+  $('btn-handoff-show').onclick = () => { $('handoff').hidden = true; };
+
   // ---- Knappar: LOBBY ------------------------------------------------------
   $('btn-start').onclick = () => { Snd.resume(); Net.dispatch({ type: 'start', levelId: selectedLevel, session: selectedSession, mode: selectedDuet ? 'par' : selectedMode, duet: selectedDuet }); };
   bindChips();
@@ -4093,7 +4273,8 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
   function openSheet() {
     const s = state(); if (!s) return;
     const myTurn = s.turnId === (Net.me && Net.me.id);
-    const isHost = Net.role === 'host';
+    const isLocal = Net.role === 'local';
+    const isHost = Net.role === 'host' || isLocal;   // runt bordet: enheten styr allt
     const canDrive = isHost || myTurn;
     $('sheet-levels').innerHTML = LEVELS.map((l) => levelCard(l, l.id === s.levelId, true)).join('');
     bindLevelButtons('sheet-levels', (id) => { Net.dispatch({ type: 'setLevel', levelId: id }); closeSheet(); });
@@ -4106,11 +4287,12 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
     $('btn-strom').hidden = !canDrive || s.players.filter((p) => p.connected).length < 2; // kräver två
     $('btn-silence').hidden = !canDrive;
     $('btn-closing').hidden = !isHost;                 // avslutningskort = värd-bara
-    $('btn-pass').hidden = false;                      // skicka vidare = vem som helst
-    $('btn-pass-back').hidden = false;                 // ge tillbaka turen = vem som helst
+    $('btn-pass').hidden = isLocal;                    // skicka turen vidare = bara i nätläge
+    $('btn-pass-back').hidden = isLocal;               // ge tillbaka turen = bara i nätläge
     $('btn-finish').hidden = !isHost;                  // avsluta = värd-bara
     $('btn-restart').hidden = !isHost;
     $('sheet-note').hidden = canDrive;
+    const inv = $('btn-invite-game'); if (inv) inv.hidden = isLocal;   // ingen inbjudan lokalt
     updateSoundLabel();
     $('game-invite-code').textContent = s.code;
     $('sheet').classList.add('open'); $('sheet').setAttribute('aria-hidden', 'false');
@@ -4240,6 +4422,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
     try { localStorage.removeItem('vd_last'); } catch (_) {}
     _state = null; lastCardKey = null; closeSheet(); stopSilence();
     toggleOverlay('ritual', false); toggleOverlay('pause', false);
+    localPrevTurn = null; localStarted = false; $('handoff').hidden = true;
     netbar(null);
     showScreen('home');
     applyTheme(LEVELS[0].id);
@@ -4262,6 +4445,14 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
       return;
     }
     const joinCode = (params.get('join') || '').toUpperCase();
+
+    // Runt bordet: återuppta ett lokalt spel (ligger bara på den här enheten).
+    const localState = Net.loadLocal && Net.loadLocal();
+    if (localState && localState.phase && localState.phase !== 'lobby' && !joinCode) {
+      localStarted = true; localPrevTurn = localState.turnId || null;
+      Net.resumeLocal(localState);
+      return;
+    }
 
     const session = Net.loadSession && Net.loadSession();
     if (session && session.role && session.code && !joinCode) {
