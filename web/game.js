@@ -365,8 +365,10 @@
         if (actorId !== state.card.chooserId && actorId !== state.hostId) break;
         const target = state.players.find((x) => x.id === action.playerId);
         if (target && target.connected && target.id !== state.card.chooserId) {
-          state.card.inviteId = action.playerId;
-          state.card.partnerId = null;
+          // Runt bordet (en enhet): para direkt, det finns ingen separat enhet
+          // som kan tacka ja. I nätläge inväntas partnerns samtycke (acceptPartner).
+          if (action.direct) { state.card.partnerId = action.playerId; state.card.inviteId = null; }
+          else { state.card.inviteId = action.playerId; state.card.partnerId = null; }
         }
         break;
       }

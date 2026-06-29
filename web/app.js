@@ -159,9 +159,17 @@
   function render(state) {
     if (!state) return;
     if (state.phase !== 'playing') { toggleOverlay('ritual', false); toggleOverlay('pause', false); stopSilence(); $('handoff').hidden = true; }
-    if (state.phase === 'lobby') { lastLevelRendered = null; lastTurnId = null; renderLobby(state); showScreen('lobby'); }
+    if (state.phase === 'lobby') {
+      // Runt bordet har ingen nätlobby. "Spela igen" (restart → lobby) ska bara
+      // dela om med samma grupp och inställningar och gå rakt in i spelet igen.
+      if (Net.role === 'local') {
+        if (!localRestartPending) { localRestartPending = true; localPrevTurn = null; localStarted = false; setTimeout(() => Net.dispatch({ type: 'start' }), 0); }
+        return;
+      }
+      lastLevelRendered = null; lastTurnId = null; renderLobby(state); showScreen('lobby');
+    }
     else if (state.phase === 'summary') { renderSummary(state); showScreen('summary'); }
-    else { renderGame(state); showScreen('game'); maybeHandoff(state); }
+    else { localRestartPending = false; renderGame(state); showScreen('game'); maybeHandoff(state); }
   }
 
   function nextConnectedName(s) {
@@ -449,7 +457,7 @@
       row.innerHTML = opts.length
         ? opts.map((p) => `<button class="strom-opt" data-pid="${p.id}"><span class="pavatar" style="background:${avatarBg(p.name)}">${escapeHtml(initials(p.name))}</span>${escapeHtml(p.name)}</button>`).join('')
         : '<span class="strom-wait">Para ihop två behöver minst två dykare. Tryck Byt fråga så länge.</span>';
-      row.querySelectorAll('.strom-opt').forEach((b) => { b.onclick = () => Net.dispatch({ type: 'invitePartner', playerId: b.dataset.pid }); });
+      row.querySelectorAll('.strom-opt').forEach((b) => { b.onclick = () => Net.dispatch({ type: 'invitePartner', playerId: b.dataset.pid, direct: Net.role === 'local' }); });
     } else {
       wait.hidden = false;
       wait.textContent = `${chooser ? chooser.name : 'Någon'} väljer vem hen vill bjuda in …`;
@@ -774,8 +782,11 @@
 
   // ---- Runt bordet (lokalt läge, en telefon) -------------------------------
   let localSession = 'dyk';
+  let localMode = 'oppen';    // sällskapsläge (samma val som nätlobbyn)
+  let localLevel = LEVELS[0] && LEVELS[0].id;   // startdjup
   let localPrevTurn = null;   // för överlämningen mellan turerna
   let localStarted = false;   // hoppa över överlämning för allra första turen
+  let localRestartPending = false;   // vakt mot loop om 'start' skulle kasta vid lokal omstart
   function localRow() {
     return '<div class="local-row"><input class="local-name" type="text" maxlength="24" placeholder="Namn" enterkeyhint="next" /><button class="local-del" type="button" aria-label="Ta bort">×</button></div>';
   }
@@ -798,18 +809,29 @@
     row.querySelector('.local-name').focus();
   }
   function openLocalSetup() {
-    localSession = 'dyk';
+    localSession = 'dyk'; localMode = 'oppen'; localLevel = LEVELS[0].id;
     const box = $('local-players');
     box.innerHTML = localRow() + localRow();
     box.querySelectorAll('.local-row').forEach(bindLocalRow);
     syncChips('local-session-chips', 'session', localSession);
+    syncChips('local-mode-chips', 'mode', localMode);
+    const opt = $('local-level-options');
+    opt.innerHTML = LEVELS.map((l) => levelCard(l, l.id === localLevel, false)).join('');
+    bindLevelButtons('local-level-options', (id) => {
+      localLevel = id; applyTheme(id);
+      opt.querySelectorAll('.lvl').forEach((el) => el.classList.toggle('selected', el.dataset.id === id));
+    });
+    applyTheme(localLevel);
     showScreen('local');
   }
   $('btn-local').onclick = () => { Snd.resume(); openLocalSetup(); };
   $('btn-local-add').onclick = addLocalRow;
-  $('btn-local-back').onclick = () => showScreen('home');
+  $('btn-local-back').onclick = () => { applyTheme(LEVELS[0].id); showScreen('home'); };
   $('local-session-chips').querySelectorAll('.chip').forEach((el) => {
     el.onclick = () => { localSession = el.dataset.session; syncChips('local-session-chips', 'session', localSession); };
+  });
+  $('local-mode-chips').querySelectorAll('.chip').forEach((el) => {
+    el.onclick = () => { localMode = el.dataset.mode; syncChips('local-mode-chips', 'mode', localMode); };
   });
   $('btn-local-start').onclick = () => {
     Snd.resume();
@@ -817,7 +839,7 @@
     if (names.length < 2) { toast('Skriv in minst två namn.'); return; }
     const players = names.slice(0, 8).map((n) => ({ id: 'L' + Math.random().toString(36).slice(2, 8), name: n }));
     localPrevTurn = null; localStarted = false;
-    Net.startLocal(players, { levelId: LEVELS[0].id, session: localSession, mode: 'oppen' });
+    Net.startLocal(players, { levelId: localLevel, session: localSession, mode: localMode });
   };
   // Överlämning: när turen byter på den enda enheten, visa en lugn "nästa tur"-skärm.
   function maybeHandoff(s) {

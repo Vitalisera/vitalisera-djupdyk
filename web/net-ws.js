@@ -116,6 +116,7 @@
 
     // Knuff vid synlig flik / nät tillbaka: kolla att vi är uppe, annars koppla upp.
     poke() {
+      if (this.local) return;   // lokalt läge har ingen server att knuffa
       if (!this._alive) return;
       const ws = this._ws;
       const down = !ws || ws.readyState === WebSocket.CLOSED || ws.readyState === WebSocket.CLOSING;
