@@ -1011,3 +1011,62 @@ input:focus { border-color: var(--depth); box-shadow: 0 0 0 3px color-mix(in srg
   .turn.flash, .descend-fx.run { animation: none !important; }
   .card.flip { animation: flip 0.62s var(--ease) !important; }
 }
+
+/* ============ VISA PÅ TV (display-läge) ============ */
+/* En passiv, stor vy för TV/laptop. Lugn, läsbar på avstånd, inga kontroller. */
+body.display-mode .rotate { display: none !important; }   /* TV är liggande, ingen "vänd enheten" */
+body.display-mode .install-hint { display: none !important; }
+
+#screen-display { padding: 0; }
+.tv-wrap {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  width: 100%; max-width: 1400px; margin: 0 auto;
+  padding: clamp(20px, 4vh, 56px) clamp(20px, 5vw, 80px);
+  text-align: center;
+}
+.tv-head {
+  width: 100%; display: flex; align-items: center; justify-content: space-between;
+  color: var(--ink-soft); font-size: clamp(0.9rem, 1.6vw, 1.3rem); letter-spacing: 0.04em;
+}
+.tv-depth { text-transform: uppercase; letter-spacing: 0.16em; font-weight: 600; }
+.tv-code-pill {
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.10);
+  padding: 6px 16px; border-radius: 999px; font-size: 0.92em;
+}
+.tv-code-pill b { color: var(--accent, #7fe3ef); letter-spacing: 0.22em; margin-left: 6px; font-weight: 800; }
+.tv-turn {
+  display: inline-flex; align-items: center; gap: 14px; margin: clamp(16px, 4vh, 40px) 0 0;
+  font-size: clamp(1.1rem, 2.4vw, 2rem); color: var(--ink);
+}
+.tv-avatar {
+  width: 1.6em; height: 1.6em; border-radius: 50%; display: inline-grid; place-items: center;
+  font-size: 0.7em; font-weight: 700; color: #04202a;
+}
+.tv-stage { flex: 1; display: flex; align-items: center; justify-content: center; width: 100%; }
+.tv-card { width: 100%; max-width: 1100px; }
+.tv-eyebrow {
+  display: block; text-transform: uppercase; letter-spacing: 0.2em;
+  font-size: clamp(0.8rem, 1.4vw, 1.15rem); color: var(--accent, #7fe3ef); margin-bottom: clamp(14px, 3vh, 30px);
+}
+.tv-blot { margin: 0 auto clamp(14px, 3vh, 28px); width: clamp(180px, 26vh, 340px); }
+.tv-blot svg { width: 100%; height: auto; }
+.tv-text {
+  font-family: var(--display, Fraunces, Georgia, serif);
+  font-size: clamp(1.8rem, 4.6vw, 4.2rem); line-height: 1.18; font-weight: 500;
+  color: #f3fbfc; margin: 0; text-wrap: balance;
+}
+.tv-followup {
+  display: none; margin: clamp(18px, 4vh, 40px) auto 0; max-width: 900px;
+  font-size: clamp(1.1rem, 2.2vw, 1.9rem); line-height: 1.35; color: var(--ink-soft);
+}
+.tv-followup.show { display: block; }
+.tv-followup .fu-label {
+  display: block; text-transform: uppercase; letter-spacing: 0.14em;
+  font-size: 0.6em; color: var(--accent, #7fe3ef); margin-bottom: 8px;
+}
+.tv-players {
+  display: flex; flex-wrap: wrap; gap: 10px 14px; justify-content: center;
+  margin-top: clamp(16px, 4vh, 40px); min-height: 1.4em;
+}
+.tv-players .pchip { font-size: clamp(0.85rem, 1.6vw, 1.2rem); }
+.tv-foot { color: var(--ink-dim); font-size: clamp(0.72rem, 1.2vw, 0.95rem); margin: 18px 0 0; letter-spacing: 0.04em; }

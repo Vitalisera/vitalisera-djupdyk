@@ -13,6 +13,7 @@
   let lastReflectReveal = null;    // för att skrolla fram tolkningen en gång
   let lastLevelRendered = null;   // för nedsänknings-effekt vid nivåbyte
   let lastTurnId = null;          // för turbyte-ljud
+  let displayMode = false;        // "Visa på TV": passiv display-vy (ingen styrning)
 
   // ---- Ljud (valbart) -----------------------------------------------------
   // Subtila toner via WebAudio. Obs: på iOS spelas inget om telefonens
@@ -170,6 +171,102 @@
     }
     else if (state.phase === 'summary') { renderSummary(state); showScreen('summary'); }
     else { localRestartPending = false; renderGame(state); showScreen('game'); maybeHandoff(state); }
+  }
+
+  // ---- Display-vy ("Visa på TV"): passiv, stor, ingen styrning ------------
+  // En TV/laptop som bara speglar rummets state. Styrs av en fjärr-telefon.
+  function renderDisplay(s) {
+    showScreen('display');
+    $('tv-code').textContent = Net.code || '••••';
+    const turnEl = $('tv-turn'), eyebrow = $('tv-eyebrow'), textEl = $('tv-text'),
+      fu = $('tv-followup'), blot = $('tv-blot'), depthEl = $('tv-depth');
+    const noFu = () => { fu.textContent = ''; fu.classList.remove('show'); };
+
+    // Inget rum ännu / väntar på första staten.
+    if (!s || !s.phase) {
+      applyTheme(LEVELS[0].id);
+      depthEl.textContent = ''; turnEl.hidden = true; blot.hidden = true;
+      eyebrow.textContent = ''; noFu(); $('tv-players').innerHTML = '';
+      textEl.textContent = 'Öppna djupdyk på era telefoner och gå med med koden ovan. Det ni gör där visas här.';
+      return;
+    }
+
+    const lvl = levelMeta(s.card ? s.card.levelId : s.levelId);
+    applyTheme(lvl.id);
+
+    if (s.phase === 'lobby') {
+      depthEl.textContent = ''; turnEl.hidden = true; blot.hidden = true; noFu();
+      eyebrow.textContent = 'Snart börjar dyket';
+      const n = (s.players || []).filter((p) => p.connected).length;
+      textEl.textContent = n
+        ? (n === 1 ? 'En dykare är med. Vänta in de andra, och starta sedan från en telefon.' : `${n} dykare är med. Starta dyket från en telefon när ni är samlade.`)
+        : 'Gå med med koden ovan från era telefoner.';
+      syncPlayers($('tv-players'), s.players, {});
+      return;
+    }
+
+    if (s.phase === 'summary') {
+      const sm = s.summary || {};
+      depthEl.textContent = ''; turnEl.hidden = true; blot.hidden = true; noFu();
+      eyebrow.textContent = 'Ni dök tillsammans';
+      textEl.textContent = `${sm.depth || ''} · ${sm.cards || 0} ${sm.cards === 1 ? 'fråga' : 'frågor'} · ${sm.players || 0} dykare`;
+      $('tv-players').innerHTML = '';
+      if (window.Ocean) window.Ocean.setDepth(1);
+      return;
+    }
+
+    // Spelar.
+    depthEl.textContent = `${lvl.name} · ${lvl.depth}`;
+    const turnP = s.players.find((p) => p.id === s.turnId);
+    turnEl.hidden = false;
+    $('tv-avatar').style.cssText = turnP ? `background:${avatarBg(turnP.name)}` : '';
+    $('tv-avatar').textContent = turnP ? initials(turnP.name) : '…';
+    $('tv-turn-text').textContent = turnP ? `${turnP.name} läser` : 'Väntar på dykare…';
+
+    const src = s.card && s.card.source;
+    const isInkblot = src === 'inkblot', isStrom = src === 'strom', isReflection = src === 'reflection';
+    const isClosing = src === 'closing', isSilence = src === 'silence', isWhirl = src === 'whirl';
+    const isAscent = src === 'ascent', isQuote = src === 'quote', isParable = src === 'parable', isParCard = src === 'parcard';
+
+    eyebrow.textContent =
+      isClosing ? 'Avslutning'
+        : isReflection ? '✨ Spegling'
+        : isInkblot ? '✦ Bläckbild'
+        : isStrom ? '🌊 Para ihop två'
+        : isSilence ? '🤫 Tystnad'
+        : isWhirl ? '🌀 Strömvirvel'
+        : isAscent ? '🫧 Uppstigning'
+        : isQuote ? '💬 Diskussion'
+        : isParable ? '🪷 Visdomsberättelse'
+        : isParCard ? '💞 För er två'
+        : '';   // vanligt kort: djupet står redan uppe till vänster, ingen dubblett
+
+    // Bläckbild: visa själva bilden + den gemensamma frågan (var och en har sin egna fråga på sin telefon).
+    if (isInkblot && window.Inkblot && window.DECK.inkblot && s.card) {
+      blot.hidden = false;
+      blot.innerHTML = window.Inkblot.svg(s.card.seed, BLOT_COLOR);
+      const cfg = window.DECK.inkblot;
+      textEl.textContent = cfg.shared[s.card.sharedIdx % cfg.shared.length];
+    } else {
+      blot.hidden = true;
+      textEl.textContent = s.card ? s.card.text : '…';
+    }
+
+    // Para ihop två: visa paret när det är klart.
+    if (isStrom && s.card && s.card.partnerId) {
+      const chooser = s.players.find((p) => p.id === s.card.chooserId);
+      const partner = s.players.find((p) => p.id === s.card.partnerId);
+      if (partner) textEl.textContent = `${chooser ? chooser.name : '?'} och ${partner.name}: ${s.card.text}`;
+    }
+
+    // Följdfråga/tolkning/diskussion när den avslöjats.
+    if (s.card && s.card.followup) {
+      const lbl = isQuote ? 'Diskussion' : isParable ? 'Eftertanke' : isReflection ? 'Vad det kan betyda' : 'Följdfråga';
+      fu.innerHTML = '<span class="fu-label">' + lbl + '</span>' + escapeHtml(s.card.followup);
+      fu.classList.add('show');
+    } else noFu();
+
+    syncPlayers($('tv-players'), s.players, { current: true });
   }
 
   function nextConnectedName(s) {
@@ -729,7 +826,7 @@
   // ---- Net-händelser -------------------------------------------------------
   let everConnected = false;
   let statusTimer = null;
-  Net.on('state', (s) => { _state = s; render(s); });
+  Net.on('state', (s) => { _state = s; if (displayMode) renderDisplay(s); else render(s); });
   Net.on('open', () => { everConnected = true; clearTimeout(statusTimer); netbar('<span class="dot"></span> Ansluten', 'ok'); persistEntry(); });
   Net.on('status', (st) => {
     clearTimeout(statusTimer);
@@ -858,6 +955,36 @@
   }
   $('btn-handoff-show').onclick = () => { $('handoff').hidden = true; };
 
+  // ---- Visa på TV (display-läge) ------------------------------------------
+  function startDisplay(code) {
+    displayMode = true;
+    document.body.classList.add('display-mode');
+    try { history.replaceState({}, '', location.pathname + '?visa=' + code); } catch (_) {}
+    $('tv-code').textContent = code;
+    renderDisplay(null);
+    Net.display(code);
+  }
+  const tvCodeInput = $('tv-code-input');
+  function doTvStart() {
+    const code = (tvCodeInput.value || '').trim().toUpperCase();
+    if (code.length < 4) { toast('Skriv in koden på fyra tecken.'); return; }
+    startDisplay(code);
+  }
+  $('btn-tv-home').onclick = () => { showScreen('tv-entry'); setTimeout(() => tvCodeInput.focus(), 60); };
+  $('btn-tv-back').onclick = () => { showScreen('home'); };
+  $('btn-tv-start').onclick = doTvStart;
+  tvCodeInput.addEventListener('input', (e) => { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''); });
+  tvCodeInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') doTvStart(); });
+
+  function displayUrl() { return location.origin + location.pathname + '?visa=' + (Net.code || ''); }
+  function shareDisplay() {
+    const url = displayUrl();
+    const text = 'Öppna den här länken på en TV eller dator, så visas dyket stort där. Styr spelet från din telefon.';
+    if (navigator.share) navigator.share({ title: 'Vitalisera djupdyk: visa på TV', text, url }).catch(() => {});
+    else if (navigator.clipboard) navigator.clipboard.writeText(url).then(() => toast('TV-länk kopierad. Öppna den på en TV eller dator.')).catch(() => toast('Länk: ' + url));
+    else toast('Länk: ' + url);
+  }
+
   // ---- Knappar: LOBBY ------------------------------------------------------
   $('btn-start').onclick = () => { Snd.resume(); Net.dispatch({ type: 'start', levelId: selectedLevel, session: selectedSession, mode: selectedDuet ? 'par' : selectedMode, duet: selectedDuet }); };
   bindChips();
@@ -874,6 +1001,7 @@
   $('btn-menu').onclick = openSheet;
   $('game-code').onclick = shareInvite;
   $('btn-invite-game').onclick = () => { shareInvite(); closeSheet(); };
+  $('btn-tv-share').onclick = () => { shareDisplay(); closeSheet(); };
   $('btn-shell').onclick = saveShell;
   $('btn-buoy').onclick = () => { Net.dispatch({ type: 'buoy' }); };
   $('btn-strom-accept').onclick = () => { Snd.resume(); Net.dispatch({ type: 'acceptPartner' }); };
@@ -1062,6 +1190,10 @@
       setTimeout(() => { try { window.print(); } catch (_) {} }, 450);
       return;
     }
+    // Visa på TV: passiv display som följer ett rum (ingen styrning här).
+    const showCode = (params.get('visa') || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (showCode) { startDisplay(showCode); return; }
+
     const joinCode = (params.get('join') || '').toUpperCase();
 
     // Runt bordet: återuppta ett lokalt spel (ligger bara på den här enheten).

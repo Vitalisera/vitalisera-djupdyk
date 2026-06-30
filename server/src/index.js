@@ -80,6 +80,19 @@ export class Room {
       return new Response('Förväntade en WebSocket-uppkoppling.', { status: 426 });
     }
     const code = url.pathname.split('/').filter(Boolean).pop().toUpperCase();
+
+    // "Visa på TV": en passiv display-anslutning. Den prenumererar bara på staten
+    // (stort kort + turindikator på en TV/laptop), styrs av en fjärr-telefon i samma
+    // rum. Räknas ALDRIG som spelare: inget addPlayer, ingen meta, ingen rapport,
+    // och den skapar inte ett rum (en TV riktad mot en tom kod ska inte starta dyk).
+    if (url.searchParams.get('display') === '1') {
+      const pair = new WebSocketPair();
+      this.ctx.acceptWebSocket(pair[1], ['display']);
+      pair[1].serializeAttachment({ display: true });
+      try { pair[1].send(JSON.stringify({ type: 'state', state: this.game || null })); } catch (_) {}
+      return new Response(null, { status: 101, webSocket: pair[0] });
+    }
+
     const playerId = (url.searchParams.get('id') || ('p' + Math.random().toString(36).slice(2, 9))).slice(0, 40);
     const name = (url.searchParams.get('name') || 'Gäst').slice(0, 24);
 
@@ -121,6 +134,7 @@ export class Room {
     try { msg = JSON.parse(raw); } catch (_) { return; }
     if (!msg || typeof msg !== 'object' || !this.game) return;
     const att = ws.deserializeAttachment() || {};
+    if (att.display) return;   // en TV-display är passiv, den styr aldrig spelet
     const actorId = att.playerId;
 
     if (msg.type === 'action' && msg.action) {
@@ -164,7 +178,12 @@ export class Room {
     this.broadcast();
     // Rapportera: om ingen är kvar uppkopplad, ta bort rummet ur registret och
     // bokför dyk-längden (speltid) en gång.
-    const anyOnline = this.ctx.getWebSockets().some((s) => s.readyState === WebSocket.OPEN);
+    // Bara spelare håller rummet "levande" för speltid/registret. En kvarlämnad
+    // TV-display (utan playerId) ska inte hålla ett tomt rum öppet i evighet.
+    const anyOnline = this.ctx.getWebSockets().some((s) => {
+      const a = s.deserializeAttachment() || {};
+      return s.readyState === WebSocket.OPEN && a.playerId;
+    });
     let played = 0;
     if (!anyOnline && this.created && !this._playReported) {
       played = Math.max(0, Date.now() - this.created);

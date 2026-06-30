@@ -54,6 +54,7 @@
 
         <p class="fineprint">I samma rum eller på distans. Den som skapar dyket delar koden, sedan ser alla samma kort i realtid.</p>
         <button id="btn-help-home" class="help-link" type="button">Hur funkar det? ›</button>
+        <button id="btn-tv-home" class="help-link" type="button">📺 Visa dyket på en TV ›</button>
         <button id="btn-install" class="install-hint" type="button" hidden>
           <span class="install-ico" aria-hidden="true">⤓</span>
           <span>Lägg till på hemskärmen</span>
@@ -103,6 +104,47 @@
           <button id="btn-local-start" class="btn btn-primary btn-lg">Börja</button>
           <button id="btn-local-back" class="help-link" type="button">‹ Tillbaka</button>
         </div>
+      </div>
+    </section>
+
+    <!-- ============ VISA PÅ TV: starta en display ============ -->
+    <section id="screen-tv-entry" class="screen">
+      <div class="home-wrap">
+        <header class="brand">
+          <div class="brand-mark" role="img" aria-label="Vitalisera"></div>
+          <h1 class="brand-title">Visa på TV</h1>
+          <p class="tagline">Visa dyket stort på en TV eller dator. En telefon i rummet styr, alla andra tittar upp på samma kort.</p>
+        </header>
+
+        <div class="glass home-card">
+          <label class="field-label" for="tv-code-input">Skriv rumskoden</label>
+          <input id="tv-code-input" type="text" placeholder="KOD" maxlength="4" autocomplete="off" autocapitalize="characters" inputmode="text" enterkeyhint="go" aria-label="Rumskod" />
+          <button id="btn-tv-start" class="btn btn-primary btn-lg">Visa dyket</button>
+          <p class="fineprint">Skapa först ett dyk på en telefon. Läs av den fyrteckens koden och skriv in den här, så följer den här skärmen med automatiskt. Telefonen styr spelet.</p>
+        </div>
+
+        <button id="btn-tv-back" class="help-link" type="button">‹ Tillbaka</button>
+      </div>
+    </section>
+
+    <!-- ============ DISPLAY (TV/laptop, passiv vy) ============ -->
+    <section id="screen-display" class="screen">
+      <div class="tv-wrap">
+        <div class="tv-head">
+          <span class="tv-depth" id="tv-depth"></span>
+          <span class="tv-code-pill">Kod <b id="tv-code">••••</b></span>
+        </div>
+        <div class="tv-turn" id="tv-turn" hidden><span class="tv-avatar" id="tv-avatar"></span><span class="tv-turn-text" id="tv-turn-text"></span></div>
+        <div class="tv-stage">
+          <div class="tv-card" id="tv-card">
+            <span class="tv-eyebrow" id="tv-eyebrow"></span>
+            <div class="tv-blot" id="tv-blot" hidden></div>
+            <p class="tv-text" id="tv-text">Väntar på dyket…</p>
+            <span class="tv-followup" id="tv-followup"></span>
+          </div>
+        </div>
+        <div class="tv-players" id="tv-players"></div>
+        <p class="tv-foot">Vitalisera djupdyk · styrs från en telefon i rummet</p>
       </div>
     </section>
 
@@ -313,6 +355,7 @@
       <div class="sheet-actions">
         <button id="btn-sound" class="btn btn-glass full">🔊 Ljud: på</button>
         <button id="btn-invite-game" class="btn btn-glass full"><span>🔗 Bjud in fler (kod <b id="game-invite-code">••••</b>)</span></button>
+        <button id="btn-tv-share" class="btn btn-glass full">📺 Visa på TV</button>
         <button id="btn-help-game" class="btn btn-glass full">Så funkar det</button>
         <button id="btn-manual-game" class="btn btn-glass full">📖 Hela manualen</button>
         <button id="btn-reflection" class="btn btn-glass full">✨ Dra en spegling</button>

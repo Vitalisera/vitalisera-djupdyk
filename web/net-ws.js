@@ -52,6 +52,7 @@
 
     // ---- Persistens (resume vid omladdning) --------------------------------
     _saveSession() {
+      if (this.role === 'display') return;   // display resumas ur ?visa-länken, inte ur sessionen
       try { localStorage.setItem('vd_session', JSON.stringify({ role: this.role, code: this.code, me: this.me })); } catch (_) {}
     },
     loadSession() { try { return JSON.parse(localStorage.getItem('vd_session')); } catch (_) { return null; } },
@@ -71,6 +72,21 @@
     // I servermodellen är skillnaden bara kosmetisk; servern äger staten.
     host(name, opts = {}) { this._enter('host', (opts.code || randomCode()).toUpperCase(), name); },
     join(code, name) { this._enter('client', String(code).toUpperCase(), name); },
+
+    // "Visa på TV": passiv display som bara prenumererar på rummets state.
+    // Ingen spelare, inga handlingar, ingen rumskod-ägare. Återansluter automatiskt
+    // (samma _connect-logik) om TV:ns uppkoppling tappas.
+    display(code) {
+      this.local = false;
+      this.role = 'display';
+      this.code = String(code).toUpperCase();
+      this._utm = '';
+      this.me = { id: 'display', name: '' };
+      this._alive = true;
+      this._everOpen = false;
+      this._clientRetry = 0;
+      this._connect(true);
+    },
 
     _enter(role, code, name) {
       this.local = false;   // säkerställ att ett ev. lokalt läge inte hänger kvar
@@ -92,6 +108,7 @@
       const url = WS_BASE + '/room/' + encodeURIComponent(this.code)
         + '?id=' + encodeURIComponent(this.me.id)
         + '&name=' + encodeURIComponent(this.me.name)
+        + (this.role === 'display' ? '&display=1' : '')
         + (this._utm ? '&utm=' + encodeURIComponent(this._utm) : '');
       let ws;
       try { ws = new WebSocket(url); } catch (_) { this._scheduleRetry(); return; }
