@@ -98,20 +98,13 @@ export class Room {
     this.ctx.acceptWebSocket(server, [playerId]);
     server.serializeAttachment({ playerId, name });
 
-    const isNewRoom = !this.game;
-    if (isNewRoom) { this.game = Game.create(code, playerId); this.code = code; this.created = Date.now(); }
+    if (!this.game) { this.game = Game.create(code, playerId); this.code = code; this.created = Date.now(); }
     Game.addPlayer(this.game, { id: playerId, name });
     if (this.game.phase === 'playing' && !this.game.turnId) this.game.turnId = playerId;
 
-    // Långsiktig statistik: räkna ett nytt dyk (en gång per rum) och varje unik dykare.
-    const ev = {};
-    if (isNewRoom && !this._statSent) { ev.dyk = 1; this._statSent = true; }
-    if (!this.counted[playerId]) { this.counted[playerId] = true; ev.join = 1; ev.country = this.meta[playerId].country || ''; ev.utm = this.meta[playerId].utm || ''; }
-
     await this.persist();
     this.broadcast();
-    await this.report();
-    if (ev.dyk || ev.join) await this.stat(ev);
+    await this.report();   // dyk + dykare räknas i Registry utifrån summary (konsekvent med peak, reset-rent)
 
     return new Response(null, { status: 101, webSocket: client });
   }
@@ -198,7 +191,7 @@ export class Room {
     }
     const players = (this.game.players || []).filter((p) => onlineIds.has(p.id)).map((p) => {
       const m = this.meta[p.id] || {};
-      return { name: p.name, country: m.country, city: m.city, ip: m.ip, utm: m.utm };
+      return { id: p.id, name: p.name, country: m.country, city: m.city, ip: m.ip, utm: m.utm };
     });
     return {
       code: this.code, phase: this.game.phase, level: this.game.levelId, mode: this.game.mode,
@@ -238,6 +231,7 @@ export class Registry {
     this.ctx.blockConcurrencyWhile(async () => {
       this.rooms = (await this.ctx.storage.get('rooms')) || {};
       this.stats = (await this.ctx.storage.get('stats')) || this.freshStats();
+      this.seen = (await this.ctx.storage.get('seen')) || { codes: {}, players: {} };
       // Migrera in ev. saknade fält i en äldre stats-post.
       const f = this.freshStats(); for (const k in f) if (this.stats[k] == null) this.stats[k] = f[k];
     });
@@ -264,18 +258,10 @@ export class Registry {
   async fetch(request) {
     const url = new URL(request.url);
     if (url.pathname.endsWith('/stat') && request.method === 'POST') {
+      // Bara kort-engagemang här (next/skip). Dyk + dykare räknas i /update.
       let ev = {};
       try { ev = await request.json(); } catch (_) {}
-      const s = this.stats; const d = this.day();
-      if (ev.dyk) s.dyk += ev.dyk;
-      if (ev.join) {
-        s.joins += ev.join;
-        s.byDay[d] = (s.byDay[d] || 0) + ev.join;
-        if (ev.country) s.byCountry[ev.country] = (s.byCountry[ev.country] || 0) + 1;
-        const src = (ev.utm || '').match(/source=([^\s]+)/);
-        const key = src ? src[1] : (ev.utm ? 'övrigt' : 'direkt');
-        s.byUtm[key] = (s.byUtm[key] || 0) + 1;
-      }
+      const s = this.stats;
       if (ev.card && ev.card.text) {
         const c = s.cards[ev.card.text] || (s.cards[ev.card.text] = { kept: 0, skipped: 0, source: ev.card.source || '' });
         c.kept += ev.card.kept || 0; c.skipped += ev.card.skipped || 0;
@@ -286,11 +272,27 @@ export class Registry {
     if (url.pathname.endsWith('/update') && request.method === 'POST') {
       let b = {};
       try { b = await request.json(); } catch (_) {}
+      const s = this.stats; const d = this.day();
       if (b && b.code) {
         if (b.remove || (b.summary && (b.summary.count || 0) <= 0)) {
           if (b.played) this.accruePlay(b.played, Date.now());   // dyk-längd när rummet stänger rent
           delete this.rooms[b.code];
-        } else if (b.summary) this.rooms[b.code] = b.summary;
+        } else if (b.summary) {
+          this.rooms[b.code] = b.summary;
+          // Räkna utifrån vad dashboarden FAKTISKT ser → konsekvent med peak, och reset nollar allt.
+          if (!this.seen.codes[b.code]) { this.seen.codes[b.code] = 1; s.dyk += 1; s.byDay[d] = (s.byDay[d] || 0) + 1; }
+          for (const p of b.summary.players || []) {
+            const pk = b.code + '|' + (p.id || p.name || '');
+            if (!this.seen.players[pk]) {
+              this.seen.players[pk] = 1; s.joins += 1;
+              if (p.country) s.byCountry[p.country] = (s.byCountry[p.country] || 0) + 1;
+              const src = (p.utm || '').match(/source=([^\s]+)/);
+              const key = src ? src[1] : (p.utm ? 'övrigt' : 'direkt');
+              s.byUtm[key] = (s.byUtm[key] || 0) + 1;
+            }
+          }
+          await this.ctx.storage.put('seen', this.seen);
+        }
       }
       this.prune();
       const active = Object.keys(this.rooms).length;
@@ -300,9 +302,10 @@ export class Registry {
       return new Response('ok');
     }
     if (url.pathname.endsWith('/reset')) {
-      this.rooms = {}; this.stats = this.freshStats();
+      this.rooms = {}; this.stats = this.freshStats(); this.seen = { codes: {}, players: {} };
       await this.ctx.storage.put('rooms', this.rooms);
       await this.ctx.storage.put('stats', this.stats);
+      await this.ctx.storage.put('seen', this.seen);
       return new Response('nollställt', { headers: { 'content-type': 'text/plain; charset=utf-8' } });
     }
     this.prune();
