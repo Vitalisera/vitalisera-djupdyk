@@ -189,7 +189,7 @@ input:focus { border-color: var(--depth); box-shadow: 0 0 0 3px color-mix(in srg
 /* Hemskärmen får skrolla om innehållet inte ryms (liten skärm, Safari-rad,
    stora textstorlekar). Auto-marginalerna centrerar när det får plats och
    släpper taget när det behöver skrollas, utan att toppen klipps. */
-#screen-home { overflow-y: auto; -webkit-overflow-scrolling: touch; }
+#screen-home, #screen-local { overflow-y: auto; -webkit-overflow-scrolling: touch; }
 .home-wrap { flex: 0 0 auto; margin: auto 0; display: flex; flex-direction: column; gap: 26px; }
 .brand { text-align: center; }
 .brand-title, .tagline { text-shadow: 0 1px 18px rgba(2, 16, 22, 0.55); }
