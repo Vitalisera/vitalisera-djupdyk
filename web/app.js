@@ -291,7 +291,8 @@
     const isAscent = src === 'ascent';
     const isQuote = src === 'quote';
     const isParable = src === 'parable';
-    const isSpecial = isClosing || isReflection || isInkblot || isStrom || isSilence || isWhirl || isAscent || isQuote || isParable;
+    const isParCard = src === 'parcard';
+    const isSpecial = isClosing || isReflection || isInkblot || isStrom || isSilence || isWhirl || isAscent || isQuote || isParable || isParCard;
     const noFollowup = isInkblot || isStrom || isSilence || isWhirl || isAscent;
     card.classList.toggle('closing', !!isClosing);
     card.classList.toggle('reflection', !!isReflection);
@@ -302,6 +303,7 @@
     card.classList.toggle('ascent', !!isAscent);
     card.classList.toggle('quote', !!isQuote);
     card.classList.toggle('parable', !!isParable);
+    card.classList.toggle('parcard', !!isParCard);
     if (s.card) {
       // Bläckbild: alla ser samma bild + gemensam fråga, plus en egen fråga
       $('card-blot').hidden = !isInkblot;
@@ -332,6 +334,7 @@
         : isAscent ? '🫧 Uppstigning'
         : isQuote ? '💬 Diskussion'
         : isParable ? '🪷 Visdomsberättelse'
+        : isParCard ? '💞 För er två'
         : `${lvl.name} · ${lvl.depth}`;
       $('card-text').textContent = s.card.text;
       $('card-index').textContent = isAscent && s.ascent
@@ -896,6 +899,7 @@
     $('btn-reflection').hidden = !canDrive;
     $('btn-quote').hidden = !canDrive;
     $('btn-parable').hidden = !canDrive;
+    $('btn-parcard').hidden = !canDrive || s.mode !== 'par';   // par-kort bara i parläge
     $('btn-inkblot').hidden = !canDrive;
     $('btn-strom').hidden = !canDrive || s.players.filter((p) => p.connected).length < 2; // kräver två
     $('btn-silence').hidden = !canDrive;
@@ -917,6 +921,7 @@
   $('btn-reflection').onclick = () => { Net.dispatch({ type: 'reflection' }); closeSheet(); };
   $('btn-quote').onclick = () => { Net.dispatch({ type: 'quote' }); closeSheet(); };
   $('btn-parable').onclick = () => { Net.dispatch({ type: 'parable' }); closeSheet(); };
+  $('btn-parcard').onclick = () => { Net.dispatch({ type: 'parcard' }); closeSheet(); };
   $('btn-inkblot').onclick = () => { Net.dispatch({ type: 'inkblot' }); closeSheet(); };
   $('btn-strom').onclick = () => {
     const st = state();

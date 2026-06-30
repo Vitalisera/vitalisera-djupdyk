@@ -197,6 +197,16 @@
     state.cardsRevealed += 1;
   }
 
+  // Par-kort: extra utmanande, intima frågor riktade till varandra. Dras bara i
+  // sällskapsläget "par" (q + fördjupande följdfråga, som ett deck-kort men eget tema).
+  function drawParCard(state) {
+    const list = DECK.parCards || [];
+    if (!list.length) { drawCard(state); return; }
+    const r = list[Math.floor(Math.random() * list.length)];
+    state.card = { text: r.q, followupText: r.f, levelId: state.levelId, source: 'parcard', followup: null };
+    state.cardsRevealed += 1;
+  }
+
   // Bläckbild: en symmetrisk bild som alla tolkar tillsammans. Fröet ger samma
   // bild på alla enheter; varje spelare räknar själv ut sin egen fråga.
   function drawInkblot(state) {
@@ -303,6 +313,9 @@
       return;
     }
     if (!prevSpecial) {
+      // Par: de extra utmanande par-korten får stor plats när sällskapet är två.
+      // Eget slumptal så de inte skuggar de kumulativa special-banden nedan.
+      if (state.mode === 'par' && (DECK.parCards || []).length && Math.random() < 0.30) { drawParCard(state); return; }
       if ((DECK.reflections || []).length && roll < 0.09) { drawReflection(state); return; }
       if (DECK.inkblot && roll < 0.15) { drawInkblot(state); return; }
       if ((DECK.strommar || []).length && li >= 2 && connectedCount(state) >= 2 && roll < 0.25) { drawStrom(state); return; }
@@ -435,6 +448,12 @@
         drawParable(state);
         break;
       }
+      case 'parcard': {
+        if (state.phase !== 'playing' || !canControl(state, actorId)) break;
+        pushHistory(state);
+        drawParCard(state);
+        break;
+      }
       case 'inkblot': {
         if (state.phase !== 'playing' || !canControl(state, actorId)) break;
         pushHistory(state);
@@ -450,6 +469,7 @@
         if (src === 'reflection') drawReflection(state);
         else if (src === 'quote') drawQuote(state);
         else if (src === 'parable') drawParable(state);
+        else if (src === 'parcard') drawParCard(state);
         else if (src === 'inkblot') drawInkblot(state);
         else if (src === 'strom') drawStrom(state);
         else if (src === 'silence') drawSilence(state);

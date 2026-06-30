@@ -1334,6 +1334,7 @@ input:focus { border-color: var(--depth); box-shadow: 0 0 0 3px color-mix(in srg
         <button id="btn-reflection" class="btn btn-glass full">✨ Dra en spegling</button>
         <button id="btn-quote" class="btn btn-glass full">💬 Dra ett diskussionskort</button>
         <button id="btn-parable" class="btn btn-glass full">🪷 Dra en visdomsberättelse</button>
+        <button id="btn-parcard" class="btn btn-glass full">💞 Dra ett par-kort</button>
         <button id="btn-inkblot" class="btn btn-glass full">✦ Visa en bläckbild</button>
         <button id="btn-strom" class="btn btn-glass full">🌊 Para ihop två</button>
         <button id="btn-silence" class="btn btn-glass full">🤫 Bjud in tystnad</button>
@@ -1347,7 +1348,7 @@ input:focus { border-color: var(--depth); box-shadow: 0 0 0 3px color-mix(in srg
       </div>
       <button id="btn-close-sheet" class="btn btn-primary full">Klar</button>
       <a class="site-link" href="https://vitalisera.se" target="_blank" rel="noopener">Mer från Vitalisera · vitalisera.se ↗</a>
-      <div style="text-align:center;font-size:0.68rem;color:var(--ink-dim);opacity:0.65;margin-top:6px;letter-spacing:0.04em;">version 2026-06-29 21:12</div>
+      <div style="text-align:center;font-size:0.68rem;color:var(--ink-dim);opacity:0.65;margin-top:6px;letter-spacing:0.04em;">version 2026-06-30 16:48</div>
     </div>
   </div>
 
@@ -2341,6 +2342,32 @@ const DECK = {
     { q: 'En vis man fick en sten av en vandrare som bett honom om mat. Det var en diamant, funnen vid vägkanten. Den vise tackade och gav den vidare till en tiggare, som häpen tog emot förmögenheten och gick. Några dagar senare kom tiggaren tillbaka, lämnade tillbaka diamanten och sa: "Ge mig hellre det inom dig som gjorde att du kunde skänka bort denna sten så lätt."', by: 'Berättelse, östlig tradition', f: 'Vad är det inom en människa som gör att hon kan släppa just det andra håller hårdast om? Är det fattigdom eller rikedom att kunna ge bort en skatt utan att tveka? Och vad i ditt liv håller du i så hårt att handen för länge sedan domnat?' },
     { q: 'En vis man liknade livet vid musik. När vi lyssnar på ett stycke skyndar vi oss inte mot slutackordet. Då vore ju de bästa dirigenterna de som spelade snabbast. Meningen med musiken finns inte i slutet, utan i varje ton medan den klingar. Ändå lär vi oss att skynda genom skolan mot examen, genom arbetet mot pensionen, som om livet vore en kapplöpning mot en mållinje snarare än en sång att sjunga hela vägen.', by: 'Liknelse, ofta berättad av Alan Watts', f: 'Lever vi som om livet vore en resa mot ett mål, eller en sång att sjunga medan den pågår? Vad skyndar vi oss förbi just nu på väg mot "sedan"? Och hur skulle den här dagen se ut om dess mening låg i tonen och inte i slutackordet?' },
   ],
+  // Par-kort: extra utmanande, intima frågor riktade till varandra. Dras bara när
+  // sällskapsläget är "par". q = frågan, f = en fördjupande följdfråga (samma stil som deck).
+  parCards: [
+    { q: 'När kände du dig senast riktigt stolt över mig, och sa du det till mig?', f: 'Om du lät bli att säga det, vad var det som hindrade dig?' },
+    { q: 'Vad önskar du att vi gjorde mer av, bara vi två?', f: 'Vad brukar vi låta komma i vägen för det?' },
+    { q: 'Vilken sida av mig tror du att bara du känner till?', f: 'Är det en sida du önskar att fler fick se, eller vill du ha den för dig själv?' },
+    { q: 'När var du senast rädd att förlora oss?', f: 'Vad gjorde du med den rädslan, sa du något eller bar du den ensam?' },
+    { q: 'Vad är det svåraste du velat säga mig men inte riktigt vågat?', f: 'Vad tror du skulle hända om du sa det nu?' },
+    { q: 'På vilket sätt har jag förändrat dig?', f: 'Är det en förändring du är tacksam för, eller saknar du något av den du var förut?' },
+    { q: 'Vad i vår vardag tror du att du tar för givet?', f: 'När märkte du senast att du gjorde det?' },
+    { q: 'Vilket ögonblick fick dig att veta att det var jag?', f: 'Visste jag om hur stort det ögonblicket var för dig?' },
+    { q: 'Finns det en dröm du lagt åt sidan för vår skull?', f: 'Är det en dröm vi skulle kunna väcka till liv igen tillsammans?' },
+    { q: 'Vad gör jag som får dig att känna dig älskad, helt utan ord?', f: 'Gör jag det tillräckligt ofta?' },
+    { q: 'Vad är du mest rädd att jag egentligen tänker om dig?', f: 'Vad skulle du behöva höra från mig just nu?' },
+    { q: 'När under det senaste året kände du oss som allra närmast?', f: 'Vad var det som gjorde just den stunden så nära?' },
+    { q: 'Vad skulle du vilja att vi vågade prata mer om?', f: 'Vad är det som gör att vi väjer för det?' },
+    { q: 'Vilket av våra gräl lärde dig mest om mig?', f: 'Lärde det dig något om dig själv också?' },
+    { q: 'Vad längtar du efter från mig som du sällan ber om?', f: 'Vad hindrar dig från att be om det?' },
+    { q: 'Hur ser du oss framför dig om tio år?', f: 'Vad behöver vi göra redan idag för att den bilden ska bli sann?' },
+    { q: 'Vad gör jag som du innerst inne älskar men aldrig sagt högt?', f: 'Varför har du behållit det för dig själv?' },
+    { q: 'När var du senast helt ärlig mot mig om något som skavde?', f: 'Blev det lättare eller svårare mellan oss efteråt?' },
+    { q: 'Vad är det som får dig att fortfarande välja mig, varje dag?', f: 'Tror du att jag vet det?' },
+    { q: 'Vad är en sak du vill att vi lovar varandra ikväll?', f: 'Vad skulle krävas av oss båda för att verkligen hålla det?' },
+    { q: 'Vilken version av dig själv blir du när du är med mig?', f: 'Tycker du om den versionen?' },
+    { q: 'Vad är du tacksammast för i det vi har byggt tillsammans?', f: 'Har jag fått veta hur mycket det betyder för dig?' },
+  ],
 };
 if (typeof window !== 'undefined') window.DECK = DECK;
 else if (typeof globalThis !== 'undefined') globalThis.DECK = DECK; // för servern (Cloudflare Worker)
@@ -2547,6 +2574,16 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
     state.cardsRevealed += 1;
   }
 
+  // Par-kort: extra utmanande, intima frågor riktade till varandra. Dras bara i
+  // sällskapsläget "par" (q + fördjupande följdfråga, som ett deck-kort men eget tema).
+  function drawParCard(state) {
+    const list = DECK.parCards || [];
+    if (!list.length) { drawCard(state); return; }
+    const r = list[Math.floor(Math.random() * list.length)];
+    state.card = { text: r.q, followupText: r.f, levelId: state.levelId, source: 'parcard', followup: null };
+    state.cardsRevealed += 1;
+  }
+
   // Bläckbild: en symmetrisk bild som alla tolkar tillsammans. Fröet ger samma
   // bild på alla enheter; varje spelare räknar själv ut sin egen fråga.
   function drawInkblot(state) {
@@ -2653,6 +2690,9 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
       return;
     }
     if (!prevSpecial) {
+      // Par: de extra utmanande par-korten får stor plats när sällskapet är två.
+      // Eget slumptal så de inte skuggar de kumulativa special-banden nedan.
+      if (state.mode === 'par' && (DECK.parCards || []).length && Math.random() < 0.30) { drawParCard(state); return; }
       if ((DECK.reflections || []).length && roll < 0.09) { drawReflection(state); return; }
       if (DECK.inkblot && roll < 0.15) { drawInkblot(state); return; }
       if ((DECK.strommar || []).length && li >= 2 && connectedCount(state) >= 2 && roll < 0.25) { drawStrom(state); return; }
@@ -2785,6 +2825,12 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
         drawParable(state);
         break;
       }
+      case 'parcard': {
+        if (state.phase !== 'playing' || !canControl(state, actorId)) break;
+        pushHistory(state);
+        drawParCard(state);
+        break;
+      }
       case 'inkblot': {
         if (state.phase !== 'playing' || !canControl(state, actorId)) break;
         pushHistory(state);
@@ -2800,6 +2846,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
         if (src === 'reflection') drawReflection(state);
         else if (src === 'quote') drawQuote(state);
         else if (src === 'parable') drawParable(state);
+        else if (src === 'parcard') drawParCard(state);
         else if (src === 'inkblot') drawInkblot(state);
         else if (src === 'strom') drawStrom(state);
         else if (src === 'silence') drawSilence(state);
@@ -3726,7 +3773,8 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
     const isAscent = src === 'ascent';
     const isQuote = src === 'quote';
     const isParable = src === 'parable';
-    const isSpecial = isClosing || isReflection || isInkblot || isStrom || isSilence || isWhirl || isAscent || isQuote || isParable;
+    const isParCard = src === 'parcard';
+    const isSpecial = isClosing || isReflection || isInkblot || isStrom || isSilence || isWhirl || isAscent || isQuote || isParable || isParCard;
     const noFollowup = isInkblot || isStrom || isSilence || isWhirl || isAscent;
     card.classList.toggle('closing', !!isClosing);
     card.classList.toggle('reflection', !!isReflection);
@@ -3737,6 +3785,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
     card.classList.toggle('ascent', !!isAscent);
     card.classList.toggle('quote', !!isQuote);
     card.classList.toggle('parable', !!isParable);
+    card.classList.toggle('parcard', !!isParCard);
     if (s.card) {
       // Bläckbild: alla ser samma bild + gemensam fråga, plus en egen fråga
       $('card-blot').hidden = !isInkblot;
@@ -3767,6 +3816,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
         : isAscent ? '🫧 Uppstigning'
         : isQuote ? '💬 Diskussion'
         : isParable ? '🪷 Visdomsberättelse'
+        : isParCard ? '💞 För er två'
         : `${lvl.name} · ${lvl.depth}`;
       $('card-text').textContent = s.card.text;
       $('card-index').textContent = isAscent && s.ascent
@@ -4331,6 +4381,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
     $('btn-reflection').hidden = !canDrive;
     $('btn-quote').hidden = !canDrive;
     $('btn-parable').hidden = !canDrive;
+    $('btn-parcard').hidden = !canDrive || s.mode !== 'par';   // par-kort bara i parläge
     $('btn-inkblot').hidden = !canDrive;
     $('btn-strom').hidden = !canDrive || s.players.filter((p) => p.connected).length < 2; // kräver två
     $('btn-silence').hidden = !canDrive;
@@ -4352,6 +4403,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
   $('btn-reflection').onclick = () => { Net.dispatch({ type: 'reflection' }); closeSheet(); };
   $('btn-quote').onclick = () => { Net.dispatch({ type: 'quote' }); closeSheet(); };
   $('btn-parable').onclick = () => { Net.dispatch({ type: 'parable' }); closeSheet(); };
+  $('btn-parcard').onclick = () => { Net.dispatch({ type: 'parcard' }); closeSheet(); };
   $('btn-inkblot').onclick = () => { Net.dispatch({ type: 'inkblot' }); closeSheet(); };
   $('btn-strom').onclick = () => {
     const st = state();

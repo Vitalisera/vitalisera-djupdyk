@@ -781,6 +781,32 @@ const DECK = {
     { q: 'En vis man fick en sten av en vandrare som bett honom om mat. Det var en diamant, funnen vid vägkanten. Den vise tackade och gav den vidare till en tiggare, som häpen tog emot förmögenheten och gick. Några dagar senare kom tiggaren tillbaka, lämnade tillbaka diamanten och sa: "Ge mig hellre det inom dig som gjorde att du kunde skänka bort denna sten så lätt."', by: 'Berättelse, östlig tradition', f: 'Vad är det inom en människa som gör att hon kan släppa just det andra håller hårdast om? Är det fattigdom eller rikedom att kunna ge bort en skatt utan att tveka? Och vad i ditt liv håller du i så hårt att handen för länge sedan domnat?' },
     { q: 'En vis man liknade livet vid musik. När vi lyssnar på ett stycke skyndar vi oss inte mot slutackordet. Då vore ju de bästa dirigenterna de som spelade snabbast. Meningen med musiken finns inte i slutet, utan i varje ton medan den klingar. Ändå lär vi oss att skynda genom skolan mot examen, genom arbetet mot pensionen, som om livet vore en kapplöpning mot en mållinje snarare än en sång att sjunga hela vägen.', by: 'Liknelse, ofta berättad av Alan Watts', f: 'Lever vi som om livet vore en resa mot ett mål, eller en sång att sjunga medan den pågår? Vad skyndar vi oss förbi just nu på väg mot "sedan"? Och hur skulle den här dagen se ut om dess mening låg i tonen och inte i slutackordet?' },
   ],
+  // Par-kort: extra utmanande, intima frågor riktade till varandra. Dras bara när
+  // sällskapsläget är "par". q = frågan, f = en fördjupande följdfråga (samma stil som deck).
+  parCards: [
+    { q: 'När kände du dig senast riktigt stolt över mig, och sa du det till mig?', f: 'Om du lät bli att säga det, vad var det som hindrade dig?' },
+    { q: 'Vad önskar du att vi gjorde mer av, bara vi två?', f: 'Vad brukar vi låta komma i vägen för det?' },
+    { q: 'Vilken sida av mig tror du att bara du känner till?', f: 'Är det en sida du önskar att fler fick se, eller vill du ha den för dig själv?' },
+    { q: 'När var du senast rädd att förlora oss?', f: 'Vad gjorde du med den rädslan, sa du något eller bar du den ensam?' },
+    { q: 'Vad är det svåraste du velat säga mig men inte riktigt vågat?', f: 'Vad tror du skulle hända om du sa det nu?' },
+    { q: 'På vilket sätt har jag förändrat dig?', f: 'Är det en förändring du är tacksam för, eller saknar du något av den du var förut?' },
+    { q: 'Vad i vår vardag tror du att du tar för givet?', f: 'När märkte du senast att du gjorde det?' },
+    { q: 'Vilket ögonblick fick dig att veta att det var jag?', f: 'Visste jag om hur stort det ögonblicket var för dig?' },
+    { q: 'Finns det en dröm du lagt åt sidan för vår skull?', f: 'Är det en dröm vi skulle kunna väcka till liv igen tillsammans?' },
+    { q: 'Vad gör jag som får dig att känna dig älskad, helt utan ord?', f: 'Gör jag det tillräckligt ofta?' },
+    { q: 'Vad är du mest rädd att jag egentligen tänker om dig?', f: 'Vad skulle du behöva höra från mig just nu?' },
+    { q: 'När under det senaste året kände du oss som allra närmast?', f: 'Vad var det som gjorde just den stunden så nära?' },
+    { q: 'Vad skulle du vilja att vi vågade prata mer om?', f: 'Vad är det som gör att vi väjer för det?' },
+    { q: 'Vilket av våra gräl lärde dig mest om mig?', f: 'Lärde det dig något om dig själv också?' },
+    { q: 'Vad längtar du efter från mig som du sällan ber om?', f: 'Vad hindrar dig från att be om det?' },
+    { q: 'Hur ser du oss framför dig om tio år?', f: 'Vad behöver vi göra redan idag för att den bilden ska bli sann?' },
+    { q: 'Vad gör jag som du innerst inne älskar men aldrig sagt högt?', f: 'Varför har du behållit det för dig själv?' },
+    { q: 'När var du senast helt ärlig mot mig om något som skavde?', f: 'Blev det lättare eller svårare mellan oss efteråt?' },
+    { q: 'Vad är det som får dig att fortfarande välja mig, varje dag?', f: 'Tror du att jag vet det?' },
+    { q: 'Vad är en sak du vill att vi lovar varandra ikväll?', f: 'Vad skulle krävas av oss båda för att verkligen hålla det?' },
+    { q: 'Vilken version av dig själv blir du när du är med mig?', f: 'Tycker du om den versionen?' },
+    { q: 'Vad är du tacksammast för i det vi har byggt tillsammans?', f: 'Har jag fått veta hur mycket det betyder för dig?' },
+  ],
 };
 if (typeof window !== 'undefined') window.DECK = DECK;
 else if (typeof globalThis !== 'undefined') globalThis.DECK = DECK; // för servern (Cloudflare Worker)
