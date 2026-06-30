@@ -20,6 +20,17 @@
   // Serverns adress. Kan överstyras via window.VD_WS_URL.
   const WS_BASE = String(global.VD_WS_URL || 'wss://djupdyk-room.vitalisera.workers.dev').replace(/\/+$/, '');
 
+  // Fånga marknadsförings-parametrar (utm_*) DIREKT vid laddning, innան appen
+  // hinner städa URL:en (history.replaceState). Bara för dashboarden, kort sträng.
+  const INITIAL_UTM = (function () {
+    try {
+      const p = new URLSearchParams(global.location && global.location.search || '');
+      const parts = [];
+      for (const [k, v] of p.entries()) { if (/^utm_/i.test(k) && v) parts.push(k.replace(/^utm_/i, '') + '=' + v); }
+      return parts.join(' ').slice(0, 200);
+    } catch (_) { return ''; }
+  })();
+
   const Net = {
     role: null,
     code: null,
@@ -45,6 +56,7 @@
     },
     loadSession() { try { return JSON.parse(localStorage.getItem('vd_session')); } catch (_) { return null; } },
     clearSession() { try { localStorage.removeItem('vd_session'); } catch (_) {} },
+    _readUtm() { return INITIAL_UTM || ''; },
     _persistName() { try { return JSON.parse(localStorage.getItem('vd_name')); } catch (_) { return null; } },
     saveName(name) { try { localStorage.setItem('vd_name', JSON.stringify(name)); } catch (_) {} },
     _myPlayerId() {
@@ -64,6 +76,7 @@
       this.local = false;   // säkerställ att ett ev. lokalt läge inte hänger kvar
       this.role = role;
       this.code = code;
+      this._utm = this._readUtm();   // marknadsföringsparametrar ur länken (för dashboarden)
       this.me = { id: this._myPlayerId(), name: name || 'Gäst' };
       this.saveName(this.me.name);
       this._alive = true;
@@ -78,7 +91,8 @@
       try { if (this._ws) { this._ws.onclose = null; this._ws.onerror = null; this._ws.close(); } } catch (_) {}
       const url = WS_BASE + '/room/' + encodeURIComponent(this.code)
         + '?id=' + encodeURIComponent(this.me.id)
-        + '&name=' + encodeURIComponent(this.me.name);
+        + '&name=' + encodeURIComponent(this.me.name)
+        + (this._utm ? '&utm=' + encodeURIComponent(this._utm) : '');
       let ws;
       try { ws = new WebSocket(url); } catch (_) { this._scheduleRetry(); return; }
       this._ws = ws;

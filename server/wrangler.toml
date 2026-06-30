@@ -12,6 +12,15 @@ compatibility_date = "2025-06-01"
 name = "ROOM"
 class_name = "Room"
 
+# Singleton-register över aktiva rum (för användnings-dashboarden).
+[[durable_objects.bindings]]
+name = "REGISTRY"
+class_name = "Registry"
+
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["Room"]
+
+[[migrations]]
+tag = "v2"
+new_sqlite_classes = ["Registry"]
