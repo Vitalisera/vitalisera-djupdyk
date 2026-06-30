@@ -60,12 +60,16 @@ export class Room {
     this.code = null;
     this.meta = {};        // playerId -> { ip, country, city, region, utm } (EJ del av spel-staten, broadcastas ej)
     this.created = null;
+    this.counted = {};     // playerId -> true: spelare vi redan räknat (mot dubbelräkning vid återanslutning)
+    this._statSent = false;
     this._lastReport = 0;
     this.ctx.blockConcurrencyWhile(async () => {
       this.game = (await this.ctx.storage.get('game')) || null;
       this.code = (await this.ctx.storage.get('code')) || null;
       this.meta = (await this.ctx.storage.get('meta')) || {};
       this.created = (await this.ctx.storage.get('created')) || null;
+      this.counted = (await this.ctx.storage.get('counted')) || {};
+      this._statSent = (await this.ctx.storage.get('statSent')) || false;
     });
   }
 
@@ -93,15 +97,29 @@ export class Room {
     this.ctx.acceptWebSocket(server, [playerId]);
     server.serializeAttachment({ playerId, name });
 
-    if (!this.game) { this.game = Game.create(code, playerId); this.code = code; this.created = Date.now(); }
+    const isNewRoom = !this.game;
+    if (isNewRoom) { this.game = Game.create(code, playerId); this.code = code; this.created = Date.now(); }
     Game.addPlayer(this.game, { id: playerId, name });
     if (this.game.phase === 'playing' && !this.game.turnId) this.game.turnId = playerId;
+
+    // Långsiktig statistik: räkna ett nytt dyk (en gång per rum) och varje unik dykare.
+    const ev = {};
+    if (isNewRoom && !this._statSent) { ev.dyk = 1; this._statSent = true; }
+    if (!this.counted[playerId]) { this.counted[playerId] = true; ev.join = 1; ev.country = this.meta[playerId].country || ''; ev.utm = this.meta[playerId].utm || ''; }
 
     await this.persist();
     this.broadcast();
     await this.report();
+    if (ev.dyk || ev.join) await this.stat(ev);
 
     return new Response(null, { status: 101, webSocket: client });
+  }
+
+  async stat(ev) {
+    try {
+      const reg = this.env.REGISTRY.get(this.env.REGISTRY.idFromName('global'));
+      await reg.fetch(new Request('https://reg/stat', { method: 'POST', body: JSON.stringify(ev) }));
+    } catch (_) {}
   }
 
   async webSocketMessage(ws, raw) {
@@ -191,6 +209,8 @@ export class Room {
       if (this.code) await this.ctx.storage.put('code', this.code);
       await this.ctx.storage.put('meta', this.meta);
       if (this.created) await this.ctx.storage.put('created', this.created);
+      await this.ctx.storage.put('counted', this.counted);
+      await this.ctx.storage.put('statSent', this._statSent);
     } catch (_) {}
   }
 }
@@ -200,8 +220,14 @@ export class Registry {
   constructor(state) {
     this.ctx = state;
     this.rooms = {};
-    this.ctx.blockConcurrencyWhile(async () => { this.rooms = (await this.ctx.storage.get('rooms')) || {}; });
+    this.stats = null;   // långsiktiga totaler
+    this.ctx.blockConcurrencyWhile(async () => {
+      this.rooms = (await this.ctx.storage.get('rooms')) || {};
+      this.stats = (await this.ctx.storage.get('stats')) || { dyk: 0, joins: 0, peak: 0, since: Date.now(), byDay: {}, byCountry: {}, byUtm: {} };
+    });
   }
+
+  day() { try { return new Date(Date.now()).toISOString().slice(0, 10); } catch (_) { return 'okänt'; } }
 
   prune() {
     const now = Date.now();
@@ -214,6 +240,22 @@ export class Registry {
 
   async fetch(request) {
     const url = new URL(request.url);
+    if (url.pathname.endsWith('/stat') && request.method === 'POST') {
+      let ev = {};
+      try { ev = await request.json(); } catch (_) {}
+      const s = this.stats; const d = this.day();
+      if (ev.dyk) s.dyk += ev.dyk;
+      if (ev.join) {
+        s.joins += ev.join;
+        s.byDay[d] = (s.byDay[d] || 0) + ev.join;
+        if (ev.country) s.byCountry[ev.country] = (s.byCountry[ev.country] || 0) + 1;
+        const src = (ev.utm || '').match(/source=([^\s]+)/);
+        const key = src ? src[1] : (ev.utm ? 'övrigt' : 'direkt');
+        s.byUtm[key] = (s.byUtm[key] || 0) + 1;
+      }
+      await this.ctx.storage.put('stats', s);
+      return new Response('ok');
+    }
     if (url.pathname.endsWith('/update') && request.method === 'POST') {
       let b = {};
       try { b = await request.json(); } catch (_) {}
@@ -222,23 +264,46 @@ export class Registry {
         else if (b.summary) this.rooms[b.code] = b.summary;
       }
       this.prune();
+      const active = Object.keys(this.rooms).length;
+      if (active > (this.stats.peak || 0)) { this.stats.peak = active; await this.ctx.storage.put('stats', this.stats); }
       await this.ctx.storage.put('rooms', this.rooms);
       return new Response('ok');
     }
     this.prune();
     await this.ctx.storage.put('rooms', this.rooms);
-    return new Response(renderDashboard(this.rooms), { headers: { 'content-type': 'text/html; charset=utf-8' } });
+    return new Response(renderDashboard(this.rooms, this.stats), { headers: { 'content-type': 'text/html; charset=utf-8' } });
   }
 }
 
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
 
-function renderDashboard(rooms) {
+function renderDashboard(rooms, stats) {
   const list = Object.values(rooms || {}).sort((a, b) => (b.updated || 0) - (a.updated || 0));
   const totalPlayers = list.reduce((n, r) => n + (r.count || 0), 0);
   const LV = { ytan: 'Ytan', grundvatten: 'Grundvatten', revet: 'Revet', djupvatten: 'Djupvatten', djuphavet: 'Djuphavet' };
   const now = Date.now();
   const ago = (t) => { const s = Math.max(0, Math.round((now - (t || now)) / 1000)); return s < 60 ? s + ' s' : Math.round(s / 60) + ' min'; };
+  // Långsiktiga totaler.
+  const s = stats || { dyk: 0, joins: 0, peak: 0, since: now, byDay: {}, byCountry: {}, byUtm: {} };
+  const topList = (obj, n) => Object.entries(obj || {}).sort((a, b) => b[1] - a[1]).slice(0, n);
+  const days = Object.keys(s.byDay || {}).sort().slice(-14);
+  const maxDay = Math.max(1, ...days.map((d) => s.byDay[d] || 0));
+  const sinceStr = (() => { try { return new Date(s.since || now).toISOString().slice(0, 10); } catch (_) { return ''; } })();
+  const bars = days.map((d) => `<div class="bar" title="${esc(d)}: ${s.byDay[d]}"><span style="height:${Math.round((s.byDay[d] || 0) / maxDay * 100)}%"></span><em>${esc(d.slice(5))}</em></div>`).join('');
+  const countryRows = topList(s.byCountry, 8).map(([c, n]) => `<div class="kv"><span>${esc(c)}</span><b>${n}</b></div>`).join('') || '<span class="meta">–</span>';
+  const utmRows = topList(s.byUtm, 8).map(([c, n]) => `<div class="kv"><span>${esc(c)}</span><b>${n}</b></div>`).join('') || '<span class="meta">–</span>';
+  const totalsBlock = `
+  <h2>Totalt sedan ${esc(sinceStr)}</h2>
+  <div class="stats">
+    <div class="stat"><div class="n">${s.dyk || 0}</div><div class="l">dyk startade</div></div>
+    <div class="stat"><div class="n">${s.joins || 0}</div><div class="l">anslutningar totalt</div></div>
+    <div class="stat"><div class="n">${s.peak || 0}</div><div class="l">flest samtidiga dyk</div></div>
+  </div>
+  <div class="cols">
+    <div class="panel"><h3>Dyk per dag (senaste 14)</h3><div class="chart">${bars || '<span class="meta">Ingen data än</span>'}</div></div>
+    <div class="panel"><h3>Per land</h3>${countryRows}</div>
+    <div class="panel"><h3>Per UTM-källa</h3>${utmRows}</div>
+  </div>`;
   const rows = list.map((r) => {
     const players = (r.players || []).map((p) => {
       const loc = [p.city, p.country].filter(Boolean).join(', ');
@@ -277,6 +342,17 @@ function renderDashboard(rooms) {
   .pill.duet{background:rgba(255,180,200,.16);color:#ffb4c8}
   .empty{color:var(--dim);padding:40px;text-align:center}
   .foot{color:var(--dim);font-size:.78rem;margin-top:18px}
+  h2{font-size:1.15rem;margin:30px 0 12px;color:var(--soft)}
+  h3{font-size:.82rem;text-transform:uppercase;letter-spacing:.06em;color:var(--soft);margin:0 0 10px}
+  .cols{display:grid;grid-template-columns:2fr 1fr 1fr;gap:14px}
+  @media(max-width:760px){.cols{grid-template-columns:1fr}}
+  .panel{background:var(--card);border-radius:14px;padding:16px 18px}
+  .chart{display:flex;align-items:flex-end;gap:5px;height:120px}
+  .bar{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;gap:5px}
+  .bar span{width:100%;min-height:2px;background:linear-gradient(180deg,var(--acc),#2c8aa0);border-radius:4px 4px 0 0}
+  .bar em{font-size:.6rem;color:var(--dim);font-style:normal}
+  .kv{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+  .kv b{color:var(--acc)}
 </style></head><body>
   <h1>Djupdyk · aktiva dyk</h1>
   <p class="sub">Live-översikt. Sidan uppdateras var 15:e sekund.</p>
@@ -285,6 +361,7 @@ function renderDashboard(rooms) {
     <div class="stat"><div class="n">${totalPlayers}</div><div class="l">dykare uppkopplade</div></div>
   </div>
   ${list.length ? `<table><thead><tr><th>Kod</th><th>Status</th><th>Djup</th><th>Läge</th><th>Antal</th><th>Dykare (plats · ip · utm)</th><th>Senast</th></tr></thead><tbody>${rows}</tbody></table>` : '<div class="empty">Inga aktiva dyk just nu.</div>'}
-  <p class="foot">Innehåller personuppgifter (namn, IP, plats). Behandla varsamt. Endast åtkomlig via den hemliga adressen.</p>
+  ${totalsBlock}
+  <p class="foot">Innehåller personuppgifter (namn, IP, plats). Behandla varsamt. Endast åtkomlig via den hemliga adressen. Totaler sparas, men ingen rad-historik per spelare.</p>
 </body></html>`;
 }
