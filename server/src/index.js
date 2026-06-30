@@ -31,12 +31,12 @@ export default {
     if (request.method === 'OPTIONS') return new Response(null, { headers: CORS });
 
     // Användnings-dashboard på en svårgissad URL.
-    const dm = url.pathname.match(/^\/dash\/([a-zA-Z0-9]+)\/?$/);
+    const dm = url.pathname.match(/^\/dash\/([a-zA-Z0-9]+)(\/reset)?\/?$/);
     if (dm) {
       const token = env.DASH_TOKEN || '';
       if (!token || dm[1] !== token) return new Response('Not found', { status: 404 });
       const reg = env.REGISTRY.get(env.REGISTRY.idFromName('global'));
-      return reg.fetch(new Request('https://reg/view'));
+      return reg.fetch(new Request(dm[2] ? 'https://reg/reset' : 'https://reg/view'));
     }
 
     const m = url.pathname.match(/^\/room\/([A-Za-z0-9]{1,12})\/?$/);
@@ -70,6 +70,7 @@ export class Room {
       this.created = (await this.ctx.storage.get('created')) || null;
       this.counted = (await this.ctx.storage.get('counted')) || {};
       this._statSent = (await this.ctx.storage.get('statSent')) || false;
+      this._playReported = (await this.ctx.storage.get('playReported')) || false;
     });
   }
 
@@ -130,10 +131,16 @@ export class Room {
     const actorId = att.playerId;
 
     if (msg.type === 'action' && msg.action) {
+      // Kort-engagemang: notera om det kort som lämnas behölls (Skicka vidare) eller byttes (Byt fråga).
+      const prev = this.game.card;
+      const t = msg.action.type;
       this.game = Game.apply(this.game, msg.action, actorId);
       await this.persist();
       this.broadcast();
       await this.report(true);   // throttlad: håller fas/djup uppdaterat
+      if (prev && prev.text && (t === 'next' || t === 'skip') && ['deck', 'quote', 'parable', 'parcard'].includes(prev.source)) {
+        await this.stat({ card: { text: prev.text.slice(0, 160), source: prev.source, kept: t === 'next' ? 1 : 0, skipped: t === 'skip' ? 1 : 0 } });
+      }
     } else if (msg.type === 'hello') {
       const p = this.game.players.find((x) => x.id === actorId);
       if (p && msg.name) {
@@ -162,9 +169,16 @@ export class Room {
     }
     await this.persist();
     this.broadcast();
-    // Rapportera: om ingen är kvar uppkopplad, ta bort rummet ur registret.
+    // Rapportera: om ingen är kvar uppkopplad, ta bort rummet ur registret och
+    // bokför dyk-längden (speltid) en gång.
     const anyOnline = this.ctx.getWebSockets().some((s) => s.readyState === WebSocket.OPEN);
-    await this.report(false, !anyOnline);
+    let played = 0;
+    if (!anyOnline && this.created && !this._playReported) {
+      played = Math.max(0, Date.now() - this.created);
+      this._playReported = true;
+      try { await this.ctx.storage.put('playReported', true); } catch (_) {}
+    }
+    await this.report(false, !anyOnline, played);
   }
 
   broadcast() {
@@ -193,12 +207,12 @@ export class Room {
     };
   }
 
-  async report(throttle, remove) {
+  async report(throttle, remove, played) {
     if (throttle && !remove && Date.now() - this._lastReport < 8000) return;
     this._lastReport = Date.now();
     try {
       const reg = this.env.REGISTRY.get(this.env.REGISTRY.idFromName('global'));
-      const body = remove ? { code: this.code, remove: true } : { code: this.code, summary: this.summary() };
+      const body = remove ? { code: this.code, remove: true, played: played || 0 } : { code: this.code, summary: this.summary() };
       await reg.fetch(new Request('https://reg/update', { method: 'POST', body: JSON.stringify(body) }));
     } catch (_) {}
   }
@@ -223,18 +237,27 @@ export class Registry {
     this.stats = null;   // långsiktiga totaler
     this.ctx.blockConcurrencyWhile(async () => {
       this.rooms = (await this.ctx.storage.get('rooms')) || {};
-      this.stats = (await this.ctx.storage.get('stats')) || { dyk: 0, joins: 0, peak: 0, since: Date.now(), byDay: {}, byCountry: {}, byUtm: {} };
+      this.stats = (await this.ctx.storage.get('stats')) || this.freshStats();
+      // Migrera in ev. saknade fält i en äldre stats-post.
+      const f = this.freshStats(); for (const k in f) if (this.stats[k] == null) this.stats[k] = f[k];
     });
   }
 
-  day() { try { return new Date(Date.now()).toISOString().slice(0, 10); } catch (_) { return 'okänt'; } }
+  freshStats() { return { dyk: 0, joins: 0, peak: 0, since: Date.now(), byDay: {}, byCountry: {}, byUtm: {}, playMs: 0, playDay: {}, playWeek: {}, playMonth: {}, playYear: {}, cards: {} }; }
+  day(t) { try { return new Date(t || Date.now()).toISOString().slice(0, 10); } catch (_) { return 'okänt'; } }
+  weekKey(t) { const d = new Date(t || Date.now()); const dt = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())); const day = dt.getUTCDay() || 7; dt.setUTCDate(dt.getUTCDate() + 4 - day); const ys = new Date(Date.UTC(dt.getUTCFullYear(), 0, 1)); const wk = Math.ceil((((dt - ys) / 86400000) + 1) / 7); return dt.getUTCFullYear() + '-v' + String(wk).padStart(2, '0'); }
+  accruePlay(ms, t) { const s = this.stats; if (!(ms > 0)) return; s.playMs += ms; const d = this.day(t), w = this.weekKey(t), mo = this.day(t).slice(0, 7), y = this.day(t).slice(0, 4); s.playDay[d] = (s.playDay[d] || 0) + ms; s.playWeek[w] = (s.playWeek[w] || 0) + ms; s.playMonth[mo] = (s.playMonth[mo] || 0) + ms; s.playYear[y] = (s.playYear[y] || 0) + ms; }
 
   prune() {
     const now = Date.now();
     for (const k of Object.keys(this.rooms)) {
       const r = this.rooms[k];
-      // Ta bort rum som inte rapporterat på länge (säkerhetsnät mot eviction).
-      if (!r || now - (r.updated || 0) > 15 * 60 * 1000 || (r.count || 0) <= 0) delete this.rooms[k];
+      if (!r || now - (r.updated || 0) > 15 * 60 * 1000 || (r.count || 0) <= 0) {
+        // Eviction-fall (rummet hann aldrig rapportera ren stängning): bokför den
+        // kända aktiva tiden (created → senaste rapport) innan vi släpper rummet.
+        if (r && r.created && r.updated > r.created) this.accruePlay(r.updated - r.created, r.updated);
+        delete this.rooms[k];
+      }
     }
   }
 
@@ -253,6 +276,10 @@ export class Registry {
         const key = src ? src[1] : (ev.utm ? 'övrigt' : 'direkt');
         s.byUtm[key] = (s.byUtm[key] || 0) + 1;
       }
+      if (ev.card && ev.card.text) {
+        const c = s.cards[ev.card.text] || (s.cards[ev.card.text] = { kept: 0, skipped: 0, source: ev.card.source || '' });
+        c.kept += ev.card.kept || 0; c.skipped += ev.card.skipped || 0;
+      }
       await this.ctx.storage.put('stats', s);
       return new Response('ok');
     }
@@ -260,17 +287,27 @@ export class Registry {
       let b = {};
       try { b = await request.json(); } catch (_) {}
       if (b && b.code) {
-        if (b.remove || (b.summary && (b.summary.count || 0) <= 0)) delete this.rooms[b.code];
-        else if (b.summary) this.rooms[b.code] = b.summary;
+        if (b.remove || (b.summary && (b.summary.count || 0) <= 0)) {
+          if (b.played) this.accruePlay(b.played, Date.now());   // dyk-längd när rummet stänger rent
+          delete this.rooms[b.code];
+        } else if (b.summary) this.rooms[b.code] = b.summary;
       }
       this.prune();
       const active = Object.keys(this.rooms).length;
-      if (active > (this.stats.peak || 0)) { this.stats.peak = active; await this.ctx.storage.put('stats', this.stats); }
+      if (active > (this.stats.peak || 0)) this.stats.peak = active;
+      await this.ctx.storage.put('stats', this.stats);
       await this.ctx.storage.put('rooms', this.rooms);
       return new Response('ok');
     }
+    if (url.pathname.endsWith('/reset')) {
+      this.rooms = {}; this.stats = this.freshStats();
+      await this.ctx.storage.put('rooms', this.rooms);
+      await this.ctx.storage.put('stats', this.stats);
+      return new Response('nollställt', { headers: { 'content-type': 'text/plain; charset=utf-8' } });
+    }
     this.prune();
     await this.ctx.storage.put('rooms', this.rooms);
+    await this.ctx.storage.put('stats', this.stats);
     return new Response(renderDashboard(this.rooms, this.stats), { headers: { 'content-type': 'text/html; charset=utf-8' } });
   }
 }
@@ -292,6 +329,16 @@ function renderDashboard(rooms, stats) {
   const bars = days.map((d) => `<div class="bar" title="${esc(d)}: ${s.byDay[d]}"><span style="height:${Math.round((s.byDay[d] || 0) / maxDay * 100)}%"></span><em>${esc(d.slice(5))}</em></div>`).join('');
   const countryRows = topList(s.byCountry, 8).map(([c, n]) => `<div class="kv"><span>${esc(c)}</span><b>${n}</b></div>`).join('') || '<span class="meta">–</span>';
   const utmRows = topList(s.byUtm, 8).map(([c, n]) => `<div class="kv"><span>${esc(c)}</span><b>${n}</b></div>`).join('') || '<span class="meta">–</span>';
+  // Speltid (dyk-minuter).
+  const fmtMin = (ms) => Math.round((ms || 0) / 60000) + ' min';
+  const fmtH = (ms) => { const m = Math.round((ms || 0) / 60000); return m >= 60 ? Math.floor(m / 60) + ' h ' + (m % 60) + ' min' : m + ' min'; };
+  const recent = (obj, n) => Object.keys(obj || {}).sort().slice(-n).map((k) => `<div class="kv"><span>${esc(k)}</span><b>${fmtMin(obj[k])}</b></div>`).join('') || '<span class="meta">–</span>';
+  // Kort-engagemang: lägst behållningsgrad (mest utbytta) först.
+  const cardArr = Object.entries(s.cards || {}).map(([text, c]) => ({ text, ...c, total: (c.kept || 0) + (c.skipped || 0) })).filter((c) => c.total >= 1);
+  const rate = (c) => c.total ? Math.round(c.kept / c.total * 100) : 0;
+  const mostSwapped = cardArr.slice().sort((a, b) => (b.skipped / b.total) - (a.skipped / a.total) || b.skipped - a.skipped).slice(0, 10);
+  const mostKept = cardArr.slice().sort((a, b) => rate(b) - rate(a) || b.total - a.total).slice(0, 10);
+  const cardRow = (c) => `<div class="card-row"><span class="ct">${esc(c.text)}</span><span class="cr">behålls ${rate(c)}% · ${c.kept}/${c.total}</span></div>`;
   const totalsBlock = `
   <h2>Totalt sedan ${esc(sinceStr)}</h2>
   <div class="stats">
@@ -303,6 +350,18 @@ function renderDashboard(rooms, stats) {
     <div class="panel"><h3>Dyk per dag (senaste 14)</h3><div class="chart">${bars || '<span class="meta">Ingen data än</span>'}</div></div>
     <div class="panel"><h3>Per land</h3>${countryRows}</div>
     <div class="panel"><h3>Per UTM-källa</h3>${utmRows}</div>
+  </div>
+  <h2>Speltid · totalt ${fmtH(s.playMs)}</h2>
+  <div class="cols4">
+    <div class="panel"><h3>Per dag</h3>${recent(s.playDay, 10)}</div>
+    <div class="panel"><h3>Per vecka</h3>${recent(s.playWeek, 8)}</div>
+    <div class="panel"><h3>Per månad</h3>${recent(s.playMonth, 12)}</div>
+    <div class="panel"><h3>Per år</h3>${recent(s.playYear, 5)}</div>
+  </div>
+  <h2>Kort-engagemang</h2>
+  <div class="cols2">
+    <div class="panel"><h3>Mest utbytta (svagast)</h3>${mostSwapped.length ? mostSwapped.map(cardRow).join('') : '<span class="meta">Ingen data än</span>'}</div>
+    <div class="panel"><h3>Mest behållna (starkast)</h3>${mostKept.length ? mostKept.map(cardRow).join('') : '<span class="meta">Ingen data än</span>'}</div>
   </div>`;
   const rows = list.map((r) => {
     const players = (r.players || []).map((p) => {
@@ -345,7 +404,11 @@ function renderDashboard(rooms, stats) {
   h2{font-size:1.15rem;margin:30px 0 12px;color:var(--soft)}
   h3{font-size:.82rem;text-transform:uppercase;letter-spacing:.06em;color:var(--soft);margin:0 0 10px}
   .cols{display:grid;grid-template-columns:2fr 1fr 1fr;gap:14px}
-  @media(max-width:760px){.cols{grid-template-columns:1fr}}
+  .cols4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  .cols2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:760px){.cols,.cols4,.cols2{grid-template-columns:1fr}}
+  .card-row{padding:7px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+  .card-row .ct{display:block;font-size:.86rem} .card-row .cr{font-size:.74rem;color:var(--acc)}
   .panel{background:var(--card);border-radius:14px;padding:16px 18px}
   .chart{display:flex;align-items:flex-end;gap:5px;height:120px}
   .bar{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;gap:5px}
