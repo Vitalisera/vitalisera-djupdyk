@@ -71,6 +71,7 @@ export class Room {
       this.counted = (await this.ctx.storage.get('counted')) || {};
       this._statSent = (await this.ctx.storage.get('statSent')) || false;
       this._playReported = (await this.ctx.storage.get('playReported')) || false;
+      this.mirrorState = (await this.ctx.storage.get('mirrorState')) || null;
     });
   }
 
@@ -89,7 +90,18 @@ export class Room {
       const pair = new WebSocketPair();
       this.ctx.acceptWebSocket(pair[1], ['display']);
       pair[1].serializeAttachment({ display: true });
-      try { pair[1].send(JSON.stringify({ type: 'state', state: this.game || null })); } catch (_) {}
+      // Prioritera ett riktigt server-spel; annars mirror-state (Runt bordet på TV).
+      try { pair[1].send(JSON.stringify({ type: 'state', state: this.game || this.mirrorState || null })); } catch (_) {}
+      return new Response(null, { status: 101, webSocket: pair[0] });
+    }
+
+    // "Runt bordet på TV": telefonen kör spelet lokalt och SPEGLAR sin state hit.
+    // Servern är bara ett relä mellan telefonen (mirror) och TV:n (display). Den kör
+    // ingen reducer, lägger inte till spelare, rapporterar inte till dashboarden.
+    if (url.searchParams.get('mirror') === '1') {
+      const pair = new WebSocketPair();
+      this.ctx.acceptWebSocket(pair[1], ['mirror']);
+      pair[1].serializeAttachment({ mirror: true });
       return new Response(null, { status: 101, webSocket: pair[0] });
     }
 
@@ -111,7 +123,12 @@ export class Room {
     this.ctx.acceptWebSocket(server, [playerId]);
     server.serializeAttachment({ playerId, name });
 
-    if (!this.game) { this.game = Game.create(code, playerId); this.code = code; this.created = Date.now(); }
+    if (!this.game) {
+      this.game = Game.create(code, playerId); this.code = code; this.created = Date.now();
+      // Ett riktigt spel tar över rummet: släng ev. gammal mirror-state (t.ex. en
+      // återvunnen rumskod som tidigare kört Runt bordet-spegling).
+      if (this.mirrorState) { this.mirrorState = null; try { this.ctx.storage.delete('mirrorState'); } catch (_) {} }
+    }
     Game.addPlayer(this.game, { id: playerId, name });
     if (this.game.phase === 'playing' && !this.game.turnId) this.game.turnId = playerId;
 
@@ -132,9 +149,24 @@ export class Room {
   async webSocketMessage(ws, raw) {
     let msg;
     try { msg = JSON.parse(raw); } catch (_) { return; }
-    if (!msg || typeof msg !== 'object' || !this.game) return;
+    if (!msg || typeof msg !== 'object') return;
     const att = ws.deserializeAttachment() || {};
     if (att.display) return;   // en TV-display är passiv, den styr aldrig spelet
+    if (att.mirror) {
+      // Telefonen (Runt bordet) speglar sin lokala state hit → vidarebefordra till TV:n.
+      // OBS: mirror-rum har ingen server-game, så detta måste ligga FÖRE game-guarden.
+      // Ett riktigt server-spel accepterar ALDRIG mirror-push (annars kan vem som helst
+      // som känner rumskoden spoofa spelets TV:ar).
+      if (this.game) return;
+      if (msg.type === 'mirror' && msg.state) {
+        this.mirrorState = msg.state;
+        try { await this.ctx.storage.put('mirrorState', this.mirrorState); } catch (_) {}
+        const payload = JSON.stringify({ type: 'state', state: msg.state });
+        for (const s of this.ctx.getWebSockets('display')) { try { s.send(payload); } catch (_) {} }
+      }
+      return;
+    }
+    if (!this.game) return;   // spelar-handlingar kräver ett server-game (mirror/display redan hanterade)
     const actorId = att.playerId;
 
     if (msg.type === 'action' && msg.action) {
@@ -189,6 +221,12 @@ export class Room {
       played = Math.max(0, Date.now() - this.created);
       this._playReported = true;
       try { await this.ctx.storage.put('playReported', true); } catch (_) {}
+    }
+    // Alla spelare borta → tala om för ev. TV-displayer att dyket är slut (annars
+    // fryser TV:n tyst på sista kortet).
+    if (!anyOnline) {
+      const ended = JSON.stringify({ type: 'ended' });
+      for (const s of this.ctx.getWebSockets('display')) { try { s.send(ended); } catch (_) {} }
     }
     await this.report(false, !anyOnline, played);
   }

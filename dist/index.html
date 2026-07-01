@@ -1036,10 +1036,16 @@ input:focus { border-color: var(--depth); box-shadow: 0 0 0 3px color-mix(in srg
 /* En passiv, stor vy för TV/laptop. Lugn, läsbar på avstånd, inga kontroller. */
 body.display-mode .rotate { display: none !important; }   /* TV är liggande, ingen "vänd enheten" */
 body.display-mode .install-hint { display: none !important; }
+/* Appen är annars kapad till en mobil-bred kolumn (max-width 600). På en TV vill vi
+   använda hela bredden. */
+body.display-mode #app { max-width: none; }
 
 #screen-display { padding: 0; }
+/* tv-wrap centrerar sina barn (align-items:center) → topbar och scen måste stretcha
+   för att fylla bredden, annars krymper de till innehållet. */
+.tv-head, .tv-stage { align-self: stretch; }
 .tv-wrap {
-  flex: 1; display: flex; flex-direction: column; align-items: center;
+  flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center;
   width: 100%; max-width: 1400px; margin: 0 auto;
   padding: clamp(20px, 4vh, 56px) clamp(20px, 5vw, 80px);
   text-align: center;
@@ -1062,8 +1068,8 @@ body.display-mode .install-hint { display: none !important; }
   width: 1.6em; height: 1.6em; border-radius: 50%; display: inline-grid; place-items: center;
   font-size: 0.7em; font-weight: 700; color: #04202a;
 }
-.tv-stage { flex: 1; display: flex; align-items: center; justify-content: center; width: 100%; }
-.tv-card { width: 100%; max-width: 1100px; }
+.tv-stage { flex: 1; display: flex; align-items: center; justify-content: center; width: 100%; min-height: 0; overflow: hidden; }
+.tv-card { width: 100%; max-width: min(1280px, 88vw); }
 .tv-eyebrow {
   display: block; text-transform: uppercase; letter-spacing: 0.2em;
   font-size: clamp(0.8rem, 1.4vw, 1.15rem); color: var(--accent, #7fe3ef); margin-bottom: clamp(14px, 3vh, 30px);
@@ -1072,9 +1078,14 @@ body.display-mode .install-hint { display: none !important; }
 .tv-blot svg { width: 100%; height: auto; }
 .tv-text {
   font-family: var(--display, Fraunces, Georgia, serif);
-  font-size: clamp(1.8rem, 4.6vw, 4.2rem); line-height: 1.18; font-weight: 500;
-  color: #f3fbfc; margin: 0; text-wrap: balance;
+  line-height: 1.2; font-weight: 500;
+  color: #f3fbfc; margin: 0 auto; text-wrap: pretty;
+  /* fyll en generös men läsbar mätare (håll radlängden under ~60 tecken på avstånd);
+     font sätts av fitTvText. Skugga för kontrast mot den rörliga havsbakgrunden. */
+  width: 100%; max-width: min(1100px, 82vw);
+  text-shadow: 0 2px 24px rgba(2, 16, 22, 0.6);
 }
+.tv-followup { text-shadow: 0 2px 20px rgba(2, 16, 22, 0.55); }
 .tv-followup {
   display: none; margin: clamp(18px, 4vh, 40px) auto 0; max-width: 900px;
   font-size: clamp(1.1rem, 2.2vw, 1.9rem); line-height: 1.35; color: var(--ink-soft);
@@ -1090,6 +1101,15 @@ body.display-mode .install-hint { display: none !important; }
 }
 .tv-players .pchip { font-size: clamp(0.85rem, 1.6vw, 1.2rem); }
 .tv-foot { color: var(--ink-dim); font-size: clamp(0.72rem, 1.2vw, 0.95rem); margin: 18px 0 0; letter-spacing: 0.04em; }
+/* Diskret väg ut ur TV-läget (fjärrkontroll/mus i hörnet). */
+.tv-exit { position: absolute; top: max(10px, env(safe-area-inset-top)); left: 14px; z-index: 5; width: 42px; height: 42px; border-radius: 50%; border: 0; background: rgba(255,255,255,0.06); color: var(--ink-soft); font-size: 1rem; cursor: pointer; opacity: 0.3; transition: opacity 0.2s; }
+.tv-exit:hover, .tv-exit:focus-visible { opacity: 1; }
+
+/* "Visa på TV"-panelen (på telefonen): kod + status. */
+.tvp-mark { font-size: 2rem; text-align: center; margin: 2px 0 2px; }
+.tvp-code { font-size: 2.4rem; font-weight: 800; letter-spacing: 0.28em; text-align: center; color: var(--accent, #7fe3ef); margin: 6px 0 2px; padding-left: 0.28em; }
+.tvp-status { text-align: center; color: var(--ink-soft); font-size: 0.9rem; margin: 0 0 10px; min-height: 1.2em; }
+.tvp-status.ok { color: var(--accent, #7fe3ef); }
 
 </style>
 </head>
@@ -1129,7 +1149,7 @@ body.display-mode .install-hint { display: none !important; }
 
         <p class="fineprint">I samma rum eller på distans. Den som skapar dyket delar koden, sedan ser alla samma kort i realtid.</p>
         <button id="btn-help-home" class="help-link" type="button">Hur funkar det? ›</button>
-        <button id="btn-tv-home" class="help-link" type="button">📺 Visa dyket på en TV ›</button>
+        <button id="btn-tv-home" class="help-link" type="button">📺 Använd som TV-skärm ›</button>
         <button id="btn-install" class="install-hint" type="button" hidden>
           <span class="install-ico" aria-hidden="true">⤓</span>
           <span>Lägg till på hemskärmen</span>
@@ -1204,6 +1224,7 @@ body.display-mode .install-hint { display: none !important; }
 
     <!-- ============ DISPLAY (TV/laptop, passiv vy) ============ -->
     <section id="screen-display" class="screen">
+      <button id="btn-tv-exit" class="tv-exit" type="button" aria-label="Avsluta TV-visningen">✕</button>
       <div class="tv-wrap">
         <div class="tv-head">
           <span class="tv-depth" id="tv-depth"></span>
@@ -1247,6 +1268,7 @@ body.display-mode .install-hint { display: none !important; }
 
         <button id="btn-invite" class="btn btn-glass full invite-btn">🔗 Bjud in fler</button>
         <p class="invite-hint" id="invite-hint">Den som öppnar länken hamnar direkt här i ert rum. Eller läs upp koden <b id="invite-code">••••</b> så skriver de in den själva.</p>
+        <button id="btn-tv-lobby" class="btn btn-glass full">📺 Visa på TV</button>
 
         <p class="safe-note" id="safe-note">Det här är ett rum byggt på trygghet. Ingen tvingas till något. Du delar det du vill, i din takt, och får alltid säga pass. Att vara här är redan modigt.</p>
 
@@ -1450,7 +1472,24 @@ body.display-mode .install-hint { display: none !important; }
       </div>
       <button id="btn-close-sheet" class="btn btn-primary full">Klar</button>
       <a class="site-link" href="https://vitalisera.se" target="_blank" rel="noopener">Mer från Vitalisera · vitalisera.se ↗</a>
-      <div style="text-align:center;font-size:0.68rem;color:var(--ink-dim);opacity:0.65;margin-top:6px;letter-spacing:0.04em;">version 2026-06-30 23:26</div>
+      <div style="text-align:center;font-size:0.68rem;color:var(--ink-dim);opacity:0.65;margin-top:6px;letter-spacing:0.04em;">version 2026-07-01 00:24</div>
+    </div>
+  </div>
+
+  <!-- ============ VISA PÅ TV: kod + hur-gör-jag (på telefonen) ============ -->
+  <div id="tvpanel" class="sheet" aria-hidden="true">
+    <div class="sheet-panel glass">
+      <div class="sheet-handle"></div>
+      <div class="tvp-mark" aria-hidden="true">📺</div>
+      <h3 class="sheet-title">Visa på TV</h3>
+      <p class="sheet-note">På en TV eller dator: öppna <b>djupdyk.vitalisera.se</b>, tryck <b>📺 Använd som TV-skärm</b> och skriv in koden nedan. Eller spegla den här telefonen till TV:n via <b>Chromecast</b> eller <b>AirPlay</b>.</p>
+      <div class="tvp-code" id="tvpanel-code">••••</div>
+      <p class="tvp-status" id="tvpanel-status"></p>
+      <div class="sheet-actions">
+        <button id="btn-tvpanel-copy" class="btn btn-glass full">🔗 Kopiera länk till TV:n</button>
+        <button id="btn-tvpanel-stop" class="btn btn-ghost full" hidden>Sluta visa på TV</button>
+      </div>
+      <button id="btn-tvpanel-close" class="btn btn-primary full">Klar</button>
     </div>
   </div>
 
@@ -3191,6 +3230,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
         let msg;
         try { msg = JSON.parse(ev.data); } catch (_) { return; }
         if (msg && msg.type === 'state') { this.state = msg.state; this._emit('state', this.state); }
+        else if (msg && msg.type === 'ended') { this._emit('ended'); }
       };
       ws.onclose = () => {
         this._open = false;
@@ -3208,6 +3248,14 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
 
     // Knuff vid synlig flik / nät tillbaka: kolla att vi är uppe, annars koppla upp.
     poke() {
+      // Väck även TV-speglingen (Runt bordet) om den tappat uppkopplingen vid t.ex.
+      // skärmsläckning/appbyte, annars fryser TV:n tyst på sista kortet.
+      if (this._mirrorAlive) {
+        const mws = this._mirrorWs;
+        const mdown = !mws || mws.readyState === WebSocket.CLOSED || mws.readyState === WebSocket.CLOSING;
+        if (mdown && !this._mirrorTimer) this._mirrorConnect();
+        else this._mirrorSend();
+      }
       if (this.local) return;   // lokalt läge har ingen server att knuffa
       if (!this._alive) return;
       const ws = this._ws;
@@ -3235,13 +3283,20 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
       this._emit('open', { code: null, role: 'local' });
       this._emit('status', { phase: 'connected' });
       this._emit('state', this.state);
+      if (this._mirrorAlive) this._mirrorSend();
     },
     _syncLocalMe() {
       const t = (this.state && (this.state.turnId || this.state.hostId)) || null;
       const p = this.state && this.state.players.find((x) => x.id === t);
       this.me = { id: t, name: p ? p.name : '' };
     },
-    _saveLocal() { try { localStorage.setItem('vd_local', JSON.stringify(this.state)); } catch (_) {} },
+    _saveLocal() {
+      try { localStorage.setItem('vd_local', JSON.stringify(this.state)); } catch (_) {}
+      try {
+        if (this._mirrorAlive && this._mirrorCode) localStorage.setItem('vd_mirror', JSON.stringify({ code: this._mirrorCode }));
+        else localStorage.removeItem('vd_mirror');
+      } catch (_) {}
+    },
     loadLocal() { try { return JSON.parse(localStorage.getItem('vd_local')); } catch (_) { return null; } },
     resumeLocal(state) {
       this.local = true; this.role = 'local'; this.code = null; this._alive = true;
@@ -3250,6 +3305,56 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
       this._emit('open', { code: null, role: 'local' });
       this._emit('status', { phase: 'connected' });
       this._emit('state', this.state);
+      // Återuppta ev. TV-spegling som var igång före omladdningen (koden är persistad).
+      if (!this._mirrorAlive) {
+        try { const m = JSON.parse(localStorage.getItem('vd_mirror')); if (m && m.code) { this._mirrorCode = m.code; this._mirrorAlive = true; this._mirrorConnect(); } } catch (_) {}
+      }
+      if (this._mirrorAlive) this._mirrorSend();
+    },
+
+    // ---- Spegling till TV (Runt bordet på storbild) ------------------------
+    // Telefonen kör spelet lokalt och skickar sin state till ett relä-rum på servern.
+    // TV:n ansluter som display till samma rum och får staten. Returnerar rumskoden.
+    _mirrorWs: null, _mirrorCode: null, _mirrorAlive: false, _mirrorTimer: null,
+    mirrorCode() { return this._mirrorCode; },
+    startMirror() {
+      if (!this.local) return null;
+      if (this._mirrorCode) return this._mirrorCode;
+      this._mirrorCode = randomCode();
+      this._mirrorAlive = true;
+      this._emit('mirror', { phase: 'connecting', code: this._mirrorCode });
+      this._mirrorConnect();
+      this._saveLocal();   // persistera koden direkt
+      return this._mirrorCode;
+    },
+    _mirrorConnect() {
+      if (!this._mirrorAlive || !this._mirrorCode) return;
+      try { if (this._mirrorWs) { this._mirrorWs.onclose = null; this._mirrorWs.onerror = null; this._mirrorWs.close(); } } catch (_) {}
+      let ws;
+      try { ws = new WebSocket(WS_BASE + '/room/' + encodeURIComponent(this._mirrorCode) + '?mirror=1'); }
+      catch (_) { this._mirrorRetry(); return; }
+      this._mirrorWs = ws;
+      ws.onopen = () => { this._emit('mirror', { phase: 'on', code: this._mirrorCode }); this._mirrorSend(); };
+      ws.onclose = () => { if (this._mirrorAlive) { this._emit('mirror', { phase: 'connecting', code: this._mirrorCode }); this._mirrorRetry(); } };
+      ws.onerror = () => {};
+    },
+    _mirrorRetry() {
+      if (!this._mirrorAlive || this._mirrorTimer) return;
+      this._mirrorTimer = setTimeout(() => { this._mirrorTimer = null; if (this._mirrorAlive) this._mirrorConnect(); }, 1500);
+    },
+    _mirrorSend() {
+      const ws = this._mirrorWs;
+      if (ws && ws.readyState === WebSocket.OPEN && this.state) {
+        try { ws.send(JSON.stringify({ type: 'mirror', state: this.state })); } catch (_) {}
+      }
+    },
+    stopMirror() {
+      this._mirrorAlive = false; this._mirrorCode = null;
+      clearTimeout(this._mirrorTimer); this._mirrorTimer = null;
+      try { if (this._mirrorWs) { this._mirrorWs.onclose = null; this._mirrorWs.onerror = null; this._mirrorWs.close(); } } catch (_) {}
+      this._mirrorWs = null;
+      try { localStorage.removeItem('vd_mirror'); } catch (_) {}
+      this._emit('mirror', { phase: 'off' });
     },
 
     // ---- Handlingar --------------------------------------------------------
@@ -3260,6 +3365,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
         this._syncLocalMe();
         this._saveLocal();
         this._emit('state', this.state);
+        if (this._mirrorAlive) this._mirrorSend();
         return;
       }
       if (this._ws && this._open && this._ws.readyState === WebSocket.OPEN) {
@@ -3290,6 +3396,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
     leave() {
       this._alive = false;
       this._open = false;
+      this.stopMirror();
       this._pending = [];
       clearTimeout(this._retryTimer); this._retryTimer = null;
       try { if (this._ws) { this._ws.onclose = null; this._ws.onerror = null; this._ws.close(); } } catch (_) {}
@@ -3790,7 +3897,57 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
 
   // ---- Display-vy ("Visa på TV"): passiv, stor, ingen styrning ------------
   // En TV/laptop som bara speglar rummets state. Styrs av en fjärr-telefon.
-  function renderDisplay(s) {
+  function renderDisplay(s) { paintDisplay(s); fitTvText(); }
+
+  // Skala kortets text så hela kortet får plats på höjden (TV:n kan inte skrolla),
+  // och så att den stora ytan på en bred skärm faktiskt används. Mäter och krymper.
+  function fitTvText() {
+    const stage = document.querySelector('.tv-stage');
+    const card = $('tv-card');
+    const text = $('tv-text');
+    const fu = $('tv-followup');
+    if (!stage || !card || !text) return;
+    const vw = window.innerWidth, vh = window.innerHeight;
+    let size = Math.max(20, Math.min(vw * 0.052, vh * 0.12));   // generös startstorlek
+    const apply = (px) => { text.style.fontSize = px + 'px'; if (fu) fu.style.fontSize = (px * 0.62) + 'px'; };
+    apply(size);
+    // Krymp texten (och följdfrågan proportionellt) tills hela kortet får plats på
+    // höjden. TV:n kan inte skrolla, så inget får rinna ut. Konvergerar, golv 18px.
+    for (let i = 0; i < 18; i++) {
+      const avail = stage.clientHeight - 12;
+      const need = card.scrollHeight;
+      if (!(avail > 0) || !(need > 0)) break;   // under övergång kan höjden vara 0 → undvik NaN
+      if (need <= avail || size <= 18) break;
+      size = Math.max(18, size * Math.max(0.8, Math.sqrt(avail / need)));
+      apply(size);
+    }
+  }
+  // Om-passa när Fraunces laddat (mätning mot fallback-fonten kan annars bli fel).
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (displayMode) fitTvText(); });
+
+  // Display: dyket avslutat (alla telefoner borta) + en väg ut ur TV-läget.
+  function showTvEnded() {
+    showScreen('display');
+    $('tv-turn').hidden = true; $('tv-blot').hidden = true;
+    $('tv-eyebrow').textContent = ''; $('tv-depth').textContent = '';
+    $('tv-followup').textContent = ''; $('tv-followup').classList.remove('show');
+    $('tv-players').innerHTML = '';
+    $('tv-text').textContent = 'Dyket är avslutat. Tack för att ni dök tillsammans.';
+    fitTvText();
+  }
+  function leaveDisplay() {
+    displayMode = false;
+    if (Net.leave) Net.leave();
+    document.body.classList.remove('display-mode');
+    try { history.replaceState({}, '', location.pathname); } catch (_) {}
+    _state = null;
+    showScreen('home');
+    applyTheme(LEVELS[0].id);
+  }
+  Net.on('ended', () => { if (displayMode) showTvEnded(); });
+  if ($('btn-tv-exit')) $('btn-tv-exit').onclick = leaveDisplay;
+
+  function paintDisplay(s) {
     showScreen('display');
     $('tv-code').textContent = Net.code || '••••';
     const turnEl = $('tv-turn'), eyebrow = $('tv-eyebrow'), textEl = $('tv-text'),
@@ -3801,8 +3958,8 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
     if (!s || !s.phase) {
       applyTheme(LEVELS[0].id);
       depthEl.textContent = ''; turnEl.hidden = true; blot.hidden = true;
-      eyebrow.textContent = ''; noFu(); $('tv-players').innerHTML = '';
-      textEl.textContent = 'Öppna djupdyk på era telefoner och gå med med koden ovan. Det ni gör där visas här.';
+      eyebrow.textContent = 'Väntar på dyket'; noFu(); $('tv-players').innerHTML = '';
+      textEl.textContent = `Den här skärmen visar dyket med koden ${Net.code || '••••'}. Starta eller fortsätt på telefonen, så dyker det upp här. Syns inget? Kontrollera att koden stämmer.`;
       return;
     }
 
@@ -4471,6 +4628,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
   // kommer tillbaka: knuffa nätlagret att kontrollera och återansluta vid behov.
   document.addEventListener('visibilitychange', () => { if (!document.hidden && Net.poke) Net.poke(); });
   window.addEventListener('online', () => { if (Net.poke) Net.poke(); });
+  window.addEventListener('resize', () => { if (displayMode) fitTvText(); });
 
   function persistEntry() {
     try { localStorage.setItem('vd_last', JSON.stringify({ role: Net.role, code: Net.code })); } catch (_) {}
@@ -4591,14 +4749,43 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
   tvCodeInput.addEventListener('input', (e) => { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''); });
   tvCodeInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') doTvStart(); });
 
-  function displayUrl() { return location.origin + location.pathname + '?visa=' + (Net.code || ''); }
-  function shareDisplay() {
-    const url = displayUrl();
-    const text = 'Öppna den här länken på en TV eller dator, så visas dyket stort där. Styr spelet från din telefon.';
-    if (navigator.share) navigator.share({ title: 'Vitalisera djupdyk: visa på TV', text, url }).catch(() => {});
-    else if (navigator.clipboard) navigator.clipboard.writeText(url).then(() => toast('TV-länk kopierad. Öppna den på en TV eller dator.')).catch(() => toast('Länk: ' + url));
-    else toast('Länk: ' + url);
+  // "Visa på TV"-panelen på telefonen. Visar KODEN att skriva in på TV:n (i lokalt
+  // läge "Runt bordet" finns ingen serverkod → vi startar en spegling som ger en
+  // relä-kod telefonen pushar sin state till), plus hur-gör-jag och live-status.
+  function displayCode() { return Net.local ? (Net.mirrorCode && Net.mirrorCode()) : Net.code; }
+  function tvDisplayUrl() { return location.origin + location.pathname + '?visa=' + (displayCode() || ''); }
+  let tvMirrorPhase = 'off';
+  function updateTvPanelStatus() {
+    const st = $('tvpanel-status'); if (!st) return;
+    if (Net.local) {
+      const on = tvMirrorPhase === 'on';
+      st.textContent = on ? '✓ Klart — koden visar ert dyk på TV:n.' : 'Kopplar upp speglingen …';
+      st.className = 'tvp-status' + (on ? ' ok' : '');
+    } else {
+      st.textContent = 'Skriv koden på TV:n, så följer den ert dyk.';
+      st.className = 'tvp-status';
+    }
   }
+  function openTvPanel() {
+    if (Net.local && Net.startMirror) Net.startMirror();   // starta spegling + generera kod
+    const code = displayCode();
+    if (!code) { toast('Skapa eller gå med i ett dyk först, så kan du visa det på en TV.'); return; }
+    $('tvpanel-code').textContent = code;
+    $('btn-tvpanel-stop').hidden = !Net.local;              // "sluta visa" är bara relevant för spegling
+    updateTvPanelStatus();
+    $('tvpanel').classList.add('open'); $('tvpanel').setAttribute('aria-hidden', 'false');
+  }
+  function closeTvPanel() { $('tvpanel').classList.remove('open'); $('tvpanel').setAttribute('aria-hidden', 'true'); }
+  Net.on('mirror', (m) => { tvMirrorPhase = (m && m.phase) || 'off'; if ($('tvpanel').classList.contains('open')) updateTvPanelStatus(); });
+  $('btn-tvpanel-close').onclick = closeTvPanel;
+  $('tvpanel').addEventListener('click', (e) => { if (e.target.id === 'tvpanel') closeTvPanel(); });
+  $('btn-tvpanel-copy').onclick = () => {
+    const url = tvDisplayUrl();
+    if (navigator.share) navigator.share({ title: 'Vitalisera djupdyk: visa på TV', text: 'Öppna på en TV eller dator:', url }).catch(() => {});
+    else if (navigator.clipboard) navigator.clipboard.writeText(url).then(() => toast('Länk kopierad. Öppna den på TV:n eller datorn.')).catch(() => toast('Länk: ' + url));
+    else toast('Länk: ' + url);
+  };
+  $('btn-tvpanel-stop').onclick = () => { if (Net.stopMirror) Net.stopMirror(); closeTvPanel(); toast('Slutade visa på TV.'); };
 
   // ---- Knappar: LOBBY ------------------------------------------------------
   $('btn-start').onclick = () => { Snd.resume(); Net.dispatch({ type: 'start', levelId: selectedLevel, session: selectedSession, mode: selectedDuet ? 'par' : selectedMode, duet: selectedDuet }); };
@@ -4616,7 +4803,8 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
   $('btn-menu').onclick = openSheet;
   $('game-code').onclick = shareInvite;
   $('btn-invite-game').onclick = () => { shareInvite(); closeSheet(); };
-  $('btn-tv-share').onclick = () => { shareDisplay(); closeSheet(); };
+  $('btn-tv-share').onclick = () => { closeSheet(); openTvPanel(); };
+  $('btn-tv-lobby').onclick = openTvPanel;
   $('btn-shell').onclick = saveShell;
   $('btn-buoy').onclick = () => { Net.dispatch({ type: 'buoy' }); };
   $('btn-strom-accept').onclick = () => { Snd.resume(); Net.dispatch({ type: 'acceptPartner' }); };
@@ -4653,6 +4841,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
     $('btn-restart').hidden = !isHost;
     $('sheet-note').hidden = canDrive;
     const inv = $('btn-invite-game'); if (inv) inv.hidden = isLocal;   // ingen inbjudan lokalt
+    $('btn-tv-share').hidden = false;                                  // Visa på TV funkar i alla lägen (lokalt via spegling)
     updateSoundLabel();
     $('game-invite-code').textContent = s.code;
     $('sheet').classList.add('open'); $('sheet').setAttribute('aria-hidden', 'false');

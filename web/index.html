@@ -54,7 +54,7 @@
 
         <p class="fineprint">I samma rum eller på distans. Den som skapar dyket delar koden, sedan ser alla samma kort i realtid.</p>
         <button id="btn-help-home" class="help-link" type="button">Hur funkar det? ›</button>
-        <button id="btn-tv-home" class="help-link" type="button">📺 Visa dyket på en TV ›</button>
+        <button id="btn-tv-home" class="help-link" type="button">📺 Använd som TV-skärm ›</button>
         <button id="btn-install" class="install-hint" type="button" hidden>
           <span class="install-ico" aria-hidden="true">⤓</span>
           <span>Lägg till på hemskärmen</span>
@@ -129,6 +129,7 @@
 
     <!-- ============ DISPLAY (TV/laptop, passiv vy) ============ -->
     <section id="screen-display" class="screen">
+      <button id="btn-tv-exit" class="tv-exit" type="button" aria-label="Avsluta TV-visningen">✕</button>
       <div class="tv-wrap">
         <div class="tv-head">
           <span class="tv-depth" id="tv-depth"></span>
@@ -172,6 +173,7 @@
 
         <button id="btn-invite" class="btn btn-glass full invite-btn">🔗 Bjud in fler</button>
         <p class="invite-hint" id="invite-hint">Den som öppnar länken hamnar direkt här i ert rum. Eller läs upp koden <b id="invite-code">••••</b> så skriver de in den själva.</p>
+        <button id="btn-tv-lobby" class="btn btn-glass full">📺 Visa på TV</button>
 
         <p class="safe-note" id="safe-note">Det här är ett rum byggt på trygghet. Ingen tvingas till något. Du delar det du vill, i din takt, och får alltid säga pass. Att vara här är redan modigt.</p>
 
@@ -376,6 +378,23 @@
       <button id="btn-close-sheet" class="btn btn-primary full">Klar</button>
       <a class="site-link" href="https://vitalisera.se" target="_blank" rel="noopener">Mer från Vitalisera · vitalisera.se ↗</a>
       <div style="text-align:center;font-size:0.68rem;color:var(--ink-dim);opacity:0.65;margin-top:6px;letter-spacing:0.04em;">version __BUILD__</div>
+    </div>
+  </div>
+
+  <!-- ============ VISA PÅ TV: kod + hur-gör-jag (på telefonen) ============ -->
+  <div id="tvpanel" class="sheet" aria-hidden="true">
+    <div class="sheet-panel glass">
+      <div class="sheet-handle"></div>
+      <div class="tvp-mark" aria-hidden="true">📺</div>
+      <h3 class="sheet-title">Visa på TV</h3>
+      <p class="sheet-note">På en TV eller dator: öppna <b>djupdyk.vitalisera.se</b>, tryck <b>📺 Använd som TV-skärm</b> och skriv in koden nedan. Eller spegla den här telefonen till TV:n via <b>Chromecast</b> eller <b>AirPlay</b>.</p>
+      <div class="tvp-code" id="tvpanel-code">••••</div>
+      <p class="tvp-status" id="tvpanel-status"></p>
+      <div class="sheet-actions">
+        <button id="btn-tvpanel-copy" class="btn btn-glass full">🔗 Kopiera länk till TV:n</button>
+        <button id="btn-tvpanel-stop" class="btn btn-ghost full" hidden>Sluta visa på TV</button>
+      </div>
+      <button id="btn-tvpanel-close" class="btn btn-primary full">Klar</button>
     </div>
   </div>
 

@@ -130,6 +130,7 @@
         let msg;
         try { msg = JSON.parse(ev.data); } catch (_) { return; }
         if (msg && msg.type === 'state') { this.state = msg.state; this._emit('state', this.state); }
+        else if (msg && msg.type === 'ended') { this._emit('ended'); }
       };
       ws.onclose = () => {
         this._open = false;
@@ -147,6 +148,14 @@
 
     // Knuff vid synlig flik / nät tillbaka: kolla att vi är uppe, annars koppla upp.
     poke() {
+      // Väck även TV-speglingen (Runt bordet) om den tappat uppkopplingen vid t.ex.
+      // skärmsläckning/appbyte, annars fryser TV:n tyst på sista kortet.
+      if (this._mirrorAlive) {
+        const mws = this._mirrorWs;
+        const mdown = !mws || mws.readyState === WebSocket.CLOSED || mws.readyState === WebSocket.CLOSING;
+        if (mdown && !this._mirrorTimer) this._mirrorConnect();
+        else this._mirrorSend();
+      }
       if (this.local) return;   // lokalt läge har ingen server att knuffa
       if (!this._alive) return;
       const ws = this._ws;
@@ -174,13 +183,20 @@
       this._emit('open', { code: null, role: 'local' });
       this._emit('status', { phase: 'connected' });
       this._emit('state', this.state);
+      if (this._mirrorAlive) this._mirrorSend();
     },
     _syncLocalMe() {
       const t = (this.state && (this.state.turnId || this.state.hostId)) || null;
       const p = this.state && this.state.players.find((x) => x.id === t);
       this.me = { id: t, name: p ? p.name : '' };
     },
-    _saveLocal() { try { localStorage.setItem('vd_local', JSON.stringify(this.state)); } catch (_) {} },
+    _saveLocal() {
+      try { localStorage.setItem('vd_local', JSON.stringify(this.state)); } catch (_) {}
+      try {
+        if (this._mirrorAlive && this._mirrorCode) localStorage.setItem('vd_mirror', JSON.stringify({ code: this._mirrorCode }));
+        else localStorage.removeItem('vd_mirror');
+      } catch (_) {}
+    },
     loadLocal() { try { return JSON.parse(localStorage.getItem('vd_local')); } catch (_) { return null; } },
     resumeLocal(state) {
       this.local = true; this.role = 'local'; this.code = null; this._alive = true;
@@ -189,6 +205,56 @@
       this._emit('open', { code: null, role: 'local' });
       this._emit('status', { phase: 'connected' });
       this._emit('state', this.state);
+      // Återuppta ev. TV-spegling som var igång före omladdningen (koden är persistad).
+      if (!this._mirrorAlive) {
+        try { const m = JSON.parse(localStorage.getItem('vd_mirror')); if (m && m.code) { this._mirrorCode = m.code; this._mirrorAlive = true; this._mirrorConnect(); } } catch (_) {}
+      }
+      if (this._mirrorAlive) this._mirrorSend();
+    },
+
+    // ---- Spegling till TV (Runt bordet på storbild) ------------------------
+    // Telefonen kör spelet lokalt och skickar sin state till ett relä-rum på servern.
+    // TV:n ansluter som display till samma rum och får staten. Returnerar rumskoden.
+    _mirrorWs: null, _mirrorCode: null, _mirrorAlive: false, _mirrorTimer: null,
+    mirrorCode() { return this._mirrorCode; },
+    startMirror() {
+      if (!this.local) return null;
+      if (this._mirrorCode) return this._mirrorCode;
+      this._mirrorCode = randomCode();
+      this._mirrorAlive = true;
+      this._emit('mirror', { phase: 'connecting', code: this._mirrorCode });
+      this._mirrorConnect();
+      this._saveLocal();   // persistera koden direkt
+      return this._mirrorCode;
+    },
+    _mirrorConnect() {
+      if (!this._mirrorAlive || !this._mirrorCode) return;
+      try { if (this._mirrorWs) { this._mirrorWs.onclose = null; this._mirrorWs.onerror = null; this._mirrorWs.close(); } } catch (_) {}
+      let ws;
+      try { ws = new WebSocket(WS_BASE + '/room/' + encodeURIComponent(this._mirrorCode) + '?mirror=1'); }
+      catch (_) { this._mirrorRetry(); return; }
+      this._mirrorWs = ws;
+      ws.onopen = () => { this._emit('mirror', { phase: 'on', code: this._mirrorCode }); this._mirrorSend(); };
+      ws.onclose = () => { if (this._mirrorAlive) { this._emit('mirror', { phase: 'connecting', code: this._mirrorCode }); this._mirrorRetry(); } };
+      ws.onerror = () => {};
+    },
+    _mirrorRetry() {
+      if (!this._mirrorAlive || this._mirrorTimer) return;
+      this._mirrorTimer = setTimeout(() => { this._mirrorTimer = null; if (this._mirrorAlive) this._mirrorConnect(); }, 1500);
+    },
+    _mirrorSend() {
+      const ws = this._mirrorWs;
+      if (ws && ws.readyState === WebSocket.OPEN && this.state) {
+        try { ws.send(JSON.stringify({ type: 'mirror', state: this.state })); } catch (_) {}
+      }
+    },
+    stopMirror() {
+      this._mirrorAlive = false; this._mirrorCode = null;
+      clearTimeout(this._mirrorTimer); this._mirrorTimer = null;
+      try { if (this._mirrorWs) { this._mirrorWs.onclose = null; this._mirrorWs.onerror = null; this._mirrorWs.close(); } } catch (_) {}
+      this._mirrorWs = null;
+      try { localStorage.removeItem('vd_mirror'); } catch (_) {}
+      this._emit('mirror', { phase: 'off' });
     },
 
     // ---- Handlingar --------------------------------------------------------
@@ -199,6 +265,7 @@
         this._syncLocalMe();
         this._saveLocal();
         this._emit('state', this.state);
+        if (this._mirrorAlive) this._mirrorSend();
         return;
       }
       if (this._ws && this._open && this._ws.readyState === WebSocket.OPEN) {
@@ -229,6 +296,7 @@
     leave() {
       this._alive = false;
       this._open = false;
+      this.stopMirror();
       this._pending = [];
       clearTimeout(this._retryTimer); this._retryTimer = null;
       try { if (this._ws) { this._ws.onclose = null; this._ws.onerror = null; this._ws.close(); } } catch (_) {}

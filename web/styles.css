@@ -1016,10 +1016,16 @@ input:focus { border-color: var(--depth); box-shadow: 0 0 0 3px color-mix(in srg
 /* En passiv, stor vy för TV/laptop. Lugn, läsbar på avstånd, inga kontroller. */
 body.display-mode .rotate { display: none !important; }   /* TV är liggande, ingen "vänd enheten" */
 body.display-mode .install-hint { display: none !important; }
+/* Appen är annars kapad till en mobil-bred kolumn (max-width 600). På en TV vill vi
+   använda hela bredden. */
+body.display-mode #app { max-width: none; }
 
 #screen-display { padding: 0; }
+/* tv-wrap centrerar sina barn (align-items:center) → topbar och scen måste stretcha
+   för att fylla bredden, annars krymper de till innehållet. */
+.tv-head, .tv-stage { align-self: stretch; }
 .tv-wrap {
-  flex: 1; display: flex; flex-direction: column; align-items: center;
+  flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center;
   width: 100%; max-width: 1400px; margin: 0 auto;
   padding: clamp(20px, 4vh, 56px) clamp(20px, 5vw, 80px);
   text-align: center;
@@ -1042,8 +1048,8 @@ body.display-mode .install-hint { display: none !important; }
   width: 1.6em; height: 1.6em; border-radius: 50%; display: inline-grid; place-items: center;
   font-size: 0.7em; font-weight: 700; color: #04202a;
 }
-.tv-stage { flex: 1; display: flex; align-items: center; justify-content: center; width: 100%; }
-.tv-card { width: 100%; max-width: 1100px; }
+.tv-stage { flex: 1; display: flex; align-items: center; justify-content: center; width: 100%; min-height: 0; overflow: hidden; }
+.tv-card { width: 100%; max-width: min(1280px, 88vw); }
 .tv-eyebrow {
   display: block; text-transform: uppercase; letter-spacing: 0.2em;
   font-size: clamp(0.8rem, 1.4vw, 1.15rem); color: var(--accent, #7fe3ef); margin-bottom: clamp(14px, 3vh, 30px);
@@ -1052,9 +1058,14 @@ body.display-mode .install-hint { display: none !important; }
 .tv-blot svg { width: 100%; height: auto; }
 .tv-text {
   font-family: var(--display, Fraunces, Georgia, serif);
-  font-size: clamp(1.8rem, 4.6vw, 4.2rem); line-height: 1.18; font-weight: 500;
-  color: #f3fbfc; margin: 0; text-wrap: balance;
+  line-height: 1.2; font-weight: 500;
+  color: #f3fbfc; margin: 0 auto; text-wrap: pretty;
+  /* fyll en generös men läsbar mätare (håll radlängden under ~60 tecken på avstånd);
+     font sätts av fitTvText. Skugga för kontrast mot den rörliga havsbakgrunden. */
+  width: 100%; max-width: min(1100px, 82vw);
+  text-shadow: 0 2px 24px rgba(2, 16, 22, 0.6);
 }
+.tv-followup { text-shadow: 0 2px 20px rgba(2, 16, 22, 0.55); }
 .tv-followup {
   display: none; margin: clamp(18px, 4vh, 40px) auto 0; max-width: 900px;
   font-size: clamp(1.1rem, 2.2vw, 1.9rem); line-height: 1.35; color: var(--ink-soft);
@@ -1070,3 +1081,12 @@ body.display-mode .install-hint { display: none !important; }
 }
 .tv-players .pchip { font-size: clamp(0.85rem, 1.6vw, 1.2rem); }
 .tv-foot { color: var(--ink-dim); font-size: clamp(0.72rem, 1.2vw, 0.95rem); margin: 18px 0 0; letter-spacing: 0.04em; }
+/* Diskret väg ut ur TV-läget (fjärrkontroll/mus i hörnet). */
+.tv-exit { position: absolute; top: max(10px, env(safe-area-inset-top)); left: 14px; z-index: 5; width: 42px; height: 42px; border-radius: 50%; border: 0; background: rgba(255,255,255,0.06); color: var(--ink-soft); font-size: 1rem; cursor: pointer; opacity: 0.3; transition: opacity 0.2s; }
+.tv-exit:hover, .tv-exit:focus-visible { opacity: 1; }
+
+/* "Visa på TV"-panelen (på telefonen): kod + status. */
+.tvp-mark { font-size: 2rem; text-align: center; margin: 2px 0 2px; }
+.tvp-code { font-size: 2.4rem; font-weight: 800; letter-spacing: 0.28em; text-align: center; color: var(--accent, #7fe3ef); margin: 6px 0 2px; padding-left: 0.28em; }
+.tvp-status { text-align: center; color: var(--ink-soft); font-size: 0.9rem; margin: 0 0 10px; min-height: 1.2em; }
+.tvp-status.ok { color: var(--accent, #7fe3ef); }
