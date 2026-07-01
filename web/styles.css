@@ -1090,3 +1090,7 @@ body.display-mode #app { max-width: none; }
 .tvp-code { font-size: 2.4rem; font-weight: 800; letter-spacing: 0.28em; text-align: center; color: var(--accent, #7fe3ef); margin: 6px 0 2px; padding-left: 0.28em; }
 .tvp-status { text-align: center; color: var(--ink-soft); font-size: 0.9rem; margin: 0 0 10px; min-height: 1.2em; }
 .tvp-status.ok { color: var(--accent, #7fe3ef); }
+.tvp-cast { display: flex; gap: 10px; margin: 2px 0 6px; }
+.tvp-cast-btn { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 8px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.05); color: var(--ink-soft); font: inherit; font-size: 0.92rem; cursor: pointer; }
+.tvp-cast-btn:hover, .tvp-cast-btn:focus-visible { background: rgba(255,255,255,0.09); color: var(--ink); }
+.tvp-cast-hint { text-align: center; color: var(--ink-soft); font-size: 0.85rem; line-height: 1.45; margin: 0 0 10px; }

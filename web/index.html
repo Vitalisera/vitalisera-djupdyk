@@ -390,6 +390,17 @@
       <p class="sheet-note">På en TV eller dator: öppna <b>djupdyk.vitalisera.se</b>, tryck <b>📺 Använd som TV-skärm</b> och skriv in koden nedan. Eller spegla den här telefonen till TV:n via <b>Chromecast</b> eller <b>AirPlay</b>.</p>
       <div class="tvp-code" id="tvpanel-code">••••</div>
       <p class="tvp-status" id="tvpanel-status"></p>
+      <div class="tvp-cast">
+        <button id="btn-tvp-airplay" class="tvp-cast-btn" type="button">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M5 17H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1h-1" stroke-linecap="round"/><path d="M12 14l5 6H7l5-6z" fill="currentColor" stroke="none"/></svg>
+          <span>AirPlay</span>
+        </button>
+        <button id="btn-tvp-cast" class="tvp-cast-btn" type="button">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 6a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-6" stroke-linecap="round"/><path d="M3 12a6 6 0 0 1 6 6M3 16a2 2 0 0 1 2 2" stroke-linecap="round"/><circle cx="3.6" cy="18.4" r="0.9" fill="currentColor" stroke="none"/></svg>
+          <span>Chromecast</span>
+        </button>
+      </div>
+      <p class="tvp-cast-hint" id="tvp-cast-hint" hidden></p>
       <div class="sheet-actions">
         <button id="btn-tvpanel-copy" class="btn btn-glass full">🔗 Kopiera länk till TV:n</button>
         <button id="btn-tvpanel-stop" class="btn btn-ghost full" hidden>Sluta visa på TV</button>
@@ -410,6 +421,7 @@
         <ul class="intro-list">
           <li>En skapar ett dyk och delar <b>rumskoden</b> eller länken. De andra går med, i samma rum eller på distans.</li>
           <li>Välj <b>startdjup</b> och tryck Starta. Alla ser samma kort samtidigt.</li>
+          <li>Ni kan också dela <b>en telefon</b> (Runt bordet) eller visa kortet stort på en <b>TV</b>. Mer i handboken.</li>
         </ul>
       </section>
 
@@ -469,6 +481,7 @@
         <h3 class="intro-h"><span class="intro-n">2</span> Kom igång</h3>
         <p class="intro-p">En av er skapar ett dyk och får en fyrteckens <b>rumskod</b> och en länk. Dela koden eller länken med de andra. De skriver in koden, eller öppnar länken och hamnar direkt i ert rum.</p>
         <p class="intro-p">Ni kan sitta i <b>samma rum</b> eller vara <b>på distans</b>, det fungerar lika bra. Välj startdjup och tryck Starta. Sedan ser alla samma kort samtidigt.</p>
+        <p class="intro-p">Det finns tre sätt att spela: <b>var och en på sin telefon</b>, <b>Runt bordet</b> på en enda telefon som ni turas om att hålla, eller <b>Visa på TV</b> där kortet syns stort på en TV eller dator medan en telefon styr. De två sista beskrivs längre ner.</p>
       </section>
 
       <section class="manual-section">
@@ -480,6 +493,7 @@
       <section class="manual-section">
         <h3 class="intro-h"><span class="intro-n">4</span> Spelets gång</h3>
         <p class="intro-p">Den vars tur det är läser kortet högt och svarar först. Sedan pratar ni fritt kring frågan, helt utan tidsgräns. Stanna kvar så länge det känns bra.</p>
+        <p class="intro-p">Vill du minnas en särskild fråga? Tryck på snäckan 🐚 på kortet, så sparas den till slutet, bara på din telefon. När ni stiger upp får ni en sammanfattning av dyket och kan dela ett litet vykort från djupet.</p>
         <div class="intro-actions">
           <span class="intro-chip is-main"><b class="ic">→</b><span>Skicka vidare</span><em>turen och ett nytt kort till nästa</em></span>
           <span class="intro-chip"><b class="ic">↩</b><span>Ge tillbaka turen</span><em>om någon knuffade fel, eller någon lämnat</em></span>
@@ -508,6 +522,9 @@
           <div class="manual-card-row"><span class="mc-ic">✦</span><span><b class="mc-nm">Bläckbild.</b> <span class="mc-desc">En abstrakt bild som var och en tolkar tyst utifrån en fråga. Sedan delar ni vad ni såg.</span></span></div>
           <div class="manual-card-row"><span class="mc-ic">🌊</span><span><b class="mc-nm">Para ihop två.</b> <span class="mc-desc">Den vars tur det är bjuder in en annan deltagare; ni två får ett kort bara för er, något ömsesidigt att säga eller göra. <i>(Minst två deltagare, och att ni nått Revet.)</i></span></span></div>
           <div class="manual-card-row"><span class="mc-ic">🤫</span><span><b class="mc-nm">Tystnad.</b> <span class="mc-desc">En kort stund tillsammans, helt utan ord. <i>(Minst två deltagare.)</i></span></span></div>
+          <div class="manual-card-row"><span class="mc-ic">🪷</span><span><b class="mc-nm">Visdomsberättelse.</b> <span class="mc-desc">En kort sedelärande berättelse ur zen, taoism, sufism och liknande källor. Den vars tur det är läser den högt, sedan finns en eftertanke att samtala kring.</span></span></div>
+          <div class="manual-card-row"><span class="mc-ic">💬</span><span><b class="mc-nm">Diskussionskort.</b> <span class="mc-desc">Ett tänkvärt citat eller påstående att bryta tankar kring, med en öppen diskussionspunkt. Här får ni gärna tycka olika.</span></span></div>
+          <div class="manual-card-row"><span class="mc-ic">💞</span><span><b class="mc-nm">Par-kort.</b> <span class="mc-desc">En liten sak för er två, något ömsesidigt att säga eller göra. Dyker upp när ni valt Par som sällskap.</span></span></div>
           <div class="manual-card-row"><span class="mc-ic">🍃</span><span><b class="mc-nm">Avslutningskort.</b> <span class="mc-desc">Spelledaren drar ett kort som varsamt rundar av kvällen.</span></span></div>
           <div class="manual-card-row"><span class="mc-ic">🫧</span><span><b class="mc-nm">Uppstigning.</b> <span class="mc-desc">Ett sista varv där var och en får säga något innan ni stiger upp till ytan.</span></span></div>
         </div>
@@ -537,7 +554,13 @@
       </section>
 
       <section class="manual-section">
-        <h3 class="intro-h"><span class="intro-n">10</span> Om Vitalisera</h3>
+        <h3 class="intro-h"><span class="intro-n">10</span> Runt bordet och Visa på TV</h3>
+        <p class="intro-p"><b>Runt bordet.</b> Vill ni dela en enda telefon i stället för att ha var sin? Välj Runt bordet på startsidan, skriv in namnen och börja. Telefonen visar kortet och vems tur det är. Ni turas om att hålla den, eller låter den ligga i mitten. Inget internet och ingen kod behövs.</p>
+        <p class="intro-p"><b>Visa på TV.</b> Vill ni se kortet stort på en TV eller dator? Tryck Visa på TV, i menyn ⋯ eller i lobbyn, så får ni en kod. Öppna sedan djupdyk.vitalisera.se på TV:n eller datorn, tryck Använd som TV-skärm och skriv in koden. En telefon i rummet styr spelet medan alla andra tittar upp på samma kort. Har ni Chromecast eller AirPlay kan ni i stället spegla telefonen dit. Panelen på telefonen visar hur.</p>
+      </section>
+
+      <section class="manual-section">
+        <h3 class="intro-h"><span class="intro-n">11</span> Om Vitalisera</h3>
         <p class="intro-p">Djupdyk är skapat av Vitalisera. Mer om oss finns på <a href="https://vitalisera.se" target="_blank" rel="noopener">vitalisera.se</a>.</p>
       </section>
 

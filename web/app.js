@@ -1050,6 +1050,7 @@
     if (!code) { toast('Skapa eller gå med i ett dyk först, så kan du visa det på en TV.'); return; }
     $('tvpanel-code').textContent = code;
     $('btn-tvpanel-stop').hidden = !Net.local;              // "sluta visa" är bara relevant för spegling
+    $('tvp-cast-hint').hidden = true;
     updateTvPanelStatus();
     $('tvpanel').classList.add('open'); $('tvpanel').setAttribute('aria-hidden', 'false');
   }
@@ -1064,6 +1065,17 @@
     else toast('Länk: ' + url);
   };
   $('btn-tvpanel-stop').onclick = () => { if (Net.stopMirror) Net.stopMirror(); closeTvPanel(); toast('Slutade visa på TV.'); };
+  // Spegling via AirPlay/Chromecast går inte att starta från en webbsida (media-API:er
+  // resp. eget Cast-bygge krävs), så ikonerna visar hur man gör i respektive system.
+  function tvCastHint(kind) {
+    const h = $('tvp-cast-hint');
+    h.textContent = kind === 'airplay'
+      ? 'iPhone/iPad: svep fram Kontrollcenter, tryck Skärmdupplicering och välj din Apple TV eller AirPlay-skärm. Öppna djupet på telefonen först, så speglas det dit.'
+      : 'Android eller Chrome på datorn: öppna webbläsarens meny (⋮) och välj Casta, sedan din Chromecast. (På iPhone stöds inte Chromecast.)';
+    h.hidden = false;
+  }
+  $('btn-tvp-airplay').onclick = () => tvCastHint('airplay');
+  $('btn-tvp-cast').onclick = () => tvCastHint('cast');
 
   // ---- Knappar: LOBBY ------------------------------------------------------
   $('btn-start').onclick = () => { Snd.resume(); Net.dispatch({ type: 'start', levelId: selectedLevel, session: selectedSession, mode: selectedDuet ? 'par' : selectedMode, duet: selectedDuet }); };

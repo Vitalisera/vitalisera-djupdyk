@@ -53,3 +53,16 @@ npx --yes surge ./dist vitalisera-djupdyk.surge.sh     # deploy (kräver surge-l
   `<link rel="stylesheet" href="styles.css" />`). Ändrar du dessa rader i `index.html` → uppdatera build-skriptet.
 - Historik: projektet skapades via Claude web på branchen `claude/dialogdyk-multiplayer-game-n8rg4m` i privata
   `Vitalisera/reolink` och bröts ut hit 2026-06-27 (reolink har AWS-hemligheter, fick ej bli publikt).
+
+## ⛔ Manual-synk (obligatoriskt, automatiskt)
+**När du lägger till eller ändrar en spelmekanik, ett korttyp, ett spelläge eller någon deltagar-facing
+funktion → uppdatera den inbyggda dokumentationen i SAMMA session, utan att bli tillsagd:**
+- **Handboken** (`#manual` i `web/index.html`) — den fullständiga, utskrivbara manualen. Lägg till/ändra rätt
+  avsnitt (specialkort, spelsätt, inställningar osv). Håll numreringen konsekvent.
+- **Onboardingen** (`#intro`, "Så funkar det") — den korta versionen. Uppdatera om det är något en ny spelare
+  bör känna till direkt.
+- Robert (2026-07-01): manualerna hade halkat efter utvecklingen (Runt bordet, Visa på TV, visdomsberättelse,
+  diskussionskort, par-kort, snäckor/vykort saknades). Detta ska skötas med automatik framöver, inte i efterhand.
+- Regel för färskhet: efter en feature-commit, fråga dig "syns detta i manualen + onboardingen?". Om nej → fixa nu.
+- Manual/onboarding är INNEHÅLL, inte kod → granska med domän-öga (världsklass-svenska, inga tankstreck —, se
+  [[djupdyk-content-regler]]), inte `code-reviewer`.
