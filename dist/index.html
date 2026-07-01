@@ -1115,6 +1115,10 @@ body.display-mode #app { max-width: none; }
 .tvp-cast-btn:hover, .tvp-cast-btn:focus-visible { background: rgba(255,255,255,0.09); color: var(--ink); }
 .tvp-cast-hint { text-align: center; color: var(--ink-soft); font-size: 0.85rem; line-height: 1.45; margin: 0 0 10px; }
 
+/* Instruktionsfilm (porträtt, 9:16). */
+.video-panel { max-width: 480px; text-align: center; }
+.video-player { width: 100%; aspect-ratio: 9 / 16; max-height: 66vh; border-radius: 16px; background: #000; margin: 12px auto 16px; display: block; }
+
 </style>
 </head>
 <body>
@@ -1476,7 +1480,7 @@ body.display-mode #app { max-width: none; }
       </div>
       <button id="btn-close-sheet" class="btn btn-primary full">Klar</button>
       <a class="site-link" href="https://vitalisera.se" target="_blank" rel="noopener">Mer från Vitalisera · vitalisera.se ↗</a>
-      <div style="text-align:center;font-size:0.68rem;color:var(--ink-dim);opacity:0.65;margin-top:6px;letter-spacing:0.04em;">version 2026-07-01 08:58</div>
+      <div style="text-align:center;font-size:0.68rem;color:var(--ink-dim);opacity:0.65;margin-top:6px;letter-spacing:0.04em;">version 2026-07-01 09:16</div>
     </div>
   </div>
 
@@ -1557,6 +1561,7 @@ body.display-mode #app { max-width: none; }
       <p class="intro-safe">Här finns inga rätta svar. Du delar det du vill, i din takt, och får alltid säga pass. Behöver ni pausa kan vem som helst hissa <b>bojen</b> 🛟.</p>
       <label class="intro-hide"><input type="checkbox" id="intro-hide" /> Visa inte det här igen</label>
       <button id="btn-intro-start" class="btn btn-primary full">Sätt igång</button>
+      <button id="btn-video-intro" class="manual-link" type="button">▶ Se filmen</button>
       <button id="btn-manual-intro" class="manual-link" type="button">📖 Läs hela manualen</button>
     </div>
   </div>
@@ -1567,6 +1572,7 @@ body.display-mode #app { max-width: none; }
       <div class="manual-head">
         <h2 class="intro-title manual-title" id="manual-title">Handbok</h2>
         <p class="intro-lede">Allt om Vitalisera djupdyk, i lugn och ro. Läs här, eller skriv ut den som PDF att ha bredvid er.</p>
+        <button id="btn-video-manual" class="btn btn-glass full" type="button">▶ Se filmen (2:35)</button>
         <button id="btn-manual-print" class="btn btn-glass full manual-print" type="button">🖨 Skriv ut / spara som PDF</button>
       </div>
 
@@ -1664,6 +1670,19 @@ body.display-mode #app { max-width: none; }
       </section>
 
       <button id="btn-manual-close" class="btn btn-primary full" type="button">Stäng</button>
+    </div>
+  </div>
+
+  <!-- ============ INSTRUKTIONSFILM ============ -->
+  <div id="video" class="intro video-overlay" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Instruktionsfilm">
+    <div class="intro-panel glass video-panel">
+      <h2 class="intro-title">Så funkar det, i film</h2>
+      <p class="intro-lede">En kort rundtur genom djupdyk. Slå gärna på ljudet.</p>
+      <video id="video-el" class="video-player" controls playsinline preload="none" poster="media/djupdyk-demo-poster.jpg">
+        <source src="media/djupdyk-demo.mp4" type="video/mp4" />
+        Din webbläsare kan inte spela upp filmen. <a href="media/djupdyk-demo.mp4">Öppna den här</a>.
+      </video>
+      <button id="btn-video-close" class="btn btn-primary full" type="button">Stäng</button>
     </div>
   </div>
 
@@ -4935,6 +4954,17 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
   $('btn-manual-close').onclick = closeManual;
   $('manual').addEventListener('click', (e) => { if (e.target.id === 'manual') closeManual(); });
   $('btn-manual-intro').onclick = openManual;
+
+  // ---- Instruktionsfilm -----------------------------------------------------
+  function openVideo() { const v = $('video'); v.classList.add('open'); v.setAttribute('aria-hidden', 'false'); }
+  function closeVideo() {
+    const v = $('video'); v.classList.remove('open'); v.setAttribute('aria-hidden', 'true');
+    try { $('video-el').pause(); } catch (_) {}
+  }
+  $('btn-video-intro').onclick = openVideo;
+  $('btn-video-manual').onclick = openVideo;
+  $('btn-video-close').onclick = closeVideo;
+  $('video').addEventListener('click', (e) => { if (e.target.id === 'video') closeVideo(); });
   $('btn-manual-game').onclick = () => { closeSheet(); openManual(); };
   $('btn-manual-print').onclick = () => {
     // iOS-PWA i standalone kan inte printa direkt: öppna i en vanlig flik som auto-printar.

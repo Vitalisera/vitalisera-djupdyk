@@ -1186,6 +1186,17 @@
   $('btn-manual-close').onclick = closeManual;
   $('manual').addEventListener('click', (e) => { if (e.target.id === 'manual') closeManual(); });
   $('btn-manual-intro').onclick = openManual;
+
+  // ---- Instruktionsfilm -----------------------------------------------------
+  function openVideo() { const v = $('video'); v.classList.add('open'); v.setAttribute('aria-hidden', 'false'); }
+  function closeVideo() {
+    const v = $('video'); v.classList.remove('open'); v.setAttribute('aria-hidden', 'true');
+    try { $('video-el').pause(); } catch (_) {}
+  }
+  $('btn-video-intro').onclick = openVideo;
+  $('btn-video-manual').onclick = openVideo;
+  $('btn-video-close').onclick = closeVideo;
+  $('video').addEventListener('click', (e) => { if (e.target.id === 'video') closeVideo(); });
   $('btn-manual-game').onclick = () => { closeSheet(); openManual(); };
   $('btn-manual-print').onclick = () => {
     // iOS-PWA i standalone kan inte printa direkt: öppna i en vanlig flik som auto-printar.

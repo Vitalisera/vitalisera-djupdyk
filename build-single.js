@@ -71,4 +71,14 @@ for (const icon of ['icon-192.png', 'icon-512.png', 'maskable-512.png', 'apple-t
   fs.copyFileSync(path.join(web, 'icons', icon), path.join(outDir, 'icons', icon));
 }
 
-console.log('Skrev', outFile, '(' + Math.round(html.length / 1024) + ' kB) · version ' + buildVer + ' + dist/index.html + PWA-filer (manifest, sw.js, icons/)');
+// Instruktionsfilmen + poster kopieras som syskonfiler (bäddas EJ in, ~7 MB skulle
+// spränga enfilsbygget). Manualerna länkar till media/*.mp4 relativt.
+const mediaDir = path.join(web, 'media');
+if (fs.existsSync(mediaDir)) {
+  fs.mkdirSync(path.join(outDir, 'media'), { recursive: true });
+  for (const f of fs.readdirSync(mediaDir)) {
+    fs.copyFileSync(path.join(mediaDir, f), path.join(outDir, 'media', f));
+  }
+}
+
+console.log('Skrev', outFile, '(' + Math.round(html.length / 1024) + ' kB) · version ' + buildVer + ' + dist/index.html + PWA-filer (manifest, sw.js, icons/, media/)');

@@ -458,6 +458,7 @@
       <p class="intro-safe">Här finns inga rätta svar. Du delar det du vill, i din takt, och får alltid säga pass. Behöver ni pausa kan vem som helst hissa <b>bojen</b> 🛟.</p>
       <label class="intro-hide"><input type="checkbox" id="intro-hide" /> Visa inte det här igen</label>
       <button id="btn-intro-start" class="btn btn-primary full">Sätt igång</button>
+      <button id="btn-video-intro" class="manual-link" type="button">▶ Se filmen</button>
       <button id="btn-manual-intro" class="manual-link" type="button">📖 Läs hela manualen</button>
     </div>
   </div>
@@ -468,6 +469,7 @@
       <div class="manual-head">
         <h2 class="intro-title manual-title" id="manual-title">Handbok</h2>
         <p class="intro-lede">Allt om Vitalisera djupdyk, i lugn och ro. Läs här, eller skriv ut den som PDF att ha bredvid er.</p>
+        <button id="btn-video-manual" class="btn btn-glass full" type="button">▶ Se filmen (2:35)</button>
         <button id="btn-manual-print" class="btn btn-glass full manual-print" type="button">🖨 Skriv ut / spara som PDF</button>
       </div>
 
@@ -565,6 +567,19 @@
       </section>
 
       <button id="btn-manual-close" class="btn btn-primary full" type="button">Stäng</button>
+    </div>
+  </div>
+
+  <!-- ============ INSTRUKTIONSFILM ============ -->
+  <div id="video" class="intro video-overlay" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Instruktionsfilm">
+    <div class="intro-panel glass video-panel">
+      <h2 class="intro-title">Så funkar det, i film</h2>
+      <p class="intro-lede">En kort rundtur genom djupdyk. Slå gärna på ljudet.</p>
+      <video id="video-el" class="video-player" controls playsinline preload="none" poster="media/djupdyk-demo-poster.jpg">
+        <source src="media/djupdyk-demo.mp4" type="video/mp4" />
+        Din webbläsare kan inte spela upp filmen. <a href="media/djupdyk-demo.mp4">Öppna den här</a>.
+      </video>
+      <button id="btn-video-close" class="btn btn-primary full" type="button">Stäng</button>
     </div>
   </div>
 
