@@ -294,7 +294,7 @@ export class Registry {
     });
   }
 
-  freshStats() { return { dyk: 0, joins: 0, peak: 0, since: Date.now(), byDay: {}, byCountry: {}, byUtm: {}, playMs: 0, playDay: {}, playWeek: {}, playMonth: {}, playYear: {}, cards: {} }; }
+  freshStats() { return { dyk: 0, joins: 0, peak: 0, since: Date.now(), byDay: {}, byCountry: {}, byCity: {}, byUtm: {}, playMs: 0, playDay: {}, playWeek: {}, playMonth: {}, playYear: {}, cards: {} }; }
   day(t) { try { return new Date(t || Date.now()).toISOString().slice(0, 10); } catch (_) { return 'okänt'; } }
   weekKey(t) { const d = new Date(t || Date.now()); const dt = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())); const day = dt.getUTCDay() || 7; dt.setUTCDate(dt.getUTCDate() + 4 - day); const ys = new Date(Date.UTC(dt.getUTCFullYear(), 0, 1)); const wk = Math.ceil((((dt - ys) / 86400000) + 1) / 7); return dt.getUTCFullYear() + '-v' + String(wk).padStart(2, '0'); }
   accruePlay(ms, t) { const s = this.stats; if (!(ms > 0)) return; s.playMs += ms; const d = this.day(t), w = this.weekKey(t), mo = this.day(t).slice(0, 7), y = this.day(t).slice(0, 4); s.playDay[d] = (s.playDay[d] || 0) + ms; s.playWeek[w] = (s.playWeek[w] || 0) + ms; s.playMonth[mo] = (s.playMonth[mo] || 0) + ms; s.playYear[y] = (s.playYear[y] || 0) + ms; }
@@ -343,6 +343,7 @@ export class Registry {
             if (!this.seen.players[pk]) {
               this.seen.players[pk] = 1; s.joins += 1;
               if (p.country) s.byCountry[p.country] = (s.byCountry[p.country] || 0) + 1;
+              if (p.city) s.byCity[p.city] = (s.byCity[p.city] || 0) + 1;
               const src = (p.utm || '').match(/source=([^\s]+)/);
               const key = src ? src[1] : (p.utm ? 'övrigt' : 'direkt');
               s.byUtm[key] = (s.byUtm[key] || 0) + 1;
@@ -388,6 +389,7 @@ function renderDashboard(rooms, stats) {
   const sinceStr = (() => { try { return new Date(s.since || now).toISOString().slice(0, 10); } catch (_) { return ''; } })();
   const bars = days.map((d) => `<div class="bar" title="${esc(d)}: ${s.byDay[d]}"><span style="height:${Math.round((s.byDay[d] || 0) / maxDay * 100)}%"></span><em>${esc(d.slice(5))}</em></div>`).join('');
   const countryRows = topList(s.byCountry, 8).map(([c, n]) => `<div class="kv"><span>${esc(c)}</span><b>${n}</b></div>`).join('') || '<span class="meta">–</span>';
+  const cityRows = topList(s.byCity, 10).map(([c, n]) => `<div class="kv"><span>${esc(c)}</span><b>${n}</b></div>`).join('') || '<span class="meta">–</span>';
   const utmRows = topList(s.byUtm, 8).map(([c, n]) => `<div class="kv"><span>${esc(c)}</span><b>${n}</b></div>`).join('') || '<span class="meta">–</span>';
   // Speltid (dyk-minuter).
   const fmtMin = (ms) => Math.round((ms || 0) / 60000) + ' min';
@@ -396,8 +398,10 @@ function renderDashboard(rooms, stats) {
   // Kort-engagemang: lägst behållningsgrad (mest utbytta) först.
   const cardArr = Object.entries(s.cards || {}).map(([text, c]) => ({ text, ...c, total: (c.kept || 0) + (c.skipped || 0) })).filter((c) => c.total >= 1);
   const rate = (c) => c.total ? Math.round(c.kept / c.total * 100) : 0;
-  const mostSwapped = cardArr.slice().sort((a, b) => (b.skipped / b.total) - (a.skipped / a.total) || b.skipped - a.skipped).slice(0, 10);
-  const mostKept = cardArr.slice().sort((a, b) => rate(b) - rate(a) || b.total - a.total).slice(0, 10);
+  // Bara kort som FAKTISKT bytts ut hör hemma i "svagast"-listan (annars fyller
+  // 100%-behållna kort ut listan när det finns färre än 10 utbytta).
+  const mostSwapped = cardArr.filter((c) => c.skipped > 0).sort((a, b) => (b.skipped / b.total) - (a.skipped / a.total) || b.skipped - a.skipped).slice(0, 10);
+  const mostKept = cardArr.filter((c) => c.kept > 0).sort((a, b) => rate(b) - rate(a) || b.total - a.total).slice(0, 10);
   const cardRow = (c) => `<div class="card-row"><span class="ct">${esc(c.text)}</span><span class="cr">behålls ${rate(c)}% · ${c.kept}/${c.total}</span></div>`;
   const totalsBlock = `
   <h2>Totalt sedan ${esc(sinceStr)}</h2>
@@ -406,9 +410,10 @@ function renderDashboard(rooms, stats) {
     <div class="stat"><div class="n">${s.joins || 0}</div><div class="l">anslutningar totalt</div></div>
     <div class="stat"><div class="n">${s.peak || 0}</div><div class="l">flest samtidiga dyk</div></div>
   </div>
-  <div class="cols">
-    <div class="panel"><h3>Dyk per dag (senaste 14)</h3><div class="chart">${bars || '<span class="meta">Ingen data än</span>'}</div></div>
+  <div class="panel"><h3>Dyk per dag (senaste 14)</h3><div class="chart">${bars || '<span class="meta">Ingen data än</span>'}</div></div>
+  <div class="cols3">
     <div class="panel"><h3>Per land</h3>${countryRows}</div>
+    <div class="panel"><h3>Per stad</h3>${cityRows}</div>
     <div class="panel"><h3>Per UTM-källa</h3>${utmRows}</div>
   </div>
   <h2>Speltid · totalt ${fmtH(s.playMs)}</h2>
@@ -463,10 +468,10 @@ function renderDashboard(rooms, stats) {
   .foot{color:var(--dim);font-size:.78rem;margin-top:18px}
   h2{font-size:1.15rem;margin:30px 0 12px;color:var(--soft)}
   h3{font-size:.82rem;text-transform:uppercase;letter-spacing:.06em;color:var(--soft);margin:0 0 10px}
-  .cols{display:grid;grid-template-columns:2fr 1fr 1fr;gap:14px}
+  .cols3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:14px}
   .cols4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
   .cols2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-  @media(max-width:760px){.cols,.cols4,.cols2{grid-template-columns:1fr}}
+  @media(max-width:760px){.cols3,.cols4,.cols2{grid-template-columns:1fr}}
   .card-row{padding:7px 0;border-bottom:1px solid rgba(255,255,255,.05)}
   .card-row .ct{display:block;font-size:.86rem} .card-row .cr{font-size:.74rem;color:var(--acc)}
   .panel{background:var(--card);border-radius:14px;padding:16px 18px}
