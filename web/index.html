@@ -174,6 +174,11 @@
         <button id="btn-invite" class="btn btn-glass full invite-btn">🔗 Bjud in fler</button>
         <p class="invite-hint" id="invite-hint">Den som öppnar länken hamnar direkt här i ert rum. Eller läs upp koden <b id="invite-code">••••</b> så skriver de in den själva.</p>
         <button id="btn-tv-lobby" class="btn btn-glass full">📺 Visa på TV</button>
+        <div class="lobby-help">
+          <button id="btn-help-lobby" class="lobby-help-btn" type="button">❓ Så funkar det</button>
+          <button id="btn-video-lobby" class="lobby-help-btn" type="button">▶ Se filmen</button>
+          <button id="btn-sound-lobby" class="lobby-help-btn" type="button">🔊 Ljud</button>
+        </div>
 
         <p class="safe-note" id="safe-note">Det här är ett rum byggt på trygghet. Ingen tvingas till något. Du delar det du vill, i din takt, och får alltid säga pass. Att vara här är redan modigt.</p>
 
@@ -224,14 +229,14 @@
       </div>
 
       <div class="topbar game-topbar">
-        <div class="depth-meter" id="depth-meter">
+        <button class="depth-meter" id="depth-meter" aria-label="Byt djup">
           <span class="depth-meter-val" id="depth-val">0 m</span>
           <span class="depth-meter-name" id="depth-name">Ytan</span>
-        </div>
+        </button>
         <a class="game-brand" id="game-brand" href="https://vitalisera.se" target="_blank" rel="noopener" aria-label="Vitalisera, vitalisera.se"></a>
         <button class="code-mini" id="game-code" aria-label="Dela rumskod och bjud in fler">••••</button>
         <button class="icon-btn buoy-icon" id="btn-buoy" aria-label="Be om en paus, anonymt">🛟</button>
-        <button class="icon-btn" id="btn-menu" aria-label="Meny">⋯</button>
+        <button class="icon-btn" id="btn-menu" aria-label="Meny">☰</button>
       </div>
 
       <div class="turn" id="turn">
@@ -349,35 +354,59 @@
       <h3 class="sheet-title">Justera dyket</h3>
       <p class="sheet-note" id="sheet-note" hidden>Det är någon annans tur. Bara den som har turen, eller värden, kan ändra dyket just nu.</p>
 
-      <div id="sheet-depth">
-        <span class="sheet-label">Byt djup mitt i spelet</span>
-        <div class="levels levels-compact" id="sheet-levels"></div>
-      </div>
-
       <div class="sheet-actions">
-        <button id="btn-sound" class="btn btn-glass full">🔊 Ljud: på</button>
-        <button id="btn-invite-game" class="btn btn-glass full"><span>🔗 Bjud in fler (kod <b id="game-invite-code">••••</b>)</span></button>
-        <button id="btn-tv-share" class="btn btn-glass full">📺 Visa på TV</button>
-        <button id="btn-help-game" class="btn btn-glass full">Så funkar det</button>
-        <button id="btn-manual-game" class="btn btn-glass full">📖 Hela manualen</button>
-        <button id="btn-reflection" class="btn btn-glass full">✨ Dra en spegling</button>
-        <button id="btn-quote" class="btn btn-glass full">💬 Dra ett diskussionskort</button>
-        <button id="btn-parable" class="btn btn-glass full">🪷 Dra en visdomsberättelse</button>
-        <button id="btn-parcard" class="btn btn-glass full">💞 Dra ett par-kort</button>
-        <button id="btn-inkblot" class="btn btn-glass full">✦ Visa en bläckbild</button>
-        <button id="btn-strom" class="btn btn-glass full">🌊 Para ihop två</button>
-        <button id="btn-silence" class="btn btn-glass full">🤫 Bjud in tystnad</button>
-        <button id="btn-closing" class="btn btn-glass full">Dra ett avslutningskort</button>
-        <button id="btn-pass" class="btn btn-glass full">Skicka turen vidare</button>
-        <button id="btn-pass-back" class="btn btn-glass full">↩ Ge tillbaka turen</button>
-        <div class="sheet-divider" id="sheet-divider"></div>
-        <button id="btn-finish" class="btn btn-glass full">🫧 Stig upp och avsluta</button>
-        <button id="btn-restart" class="btn btn-glass full">Tillbaka till lobbyn</button>
+        <div class="sheet-group" id="grp-cards">
+          <span class="sheet-group-h">Krydda samtalet</span>
+          <div class="sheet-grid">
+            <button id="btn-reflection" class="sheet-card"><b>✨</b><span>Spegling</span></button>
+            <button id="btn-quote" class="sheet-card"><b>💬</b><span>Diskussion</span></button>
+            <button id="btn-parable" class="sheet-card"><b>🪷</b><span>Visdom</span></button>
+            <button id="btn-parcard" class="sheet-card"><b>💞</b><span>Par-kort</span></button>
+            <button id="btn-inkblot" class="sheet-card"><b>✦</b><span>Bläckbild</span></button>
+            <button id="btn-strom" class="sheet-card"><b>🌊</b><span>Para ihop</span></button>
+            <button id="btn-silence" class="sheet-card"><b>🤫</b><span>Tystnad</span></button>
+          </div>
+        </div>
+
+        <div class="sheet-group" id="grp-turn">
+          <span class="sheet-group-h">Din tur</span>
+          <button id="btn-pass" class="btn btn-glass full">Skicka turen vidare</button>
+          <button id="btn-pass-back" class="btn btn-glass full">↩ Ge tillbaka turen</button>
+        </div>
+
+        <div class="sheet-group" id="grp-host">
+          <span class="sheet-group-h">Spelledaren</span>
+          <button id="btn-closing" class="btn btn-glass full">🍃 Dra ett avslutningskort</button>
+          <button id="btn-finish" class="btn btn-glass full">🫧 Stig upp och avsluta</button>
+          <button id="btn-restart" class="btn btn-glass full">↩ Tillbaka till lobbyn</button>
+        </div>
+
+        <div class="sheet-group" id="grp-room">
+          <span class="sheet-group-h">Rummet &amp; hjälp</span>
+          <button id="btn-sound" class="btn btn-glass full">🔊 Ljud: på</button>
+          <button id="btn-invite-game" class="btn btn-glass full"><span>🔗 Bjud in fler (kod <b id="game-invite-code">••••</b>)</span></button>
+          <button id="btn-tv-share" class="btn btn-glass full">📺 Visa på TV</button>
+          <button id="btn-help-game" class="btn btn-glass full">❓ Så funkar det</button>
+          <button id="btn-manual-game" class="btn btn-glass full">📖 Hela manualen</button>
+          <button id="btn-video-game" class="btn btn-glass full">▶ Se filmen</button>
+        </div>
+
         <button id="btn-leave-game" class="btn btn-ghost full danger">Lämna dyket</button>
       </div>
       <button id="btn-close-sheet" class="btn btn-primary full">Klar</button>
       <a class="site-link" href="https://vitalisera.se" target="_blank" rel="noopener">Mer från Vitalisera · vitalisera.se ↗</a>
       <div style="text-align:center;font-size:0.68rem;color:var(--ink-dim);opacity:0.65;margin-top:6px;letter-spacing:0.04em;">version __BUILD__</div>
+    </div>
+  </div>
+
+  <!-- ============ DJUPVÄLJARE (öppnas genom att trycka på djupet i topbaren) ============ -->
+  <div id="depthpick" class="sheet" aria-hidden="true">
+    <div class="sheet-panel glass">
+      <div class="sheet-handle"></div>
+      <h3 class="sheet-title">Byt djup</h3>
+      <p class="sheet-note" id="depthpick-note" hidden>Bara värden kan byta djup mitt i dyket.</p>
+      <div class="levels levels-compact" id="depthpick-levels"></div>
+      <button id="btn-depthpick-close" class="btn btn-primary full">Klar</button>
     </div>
   </div>
 

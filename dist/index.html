@@ -489,9 +489,12 @@ input:focus { border-color: var(--depth); box-shadow: 0 0 0 3px color-mix(in srg
 /* ============ SPEL ============ */
 .game-topbar { gap: 10px; }
 .depth-meter {
-  display: flex; flex-direction: column; padding: 6px 15px; border-radius: 14px;
+  display: flex; flex-direction: column; align-items: flex-start; text-align: left;
+  padding: 6px 15px; border-radius: 14px;
   background: var(--glass); border: 1px solid var(--glass-brd);
+  font: inherit; cursor: pointer;   /* tappbar: öppnar djupväljaren */
 }
+.depth-meter:active { transform: scale(0.96); }
 .depth-meter-val { font-weight: 800; font-size: 1.05rem; color: var(--depth-text); line-height: 1.1; }
 .depth-meter-name { font-size: 0.7rem; color: var(--ink-dim); text-transform: uppercase; letter-spacing: 0.08em; }
 .code-mini { margin-left: auto; min-height: 44px; display: inline-flex; align-items: center; font-weight: 700; letter-spacing: 0.18em; color: var(--ink-soft); font-size: 0.9rem;
@@ -598,11 +601,30 @@ input:focus { border-color: var(--depth); box-shadow: 0 0 0 3px color-mix(in srg
 .sheet-handle { width: 40px; height: 4px; border-radius: 2px; background: var(--ink-dim); margin: 2px auto 6px; opacity: 0.6; }
 .sheet-title { font-size: 1.25rem; text-align: center; }
 .sheet-note { text-align: center; color: var(--ink-soft); font-size: 0.86rem; line-height: 1.45; margin: 2px 0 4px; }
-.sheet-label { font-size: 0.78rem; color: var(--ink-dim); text-transform: uppercase; letter-spacing: 0.1em; }
-.sheet-actions { display: flex; flex-direction: column; gap: 9px; margin-top: 4px; }
+.levels.inert { opacity: 0.5; pointer-events: none; }   /* djupväljaren för icke-värd */
+.sheet-actions { display: flex; flex-direction: column; gap: 12px; margin-top: 4px; }
 /* Låt panelen skrolla i stället för att trycka ihop knapparna (de ska behålla
    sin höjd, minst 44px enligt HIG). */
-.sheet-panel > *, .sheet-actions > .btn { flex-shrink: 0; }
+.sheet-panel > *, .sheet-actions > * { flex-shrink: 0; }
+
+/* Grupperad meny: rubriker + specialkort som ikon-rutnät. */
+.sheet-group { display: flex; flex-direction: column; gap: 8px; }
+.sheet-group[hidden] { display: none; }
+.sheet-group-h { font-size: 0.72rem; color: var(--ink-dim); text-transform: uppercase; letter-spacing: 0.1em; margin: 2px 0 -1px; padding-left: 2px; }
+.sheet-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.sheet-card {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  padding: 12px 6px; border-radius: 14px; background: var(--glass); border: 1px solid var(--glass-brd);
+  color: var(--ink); font: inherit; font-size: 0.78rem; cursor: pointer; min-height: 68px; text-align: center;
+}
+.sheet-card b { font-size: 1.35rem; font-weight: 400; line-height: 1; }
+.sheet-card:active { transform: scale(0.96); }
+.sheet-card[hidden] { display: none; }
+
+/* Lyfta genvägar i lobbyn. */
+.lobby-help { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin: 2px 0; }
+.lobby-help-btn { background: none; border: 0; color: var(--ink-soft); font: inherit; font-size: 0.85rem; cursor: pointer; padding: 8px 10px; border-radius: 10px; min-height: 40px; }
+.lobby-help-btn:active { background: var(--glass); }
 
 /* ============ NÄT-STATUS & TOAST ============ */
 .netbar {
@@ -709,7 +731,6 @@ input:focus { border-color: var(--depth); box-shadow: 0 0 0 3px color-mix(in srg
 .btn-control:disabled { opacity: 0.3; }
 
 /* Menyseparator */
-.sheet-divider { height: 1px; background: var(--glass-brd); margin: 5px 0; }
 
 /* ---------- Sammanfattning ---------- */
 /* Skrollbar innehållsyta. bottom-dock (Dyk igen / Lämna) ligger kvar under och
@@ -1277,6 +1298,11 @@ body.display-mode #app { max-width: none; }
         <button id="btn-invite" class="btn btn-glass full invite-btn">🔗 Bjud in fler</button>
         <p class="invite-hint" id="invite-hint">Den som öppnar länken hamnar direkt här i ert rum. Eller läs upp koden <b id="invite-code">••••</b> så skriver de in den själva.</p>
         <button id="btn-tv-lobby" class="btn btn-glass full">📺 Visa på TV</button>
+        <div class="lobby-help">
+          <button id="btn-help-lobby" class="lobby-help-btn" type="button">❓ Så funkar det</button>
+          <button id="btn-video-lobby" class="lobby-help-btn" type="button">▶ Se filmen</button>
+          <button id="btn-sound-lobby" class="lobby-help-btn" type="button">🔊 Ljud</button>
+        </div>
 
         <p class="safe-note" id="safe-note">Det här är ett rum byggt på trygghet. Ingen tvingas till något. Du delar det du vill, i din takt, och får alltid säga pass. Att vara här är redan modigt.</p>
 
@@ -1327,14 +1353,14 @@ body.display-mode #app { max-width: none; }
       </div>
 
       <div class="topbar game-topbar">
-        <div class="depth-meter" id="depth-meter">
+        <button class="depth-meter" id="depth-meter" aria-label="Byt djup">
           <span class="depth-meter-val" id="depth-val">0 m</span>
           <span class="depth-meter-name" id="depth-name">Ytan</span>
-        </div>
+        </button>
         <a class="game-brand" id="game-brand" href="https://vitalisera.se" target="_blank" rel="noopener" aria-label="Vitalisera, vitalisera.se"></a>
         <button class="code-mini" id="game-code" aria-label="Dela rumskod och bjud in fler">••••</button>
         <button class="icon-btn buoy-icon" id="btn-buoy" aria-label="Be om en paus, anonymt">🛟</button>
-        <button class="icon-btn" id="btn-menu" aria-label="Meny">⋯</button>
+        <button class="icon-btn" id="btn-menu" aria-label="Meny">☰</button>
       </div>
 
       <div class="turn" id="turn">
@@ -1452,35 +1478,59 @@ body.display-mode #app { max-width: none; }
       <h3 class="sheet-title">Justera dyket</h3>
       <p class="sheet-note" id="sheet-note" hidden>Det är någon annans tur. Bara den som har turen, eller värden, kan ändra dyket just nu.</p>
 
-      <div id="sheet-depth">
-        <span class="sheet-label">Byt djup mitt i spelet</span>
-        <div class="levels levels-compact" id="sheet-levels"></div>
-      </div>
-
       <div class="sheet-actions">
-        <button id="btn-sound" class="btn btn-glass full">🔊 Ljud: på</button>
-        <button id="btn-invite-game" class="btn btn-glass full"><span>🔗 Bjud in fler (kod <b id="game-invite-code">••••</b>)</span></button>
-        <button id="btn-tv-share" class="btn btn-glass full">📺 Visa på TV</button>
-        <button id="btn-help-game" class="btn btn-glass full">Så funkar det</button>
-        <button id="btn-manual-game" class="btn btn-glass full">📖 Hela manualen</button>
-        <button id="btn-reflection" class="btn btn-glass full">✨ Dra en spegling</button>
-        <button id="btn-quote" class="btn btn-glass full">💬 Dra ett diskussionskort</button>
-        <button id="btn-parable" class="btn btn-glass full">🪷 Dra en visdomsberättelse</button>
-        <button id="btn-parcard" class="btn btn-glass full">💞 Dra ett par-kort</button>
-        <button id="btn-inkblot" class="btn btn-glass full">✦ Visa en bläckbild</button>
-        <button id="btn-strom" class="btn btn-glass full">🌊 Para ihop två</button>
-        <button id="btn-silence" class="btn btn-glass full">🤫 Bjud in tystnad</button>
-        <button id="btn-closing" class="btn btn-glass full">Dra ett avslutningskort</button>
-        <button id="btn-pass" class="btn btn-glass full">Skicka turen vidare</button>
-        <button id="btn-pass-back" class="btn btn-glass full">↩ Ge tillbaka turen</button>
-        <div class="sheet-divider" id="sheet-divider"></div>
-        <button id="btn-finish" class="btn btn-glass full">🫧 Stig upp och avsluta</button>
-        <button id="btn-restart" class="btn btn-glass full">Tillbaka till lobbyn</button>
+        <div class="sheet-group" id="grp-cards">
+          <span class="sheet-group-h">Krydda samtalet</span>
+          <div class="sheet-grid">
+            <button id="btn-reflection" class="sheet-card"><b>✨</b><span>Spegling</span></button>
+            <button id="btn-quote" class="sheet-card"><b>💬</b><span>Diskussion</span></button>
+            <button id="btn-parable" class="sheet-card"><b>🪷</b><span>Visdom</span></button>
+            <button id="btn-parcard" class="sheet-card"><b>💞</b><span>Par-kort</span></button>
+            <button id="btn-inkblot" class="sheet-card"><b>✦</b><span>Bläckbild</span></button>
+            <button id="btn-strom" class="sheet-card"><b>🌊</b><span>Para ihop</span></button>
+            <button id="btn-silence" class="sheet-card"><b>🤫</b><span>Tystnad</span></button>
+          </div>
+        </div>
+
+        <div class="sheet-group" id="grp-turn">
+          <span class="sheet-group-h">Din tur</span>
+          <button id="btn-pass" class="btn btn-glass full">Skicka turen vidare</button>
+          <button id="btn-pass-back" class="btn btn-glass full">↩ Ge tillbaka turen</button>
+        </div>
+
+        <div class="sheet-group" id="grp-host">
+          <span class="sheet-group-h">Spelledaren</span>
+          <button id="btn-closing" class="btn btn-glass full">🍃 Dra ett avslutningskort</button>
+          <button id="btn-finish" class="btn btn-glass full">🫧 Stig upp och avsluta</button>
+          <button id="btn-restart" class="btn btn-glass full">↩ Tillbaka till lobbyn</button>
+        </div>
+
+        <div class="sheet-group" id="grp-room">
+          <span class="sheet-group-h">Rummet &amp; hjälp</span>
+          <button id="btn-sound" class="btn btn-glass full">🔊 Ljud: på</button>
+          <button id="btn-invite-game" class="btn btn-glass full"><span>🔗 Bjud in fler (kod <b id="game-invite-code">••••</b>)</span></button>
+          <button id="btn-tv-share" class="btn btn-glass full">📺 Visa på TV</button>
+          <button id="btn-help-game" class="btn btn-glass full">❓ Så funkar det</button>
+          <button id="btn-manual-game" class="btn btn-glass full">📖 Hela manualen</button>
+          <button id="btn-video-game" class="btn btn-glass full">▶ Se filmen</button>
+        </div>
+
         <button id="btn-leave-game" class="btn btn-ghost full danger">Lämna dyket</button>
       </div>
       <button id="btn-close-sheet" class="btn btn-primary full">Klar</button>
       <a class="site-link" href="https://vitalisera.se" target="_blank" rel="noopener">Mer från Vitalisera · vitalisera.se ↗</a>
-      <div style="text-align:center;font-size:0.68rem;color:var(--ink-dim);opacity:0.65;margin-top:6px;letter-spacing:0.04em;">version 2026-07-01 09:16</div>
+      <div style="text-align:center;font-size:0.68rem;color:var(--ink-dim);opacity:0.65;margin-top:6px;letter-spacing:0.04em;">version 2026-07-02 14:08</div>
+    </div>
+  </div>
+
+  <!-- ============ DJUPVÄLJARE (öppnas genom att trycka på djupet i topbaren) ============ -->
+  <div id="depthpick" class="sheet" aria-hidden="true">
+    <div class="sheet-panel glass">
+      <div class="sheet-handle"></div>
+      <h3 class="sheet-title">Byt djup</h3>
+      <p class="sheet-note" id="depthpick-note" hidden>Bara värden kan byta djup mitt i dyket.</p>
+      <div class="levels levels-compact" id="depthpick-levels"></div>
+      <button id="btn-depthpick-close" class="btn btn-primary full">Klar</button>
     </div>
   </div>
 
@@ -4881,30 +4931,37 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
     const isLocal = Net.role === 'local';
     const isHost = Net.role === 'host' || isLocal;   // runt bordet: enheten styr allt
     const canDrive = isHost || myTurn;
-    $('sheet-levels').innerHTML = LEVELS.map((l) => levelCard(l, l.id === s.levelId, true)).join('');
-    bindLevelButtons('sheet-levels', (id) => { Net.dispatch({ type: 'setLevel', levelId: id }); closeSheet(); });
-    // Spelledar-bara (formar sessionen) vs turspelare/värd (driver kortet) vs alla.
-    $('sheet-depth').hidden = !isHost;                 // byt djup = värd-bara
-    $('btn-reflection').hidden = !canDrive;
-    $('btn-quote').hidden = !canDrive;
-    $('btn-parable').hidden = !canDrive;
-    $('btn-parcard').hidden = !canDrive || s.mode !== 'par';   // par-kort bara i parläge
-    $('btn-inkblot').hidden = !canDrive;
-    $('btn-strom').hidden = !canDrive || s.players.filter((p) => p.connected).length < 2; // kräver två
-    $('btn-silence').hidden = !canDrive;
-    $('btn-closing').hidden = !isHost;                 // avslutningskort = värd-bara
-    $('btn-pass').hidden = isLocal;                    // skicka turen vidare = bara i nätläge
-    $('btn-pass-back').hidden = isLocal;               // ge tillbaka turen = bara i nätläge
-    $('btn-finish').hidden = !isHost;                  // avsluta = värd-bara
-    $('btn-restart').hidden = !isHost;
+    // Grupper: specialkort (den som driver kortet), din tur (bara nätläge), spelledaren (värd).
+    $('grp-cards').hidden = !canDrive;
+    $('grp-turn').hidden = isLocal;
+    $('grp-host').hidden = !isHost;
+    // Enskilda villkor inom grupperna.
+    $('btn-parcard').hidden = s.mode !== 'par';                                       // par-kort bara i parläge
+    $('btn-strom').hidden = s.players.filter((p) => p.connected).length < 2;          // kräver två
+    const inv = $('btn-invite-game'); if (inv) inv.hidden = isLocal;                  // ingen inbjudan lokalt
     $('sheet-note').hidden = canDrive;
-    const inv = $('btn-invite-game'); if (inv) inv.hidden = isLocal;   // ingen inbjudan lokalt
-    $('btn-tv-share').hidden = false;                                  // Visa på TV funkar i alla lägen (lokalt via spegling)
     updateSoundLabel();
     $('game-invite-code').textContent = s.code;
     $('sheet').classList.add('open'); $('sheet').setAttribute('aria-hidden', 'false');
   }
   function closeSheet() { $('sheet').classList.remove('open'); $('sheet').setAttribute('aria-hidden', 'true'); }
+
+  // ---- Djupväljare (öppnas via djup-mätaren i topbaren) --------------------
+  function openDepthPicker() {
+    const s = state(); if (!s) return;
+    const isHost = Net.role === 'host' || Net.role === 'local';
+    $('depthpick-levels').innerHTML = LEVELS.map((l) => levelCard(l, l.id === s.levelId, true)).join('');
+    $('depthpick-levels').classList.toggle('inert', !isHost);   // icke-värd: dämpad, ej klickbar
+    $('depthpick-note').hidden = isHost;   // bara värden kan byta djup mitt i dyket
+    if (isHost) {
+      bindLevelButtons('depthpick-levels', (id) => { Net.dispatch({ type: 'setLevel', levelId: id }); closeDepthPicker(); });
+    }
+    $('depthpick').classList.add('open'); $('depthpick').setAttribute('aria-hidden', 'false');
+  }
+  function closeDepthPicker() { $('depthpick').classList.remove('open'); $('depthpick').setAttribute('aria-hidden', 'true'); }
+  $('depth-meter').onclick = openDepthPicker;
+  $('btn-depthpick-close').onclick = closeDepthPicker;
+  $('depthpick').addEventListener('click', (e) => { if (e.target.id === 'depthpick') closeDepthPicker(); });
   function updateSoundLabel() { $('btn-sound').textContent = Snd.muted ? '🔇 Ljud: av' : '🔊 Ljud: på'; }
   $('btn-close-sheet').onclick = closeSheet;
   $('sheet').addEventListener('click', (e) => { if (e.target.id === 'sheet') closeSheet(); });
@@ -4963,8 +5020,13 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
   }
   $('btn-video-intro').onclick = openVideo;
   $('btn-video-manual').onclick = openVideo;
+  $('btn-video-game').onclick = () => { closeSheet(); openVideo(); };
   $('btn-video-close').onclick = closeVideo;
   $('video').addEventListener('click', (e) => { if (e.target.id === 'video') closeVideo(); });
+  // Lobbyns lyfta genvägar (samma som i menyn/hemma).
+  $('btn-help-lobby').onclick = openIntro;
+  $('btn-video-lobby').onclick = openVideo;
+  $('btn-sound-lobby').onclick = () => { Snd.toggle(); Snd.resume(); $('btn-sound-lobby').textContent = Snd.muted ? '🔇 Ljud' : '🔊 Ljud'; };
   $('btn-manual-game').onclick = () => { closeSheet(); openManual(); };
   $('btn-manual-print').onclick = () => {
     // iOS-PWA i standalone kan inte printa direkt: öppna i en vanlig flik som auto-printar.

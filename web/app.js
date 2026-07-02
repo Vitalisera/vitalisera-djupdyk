@@ -1113,30 +1113,37 @@
     const isLocal = Net.role === 'local';
     const isHost = Net.role === 'host' || isLocal;   // runt bordet: enheten styr allt
     const canDrive = isHost || myTurn;
-    $('sheet-levels').innerHTML = LEVELS.map((l) => levelCard(l, l.id === s.levelId, true)).join('');
-    bindLevelButtons('sheet-levels', (id) => { Net.dispatch({ type: 'setLevel', levelId: id }); closeSheet(); });
-    // Spelledar-bara (formar sessionen) vs turspelare/värd (driver kortet) vs alla.
-    $('sheet-depth').hidden = !isHost;                 // byt djup = värd-bara
-    $('btn-reflection').hidden = !canDrive;
-    $('btn-quote').hidden = !canDrive;
-    $('btn-parable').hidden = !canDrive;
-    $('btn-parcard').hidden = !canDrive || s.mode !== 'par';   // par-kort bara i parläge
-    $('btn-inkblot').hidden = !canDrive;
-    $('btn-strom').hidden = !canDrive || s.players.filter((p) => p.connected).length < 2; // kräver två
-    $('btn-silence').hidden = !canDrive;
-    $('btn-closing').hidden = !isHost;                 // avslutningskort = värd-bara
-    $('btn-pass').hidden = isLocal;                    // skicka turen vidare = bara i nätläge
-    $('btn-pass-back').hidden = isLocal;               // ge tillbaka turen = bara i nätläge
-    $('btn-finish').hidden = !isHost;                  // avsluta = värd-bara
-    $('btn-restart').hidden = !isHost;
+    // Grupper: specialkort (den som driver kortet), din tur (bara nätläge), spelledaren (värd).
+    $('grp-cards').hidden = !canDrive;
+    $('grp-turn').hidden = isLocal;
+    $('grp-host').hidden = !isHost;
+    // Enskilda villkor inom grupperna.
+    $('btn-parcard').hidden = s.mode !== 'par';                                       // par-kort bara i parläge
+    $('btn-strom').hidden = s.players.filter((p) => p.connected).length < 2;          // kräver två
+    const inv = $('btn-invite-game'); if (inv) inv.hidden = isLocal;                  // ingen inbjudan lokalt
     $('sheet-note').hidden = canDrive;
-    const inv = $('btn-invite-game'); if (inv) inv.hidden = isLocal;   // ingen inbjudan lokalt
-    $('btn-tv-share').hidden = false;                                  // Visa på TV funkar i alla lägen (lokalt via spegling)
     updateSoundLabel();
     $('game-invite-code').textContent = s.code;
     $('sheet').classList.add('open'); $('sheet').setAttribute('aria-hidden', 'false');
   }
   function closeSheet() { $('sheet').classList.remove('open'); $('sheet').setAttribute('aria-hidden', 'true'); }
+
+  // ---- Djupväljare (öppnas via djup-mätaren i topbaren) --------------------
+  function openDepthPicker() {
+    const s = state(); if (!s) return;
+    const isHost = Net.role === 'host' || Net.role === 'local';
+    $('depthpick-levels').innerHTML = LEVELS.map((l) => levelCard(l, l.id === s.levelId, true)).join('');
+    $('depthpick-levels').classList.toggle('inert', !isHost);   // icke-värd: dämpad, ej klickbar
+    $('depthpick-note').hidden = isHost;   // bara värden kan byta djup mitt i dyket
+    if (isHost) {
+      bindLevelButtons('depthpick-levels', (id) => { Net.dispatch({ type: 'setLevel', levelId: id }); closeDepthPicker(); });
+    }
+    $('depthpick').classList.add('open'); $('depthpick').setAttribute('aria-hidden', 'false');
+  }
+  function closeDepthPicker() { $('depthpick').classList.remove('open'); $('depthpick').setAttribute('aria-hidden', 'true'); }
+  $('depth-meter').onclick = openDepthPicker;
+  $('btn-depthpick-close').onclick = closeDepthPicker;
+  $('depthpick').addEventListener('click', (e) => { if (e.target.id === 'depthpick') closeDepthPicker(); });
   function updateSoundLabel() { $('btn-sound').textContent = Snd.muted ? '🔇 Ljud: av' : '🔊 Ljud: på'; }
   $('btn-close-sheet').onclick = closeSheet;
   $('sheet').addEventListener('click', (e) => { if (e.target.id === 'sheet') closeSheet(); });
@@ -1195,8 +1202,13 @@
   }
   $('btn-video-intro').onclick = openVideo;
   $('btn-video-manual').onclick = openVideo;
+  $('btn-video-game').onclick = () => { closeSheet(); openVideo(); };
   $('btn-video-close').onclick = closeVideo;
   $('video').addEventListener('click', (e) => { if (e.target.id === 'video') closeVideo(); });
+  // Lobbyns lyfta genvägar (samma som i menyn/hemma).
+  $('btn-help-lobby').onclick = openIntro;
+  $('btn-video-lobby').onclick = openVideo;
+  $('btn-sound-lobby').onclick = () => { Snd.toggle(); Snd.resume(); $('btn-sound-lobby').textContent = Snd.muted ? '🔇 Ljud' : '🔊 Ljud'; };
   $('btn-manual-game').onclick = () => { closeSheet(); openManual(); };
   $('btn-manual-print').onclick = () => {
     // iOS-PWA i standalone kan inte printa direkt: öppna i en vanlig flik som auto-printar.
