@@ -494,7 +494,8 @@
 
       const fu = $('card-followup');
       if (s.card.followup) {
-        fu.innerHTML = '<span class="fu-label">' + (isQuote ? 'Diskussion' : isParable ? 'Eftertanke' : isReflection ? 'Vad det kan betyda' : 'Följdfråga') + '</span>' + escapeHtml(s.card.followup);
+        fu.innerHTML = '<span class="fu-label">' + (isQuote ? 'Diskussion' : isParable ? 'Eftertanke' : isReflection ? 'Vad det kan betyda' : 'Följdfråga') + '</span>' + escapeHtml(s.card.followup)
+          + (isReflection ? '<span class="fu-mirror">🪞 En spegel, ingen sanning</span>' : '');   // fast disclaimer (flyttad ur f-texterna)
         fu.classList.add('show'); fu.classList.toggle('reveal', !!isReflection);
       } else { fu.classList.remove('show'); fu.classList.remove('reveal'); fu.textContent = ''; }
 

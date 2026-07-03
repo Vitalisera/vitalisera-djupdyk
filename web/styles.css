@@ -706,6 +706,7 @@ input:focus { border-color: var(--depth); box-shadow: 0 0 0 3px color-mix(in srg
 
 /* Tydlig etikett på följdfråga (inte en kryptisk ikon) */
 .fu-label { display: inline-block; font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.13em; font-weight: 800; color: var(--depth-text); margin-right: 7px; }
+.fu-mirror { display: block; margin-top: 12px; font-size: 0.74rem; font-style: italic; color: var(--ink-dim); letter-spacing: 0.02em; }
 
 /* Starkare låst läge på kontroller */
 .btn-control:disabled { opacity: 0.3; }
