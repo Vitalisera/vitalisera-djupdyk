@@ -4,7 +4,7 @@ Ett samtalsspel där ni dyker allt djupare tillsammans — från **Ytan** till *
 Ni sitter i samma rum men följer spelet var och en på sin **egen mobiltelefon**. Alla
 telefoner visar exakt samma kort, vems tur det är och spelets gång i realtid.
 
-> 150 originalformulerade frågor i fem djup · turordning · "dyk djupare"-följdfrågor ·
+> 350 frågor i fem djup, och över 300 speglingar, strömmar, citat och berättelser · turordning · "dyk djupare"-följdfrågor ·
 > avslutningskort · installerbar app (PWA) · fungerar offline-skal · helt utan konton.
 
 ## Spela
@@ -52,7 +52,7 @@ djupdyk/
     inkblot.js             bläckfisk-/bläckanimation
     sw.js                  service worker (app-skal offline)
     manifest.webmanifest   PWA-manifest
-    data/questions.js      frågebanken (150 frågor i 5 djup)
+    data/questions.js      frågebanken (350 frågor i 5 djup + 300+ speglingar/strömmar/citat/berättelser)
     vendor/peerjs.min.js   PeerJS lokalt (inget körtidsberoende av CDN)
     icons/                 app-ikoner
   build-single.js          bygger web/ → dist/ (enfils + PWA-syskonfiler)

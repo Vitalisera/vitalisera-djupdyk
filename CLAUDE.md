@@ -9,7 +9,7 @@ testa lokalt (`npm start`) → deploya till surge → verifiera live. Svensk tex
 
 ## Vad det är
 Ett **serverlöst flerspelar-samtalsspel**. Deltagarna sitter i samma rum men följer spelet var och en på sin
-egen mobil; alla telefoner visar samma kort, turordning och spelgång i realtid. 150 originalfrågor i fem djup
+egen mobil; alla telefoner visar samma kort, turordning och spelgång i realtid. 350 frågor i fem djup (+300 speglingar/strömmar/citat/berättelser)
 (Ytan → Djuphavet), "dyk djupare"-följdfrågor, avslutningskort, installerbar PWA, offline-skal, inga konton.
 
 ## Arkitektur
@@ -26,7 +26,7 @@ egen mobil; alla telefoner visar samma kort, turordning och spelgång i realtid.
   | `net.js` / `net-ws.js` | P2P-lager (WebRTC/PeerJS) resp. WebSocket-relä |
   | `ocean.js` / `inkblot.js` | levande undervattensscen (canvas) |
   | `sw.js`, `manifest.webmanifest` | PWA (offline-skal + installera) |
-  | `data/questions.js` | frågebanken (150 frågor, 5 djup) |
+  | `data/questions.js` | frågebanken (350 frågor i 5 djup + 300+ speglingar/strömmar/citat/berättelser) |
   | `vendor/peerjs.min.js` | PeerJS lokalt (inget CDN-beroende) |
 - **`server.js`** — liten beroendefri Node-server BARA för lokal förhandsvisning (`npm start` → port 5173).
 - **`server/`** — valfri Cloudflare Worker (WebSocket-relä, `wrangler.toml`). Spelet funkar utan den (ren P2P).
