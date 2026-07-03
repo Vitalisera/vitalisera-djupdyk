@@ -25,6 +25,17 @@ const CORS = {
   'Access-Control-Allow-Headers': 'Content-Type',
 };
 
+// Rate limit per IP via Workers ratelimit-binding (JOIN_RL i wrangler.toml, delad inom
+// colo). Hotbilden är kod-gissning mot känsliga rum (32^4 kombinationer), inte data.
+// Fail-open: saknas bindningen (t.ex. lokal dev) släpps trafiken igenom.
+async function rateLimited(env, ip) {
+  try {
+    if (!env.JOIN_RL || !ip) return false;
+    const { success } = await env.JOIN_RL.limit({ key: ip });
+    return !success;
+  } catch (_) { return false; }
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -41,6 +52,9 @@ export default {
 
     const m = url.pathname.match(/^\/room\/([A-Za-z0-9]{1,12})\/?$/);
     if (m) {
+      if (await rateLimited(env, request.headers.get('cf-connecting-ip') || '')) {
+        return new Response('För många försök. Vänta en stund.', { status: 429, headers: CORS });
+      }
       const code = m[1].toUpperCase();
       const id = env.ROOM.idFromName(code);
       return env.ROOM.get(id).fetch(request);
@@ -72,6 +86,7 @@ export class Room {
       this._statSent = (await this.ctx.storage.get('statSent')) || false;
       this._playReported = (await this.ctx.storage.get('playReported')) || false;
       this.mirrorState = (await this.ctx.storage.get('mirrorState')) || null;
+      this.secrets = (await this.ctx.storage.get('secrets')) || {};   // playerId -> hemlighet (identitetsskydd)
     });
   }
 
@@ -108,6 +123,26 @@ export class Room {
     const playerId = (url.searchParams.get('id') || ('p' + Math.random().toString(36).slice(2, 9))).slice(0, 40);
     const name = (url.searchParams.get('name') || 'Gäst').slice(0, 24);
 
+    // Identitetsskydd: spelar-id är självdeklarerat, så första anslutningen får en
+    // hemlighet som sedan KRÄVS för att återta samma id (annars kan den som kan
+    // rumskod + id agera som vem som helst, inklusive värden).
+    const sec = (url.searchParams.get('s') || '').slice(0, 64);
+    const known = this.secrets[playerId];
+    if (known && known !== sec) {
+      // Fel hemlighet: acceptera kort (ej hibernation-poolen), säg nej, stäng.
+      const dp = new WebSocketPair();
+      dp[1].accept();
+      try { dp[1].send(JSON.stringify({ type: 'denied', reason: 'identitet' })); dp[1].close(4403, 'denied'); } catch (_) {}
+      return new Response(null, { status: 101, webSocket: dp[0] });
+    }
+    // Okänt id: adoptera klientens hemlighet om den skickar en (samma enhet har EN
+    // hemlighet för alla rum), annars utfärda en ny och skicka tillbaka den.
+    let issuedSecret = null;
+    if (!known) {
+      if (sec) this.secrets[playerId] = sec;
+      else { issuedSecret = crypto.randomUUID().replace(/-/g, ''); this.secrets[playerId] = issuedSecret; }
+    }
+
     // Fånga IP/geo/UTM för dashboarden (separat från spel-staten).
     const cf = request.cf || {};
     this.meta[playerId] = {
@@ -122,6 +157,8 @@ export class Room {
 
     this.ctx.acceptWebSocket(server, [playerId]);
     server.serializeAttachment({ playerId, name });
+    // Ny identitet: skicka hemligheten privat till just den här socketen.
+    if (issuedSecret) { try { server.send(JSON.stringify({ type: 'secret', secret: issuedSecret })); } catch (_) {} }
 
     if (!this.game) {
       this.game = Game.create(code, playerId); this.code = code; this.created = Date.now();
@@ -135,6 +172,8 @@ export class Room {
     await this.persist();
     this.broadcast();
     await this.report();   // dyk + dykare räknas i Registry utifrån summary (konsekvent med peak, reset-rent)
+    // TTL: rensa bort övergivna rum (och deras IP/geo-metadata) efter ett dygn utan nya anslutningar.
+    try { await this.ctx.storage.setAlarm(Date.now() + 24 * 3600 * 1000); } catch (_) {}
 
     return new Response(null, { status: 101, webSocket: client });
   }
@@ -202,6 +241,17 @@ export class Room {
 
   async webSocketClose(ws) { await this._gone(ws); }
   async webSocketError(ws) { await this._gone(ws); }
+
+  // TTL: ett dygn efter senaste anslutning. Är någon kvar → skjut fram; annars glöm
+  // rummet helt (spelstat, hemligheter och IP/geo/UTM-metadata städas ur lagringen).
+  async alarm() {
+    const anyOnline = this.ctx.getWebSockets().some((s) => s.readyState === WebSocket.OPEN);
+    if (anyOnline) { try { await this.ctx.storage.setAlarm(Date.now() + 24 * 3600 * 1000); } catch (_) {} return; }
+    try { await this.report(false, true, 0); } catch (_) {}
+    try { await this.ctx.storage.deleteAll(); } catch (_) {}
+    this.game = null; this.code = null; this.meta = {}; this.mirrorState = null; this.secrets = {};
+    this.created = null; this.counted = {}; this._statSent = false; this._playReported = false;
+  }
 
   async _gone(ws) {
     const att = ws.deserializeAttachment() || {};
@@ -284,6 +334,7 @@ export class Room {
       if (this.created) await this.ctx.storage.put('created', this.created);
       await this.ctx.storage.put('counted', this.counted);
       await this.ctx.storage.put('statSent', this._statSent);
+      await this.ctx.storage.put('secrets', this.secrets);
     } catch (_) {}
   }
 }

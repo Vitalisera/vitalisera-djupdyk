@@ -24,3 +24,11 @@ new_sqlite_classes = ["Room"]
 [[migrations]]
 tag = "v2"
 new_sqlite_classes = ["Registry"]
+
+# Rate limit för rums-anslutningar (per IP, delad inom colo — till skillnad från
+# en isolat-lokal Map som i praktiken aldrig biter).
+[[unsafe.bindings]]
+name = "JOIN_RL"
+type = "ratelimit"
+namespace_id = "1001"
+simple = { limit = 30, period = 60 }

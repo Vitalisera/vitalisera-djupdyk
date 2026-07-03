@@ -35,7 +35,9 @@ som synkar telefonerna **peer-to-peer via WebRTC** (PeerJS):
 - Eftersom signaleringen går via internet kan ni även spela på **olika nätverk**, inte bara
   samma WiFi (STUN/TURN ingår för att ta sig genom brandväggar).
 
-Inga konton, ingen databas, ingen molntjänst — bara statiska filer.
+Inga konton och ingen traditionell databas. Rummen bor i Cloudflare Durable Objects medan de
+spelas: servern lagrar spelstaten samt anslutningsmetadata (IP-adress, land, stad) för en intern
+användningsöversikt. Övergivna rum och deras metadata raderas automatiskt efter ett dygn.
 
 ## Projektstruktur
 

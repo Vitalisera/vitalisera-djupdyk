@@ -1536,7 +1536,7 @@ body.display-mode #app { max-width: none; }
       </div>
       <button id="btn-close-sheet" class="btn btn-primary full">Klar</button>
       <a class="site-link" href="https://vitalisera.se" target="_blank" rel="noopener">Mer från Vitalisera · vitalisera.se ↗</a>
-      <div style="text-align:center;font-size:0.68rem;color:var(--ink-dim);opacity:0.65;margin-top:6px;letter-spacing:0.04em;">version 2026-07-03 22:21</div>
+      <div style="text-align:center;font-size:0.68rem;color:var(--ink-dim);opacity:0.65;margin-top:6px;letter-spacing:0.04em;">version 2026-07-03 22:29</div>
     </div>
   </div>
 
@@ -1707,6 +1707,7 @@ body.display-mode #app { max-width: none; }
         <h3 class="intro-h"><span class="intro-n">7</span> Trygghet</h3>
         <p class="intro-p">Du får alltid säga <b>pass</b>. Det finns inga rätta svar och ingen behöver dela mer än hen vill.</p>
         <p class="intro-p">Behöver ni pausa kan vem som helst hissa <b>bojen</b> 🛟, helt anonymt. Och vem som helst kan simma vidare igen när det känns bra.</p>
+        <p class="intro-p"><b>Er integritet.</b> Det ni säger till varandra lämnar aldrig rummet, och samtalen spelas inte in. Tekniskt behandlas bara det som behövs för att hålla er ihop: namnet du skriver in, spelets läge och anslutningsuppgifter (IP-adress och ungefärlig plats). Övergivna rum raderas automatiskt inom ett dygn.</p>
       </section>
 
       <section class="manual-section">
@@ -3318,6 +3319,10 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
       if (!id) { id = makeId(); try { localStorage.setItem('vd_pid', JSON.stringify(id)); } catch (_) {} }
       return id;
     },
+    // Identitetshemlighet: utfärdas av servern vid första anslutningen och krävs
+    // sedan för att återta samma spelar-id (skydd mot att någon tar ens plats).
+    _mySecret() { try { return JSON.parse(localStorage.getItem('vd_sec')) || ''; } catch (_) { return ''; } },
+    _saveSecret(s) { try { localStorage.setItem('vd_sec', JSON.stringify(String(s).slice(0, 64))); } catch (_) {} },
 
     // ---- Ingångar ----------------------------------------------------------
     // host = den som skapar rummet (får en kod), client = den som går med.
@@ -3357,10 +3362,12 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
       if (!this._alive) return;
       this._emit('status', { phase: first && !this._everOpen ? 'connecting' : 'reconnecting' });
       try { if (this._ws) { this._ws.onclose = null; this._ws.onerror = null; this._ws.close(); } } catch (_) {}
+      const sec = this.role === 'display' ? '' : this._mySecret();
       const url = WS_BASE + '/room/' + encodeURIComponent(this.code)
         + '?id=' + encodeURIComponent(this.me.id)
         + '&name=' + encodeURIComponent(this.me.name)
         + (this.role === 'display' ? '&display=1' : '')
+        + (sec ? '&s=' + encodeURIComponent(sec) : '')
         + (this._utm ? '&utm=' + encodeURIComponent(this._utm) : '');
       let ws;
       try { ws = new WebSocket(url); } catch (_) { this._scheduleRetry(); return; }
@@ -3383,6 +3390,14 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
         try { msg = JSON.parse(ev.data); } catch (_) { return; }
         if (msg && msg.type === 'state') { this.state = msg.state; this._emit('state', this.state); }
         else if (msg && msg.type === 'ended') { this._emit('ended'); }
+        else if (msg && msg.type === 'secret' && msg.secret) { this._saveSecret(msg.secret); }
+        else if (msg && msg.type === 'denied') {
+          // Servern nekade identiteten: sluta försöka (annars evig retry-loop).
+          this._alive = false;
+          clearTimeout(this._retryTimer); this._retryTimer = null;
+          this.clearSession();
+          this._emit('denied');
+        }
       };
       ws.onclose = () => {
         this._open = false;
@@ -5411,6 +5426,10 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
     statusTimer = setTimeout(render, everConnected ? 1500 : 0);
   });
   Net.on('error', (msg) => { toast(msg); });
+  Net.on('denied', () => {
+    toast('Ditt spelar-id används redan i det här rummet från en annan enhet.');
+    leave();
+  });
   let droppedT = 0;
   Net.on('dropped', () => { const now = Date.now(); if (now - droppedT > 2500) { droppedT = now; toast('Inte ansluten just nu. Det du valde skickas så snart du är inne igen.'); } });
 

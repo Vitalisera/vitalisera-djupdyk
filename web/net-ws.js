@@ -66,6 +66,10 @@
       if (!id) { id = makeId(); try { localStorage.setItem('vd_pid', JSON.stringify(id)); } catch (_) {} }
       return id;
     },
+    // Identitetshemlighet: utfärdas av servern vid första anslutningen och krävs
+    // sedan för att återta samma spelar-id (skydd mot att någon tar ens plats).
+    _mySecret() { try { return JSON.parse(localStorage.getItem('vd_sec')) || ''; } catch (_) { return ''; } },
+    _saveSecret(s) { try { localStorage.setItem('vd_sec', JSON.stringify(String(s).slice(0, 64))); } catch (_) {} },
 
     // ---- Ingångar ----------------------------------------------------------
     // host = den som skapar rummet (får en kod), client = den som går med.
@@ -105,10 +109,12 @@
       if (!this._alive) return;
       this._emit('status', { phase: first && !this._everOpen ? 'connecting' : 'reconnecting' });
       try { if (this._ws) { this._ws.onclose = null; this._ws.onerror = null; this._ws.close(); } } catch (_) {}
+      const sec = this.role === 'display' ? '' : this._mySecret();
       const url = WS_BASE + '/room/' + encodeURIComponent(this.code)
         + '?id=' + encodeURIComponent(this.me.id)
         + '&name=' + encodeURIComponent(this.me.name)
         + (this.role === 'display' ? '&display=1' : '')
+        + (sec ? '&s=' + encodeURIComponent(sec) : '')
         + (this._utm ? '&utm=' + encodeURIComponent(this._utm) : '');
       let ws;
       try { ws = new WebSocket(url); } catch (_) { this._scheduleRetry(); return; }
@@ -131,6 +137,14 @@
         try { msg = JSON.parse(ev.data); } catch (_) { return; }
         if (msg && msg.type === 'state') { this.state = msg.state; this._emit('state', this.state); }
         else if (msg && msg.type === 'ended') { this._emit('ended'); }
+        else if (msg && msg.type === 'secret' && msg.secret) { this._saveSecret(msg.secret); }
+        else if (msg && msg.type === 'denied') {
+          // Servern nekade identiteten: sluta försöka (annars evig retry-loop).
+          this._alive = false;
+          clearTimeout(this._retryTimer); this._retryTimer = null;
+          this.clearSession();
+          this._emit('denied');
+        }
       };
       ws.onclose = () => {
         this._open = false;

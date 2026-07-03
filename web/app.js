@@ -941,6 +941,10 @@
     statusTimer = setTimeout(render, everConnected ? 1500 : 0);
   });
   Net.on('error', (msg) => { toast(msg); });
+  Net.on('denied', () => {
+    toast('Ditt spelar-id används redan i det här rummet från en annan enhet.');
+    leave();
+  });
   let droppedT = 0;
   Net.on('dropped', () => { const now = Date.now(); if (now - droppedT > 2500) { droppedT = now; toast('Inte ansluten just nu. Det du valde skickas så snart du är inne igen.'); } });
 
