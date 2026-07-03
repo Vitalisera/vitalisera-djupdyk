@@ -1536,7 +1536,7 @@ body.display-mode #app { max-width: none; }
       </div>
       <button id="btn-close-sheet" class="btn btn-primary full">Klar</button>
       <a class="site-link" href="https://vitalisera.se" target="_blank" rel="noopener">Mer från Vitalisera · vitalisera.se ↗</a>
-      <div style="text-align:center;font-size:0.68rem;color:var(--ink-dim);opacity:0.65;margin-top:6px;letter-spacing:0.04em;">version 2026-07-03 22:13</div>
+      <div style="text-align:center;font-size:0.68rem;color:var(--ink-dim);opacity:0.65;margin-top:6px;letter-spacing:0.04em;">version 2026-07-03 22:21</div>
     </div>
   </div>
 
@@ -2078,7 +2078,7 @@ const DECK = {
         { q: 'Vad skulle du göra annorlunda om du visste att ingen skulle döma dig?', f: 'Tror du fler skulle göra precis samma sak, eller är ditt svar ditt eget?' },
         { q: 'Vilket misstag har lärt dig mest om vem du vill vara?', f: 'Skulle du tacka det misstaget idag, eller helst sluppit det?' },
         { q: 'Vad är en sorg du bär som sällan får ta plats?', f: 'Vad skulle behövas för att ge den lite plats ikväll?' },
-        { q: 'När senast grät du, och vad var det som bröt fram?', f: 'Mår du oftast bättre efteråt, eller känns det mest blottande?' },
+        { m: 'vanner', q: 'När senast grät du, och vad var det som bröt fram?', f: 'Mår du oftast bättre efteråt, eller känns det mest blottande?' },
         { q: 'Vad är du rädd att livet ska gå förbi utan att du hunnit göra?', f: 'Vad är det egentligen som står i vägen, tid eller mod?' },
         { q: 'Vilken mask tar du på dig oftast, och inför vem?', f: 'Vem får se dig helt utan den?' },
         { q: 'Vad behöver du höra just nu som ingen säger till dig?', f: 'Vad hindrar dig från att säga det till dig själv?' },
@@ -2105,14 +2105,14 @@ const DECK = {
         { q: 'Vilket ord skulle göra mest ont att höra någon säga om dig?', f: 'Är det för att det är osant, eller för att du ibland är rädd att det är sant?' },
         { q: 'Vad gör du fortfarande mest för att inte göra någon annan besviken?', f: 'Vem märker ens att du gör det?' },
         { q: 'Vilken längtan har du gett upp för att den kändes orimlig att ha?', f: 'Skulle den kännas lika orimlig om en vän bar på den?' },
-        { q: 'Vad bär du just nu som ingen annan känner tyngden av?', f: 'Vad skulle förändras om en enda människa visste?' },
+        { m: 'vanner', q: 'Vad bär du just nu som ingen annan känner tyngden av?', f: 'Vad skulle förändras om en enda människa visste?' },
         { q: 'När senast kände du dig liten inför någon annan?', f: 'Vad brukar få dig att känna dig stor igen?' },
         { q: 'Vad är något du burit länge och ibland tvivlar på att du kan lägga ner?', f: 'Hur ser de dagar ut då det väger lite lättare?' },
         { q: 'Vilken del av ditt liv låtsas du har mer ordning på än den har?', f: 'Vem skulle bli mest förvånad om de visste hur det egentligen ser ut?' },
         { q: 'Vad rör vid dig så djupt att det kan föra dig nära tårar?', f: 'När du känner det, släpper du fram det eller blinkar du bort det?' },
         { q: 'Vilken trygghet håller du fast vid som du egentligen vuxit ifrån?', f: 'Vad ger den dig fortfarande som gör den svår att släppa?' },
         { q: 'Vad önskar du att någon hade frågat dig under ett av livets svåraste skeden?', f: 'Vad tror du höll dem från att fråga?' },
-        { q: 'Vilken sanning om en relation vågar du knappt säga ens till dig själv?', f: 'Vad tror du skulle förändras den dag du sa den högt?' },
+        { m: 'vanner', q: 'Vilken sanning om en relation vågar du knappt säga ens till dig själv?', f: 'Vad tror du skulle förändras den dag du sa den högt?' },
         { q: 'Vad i ditt förflutna önskar du att du kunde se på med mildare blick?', f: 'Vad skulle du säga till den yngre du som var med om det?' },
         { q: 'Vilken längtan efter att höra till bär du fortfarande med dig?', f: 'Var har du känt dig som mest hemma hittills?' },
         { q: 'Vad är du rädd att andra tröttnar på hos dig till slut?', f: 'Har någon faktiskt gjort det, eller är det mest en känsla?' },
@@ -2148,16 +2148,16 @@ const DECK = {
       intro: 'Längst ner är det stilla. Här möter du dig själv på djupet, kanske den modigaste platsen av alla. Det finns ett före och ett efter den här stunden.',
       cards: [
         { q: 'Vad är det viktigaste du aldrig har sagt högt till någon?', f: 'Om du fick säga det helt utan risk, vem skulle få höra det?' },
-        { q: 'Om det här var ditt sista samtal, vad skulle du vilja att vi mindes om dig?', f: 'Vilket enda ord skulle du vilja att vi sa om dig efteråt?' },
+        { w: 1, q: 'Om det här var ditt sista samtal, vad skulle du vilja att vi mindes om dig?', f: 'Vilket enda ord skulle du vilja att vi sa om dig efteråt?' },
         { q: 'Vilken sanning om ditt liv har tagit dig längst tid att acceptera?', f: 'Om du fått veta den tio år tidigare, vad hade du gjort annorlunda?' },
         { q: 'Vad är du mest tacksam för att du fått uppleva, trots allt?', f: 'Vilken bild dyker upp först när du tänker på det?' },
         { q: 'Vilken person skulle du be om förlåtelse av om du kunde, och för vad?', f: 'Vad är det första du skulle vilja säga till dem?' },
         { q: 'Vad hoppas du att livet handlade om när du en dag ser tillbaka på allt?', f: 'Vilket ögonblick hittills känns redan som en del av det svaret?' },
         { q: 'Vilken kärlek i ditt liv har format dig mest, på gott och ont?', f: 'Vilken liten vana eller gest bär du fortfarande från den?' },
         { q: 'Vad är du rädd ska vara sant om dig, men aldrig vågat undersöka?', f: 'Vem i ditt liv skulle genast säga att det inte stämmer?' },
-        { q: 'Om du fick säga en sista sak till någon du förlorat, vad skulle det vara?', f: 'Vad skulle de svara dig tillbaka, tror du?' },
+        { w: 1, q: 'Om du fick säga en sista sak till någon du förlorat, vad skulle det vara?', f: 'Vad skulle de svara dig tillbaka, tror du?' },
         { q: 'Vad har fått dig att tro att livet ändå är värt det?', f: 'Vilken liten sak idag påminde dig om det?' },
-        { q: 'Vilken del av dig dog lite längs vägen, och saknar du den?', f: 'Vad gjorde du som mest när den delen levde?' },
+        { w: 1, q: 'Vilken del av dig dog lite längs vägen, och saknar du den?', f: 'Vad gjorde du som mest när den delen levde?' },
         { q: 'Vad skulle du behöva för att känna dig helt fri?', f: 'Vad är det första du skulle göra den morgonen?' },
         { q: 'Vilken mening med ditt liv letar du fortfarande efter?', f: 'Var känner du dig närmast att hitta den?' },
         { q: 'Vad är det modigaste du någonsin gjort, även om ingen annan vet om det?', f: 'Vem skulle bli mest förvånad om de fick veta?' },
@@ -2194,7 +2194,7 @@ const DECK = {
         { q: 'Vilket ögonblick i ditt liv kändes som att tiden stannade?', f: 'Vad är det första du minns från just då?' },
         { q: 'Vad har du upptäckt om kärlek som du inte trodde på när du var ung?', f: 'Vad skulle din unga jag säga om det idag?' },
         { q: 'Vilket litet ögonblick av nåd från en främling har du aldrig glömt?', f: 'Vad önskar du att du hade hunnit säga till dem?' },
-        { q: 'Vad i ditt liv vill du hinna känna dig färdig med, så att inget är osagt?', f: 'Vad skulle få det att kännas avslutat?' },
+        { w: 1, q: 'Vad i ditt liv vill du hinna känna dig färdig med, så att inget är osagt?', f: 'Vad skulle få det att kännas avslutat?' },
         { q: 'Vilken del av dig själv har du till slut lärt dig att möta med ömhet istället för dom?', f: 'Vad skulle du vilja säga till den delen nu?' },
         { q: 'Vad skulle du vilja tacka livet för innan dagen är slut?', f: 'Vad av det hände redan idag?' },
         { q: 'Vilken stund med en människa bär du som det närmaste du kommit något heligt?', f: 'Var var ni när det hände?' },
@@ -2210,7 +2210,7 @@ const DECK = {
         { q: 'Vilken del av ditt liv har varit en gåva som du först nu förstår värdet av?', f: 'Vem gav dig den gåvan?' },
         { q: 'Vad skulle behöva vara sant för att du skulle kunna lägga dig ner i kväll fullkomligt försonad?', f: 'Vad av det ligger faktiskt inom räckhåll för dig ikväll?' },
         { q: 'Vilken röst inom dig har du till slut lärt dig att lita på framför alla andras?', f: 'Vad säger den till dig just nu?' },
-        { q: 'Vad i din historia vill du att den ska få sluta med, om du själv fick skriva slutet?', f: 'Vilken bild skulle du vilja ha på sista sidan?' },
+        { w: 1, q: 'Vad i din historia vill du att den ska få sluta med, om du själv fick skriva slutet?', f: 'Vilken bild skulle du vilja ha på sista sidan?' },
         { q: 'Vilken människa har gjort dig modigare bara genom att finnas till?', f: 'Vad vågade du göra tack vare dem?' },
         { q: 'Vad har du behövt ge upp drömmen om för att kunna omfamna det liv du faktiskt fått?', f: 'Vad fick du istället som du inte hade väntat dig?' },
         { q: 'Vad har du sagt ja till i livet som krävde mest mod av dig?', f: 'Vem hejade på dig när du sa det?' },
@@ -2788,9 +2788,46 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
     return q;
   }
 
+  // Per-korts-gating: `m` kräver ett sällskap med djuphavs-förtroende (samma tak som
+  // strömmarna: par/vänner/blandat) — tunga kort ska inte nå t.ex. "nya bekanta".
+  // `w: 1` markerar tyngd (dödsnära): minst två kort mellan två tunga, shufflen är
+  // annars semantiskt blind och kan lägga tre dödskort i rad.
+  function cardOk(state, card) {
+    if (typeof card === 'string' || !card) return true;
+    if (card.m && modeCap(state) !== 'djuphavet') return false;
+    if (card.w && state.heavyAt != null && state.cardsRevealed - state.heavyAt < 3) return false;
+    return true;
+  }
+
   function drawCard(state) {
     const lvl = levelById(state.levelId);
-    const q = ensureQueue(state, state.levelId);
+    let q = ensureQueue(state, state.levelId);
+    // Återstår bara sällskaps-gatade kort i kön? Börja om med en ny blandning i stället
+    // för att tvinga fram ett för tungt kort (gaten är hård).
+    const anyModeOk = (queue) => {
+      for (let j = queue.pos; j < queue.order.length; j++) {
+        const c = lvl.cards[queue.order[j]];
+        if (!(c && typeof c !== 'string' && c.m) || modeCap(state) === 'djuphavet') return true;
+      }
+      return false;
+    };
+    if (!anyModeOk(q) && lvl.cards.length > 1) {
+      state.queues[state.levelId] = null;
+      q = ensureQueue(state, state.levelId);
+    }
+    // Hitta första valbara kortet från kön och lyft fram det (olämpliga skjuts bakåt,
+    // inte bort — kön förblir komplett). Sällskaps-gaten (m) är hård; tyngd-spacingen (w)
+    // är mjuk och släpps som andrahandsval hellre än att inget kort dras.
+    const modeOk = (c) => !(c && typeof c !== 'string' && c.m) || modeCap(state) === 'djuphavet';
+    let pick = -1;
+    for (let j = q.pos; j < q.order.length; j++) {
+      if (cardOk(state, lvl.cards[q.order[j]])) { pick = j; break; }
+    }
+    if (pick < 0) for (let j = q.pos; j < q.order.length; j++) {
+      if (modeOk(lvl.cards[q.order[j]])) { pick = j; break; }   // acceptera w, aldrig m
+    }
+    if (pick < 0) pick = q.pos;                                  // nödfall: allt gated
+    if (pick !== q.pos) { const t = q.order[q.pos]; q.order[q.pos] = q.order[pick]; q.order[pick] = t; }
     const idx = q.order[q.pos];
     q.pos += 1;
     const card = lvl.cards[idx];
@@ -2798,6 +2835,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
     const followupText = typeof card === 'string' ? null : card.f;
     state.card = { text, followupText, levelId: lvl.id, source: 'deck', followup: null };
     state.cardsRevealed += 1;
+    if (card && card.w) state.heavyAt = state.cardsRevealed;
   }
 
   // Speglingskort: en lekfull projektiv övning vars tolkning avslöjas efteråt.

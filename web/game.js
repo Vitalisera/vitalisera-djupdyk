@@ -156,9 +156,46 @@
     return q;
   }
 
+  // Per-korts-gating: `m` kräver ett sällskap med djuphavs-förtroende (samma tak som
+  // strömmarna: par/vänner/blandat) — tunga kort ska inte nå t.ex. "nya bekanta".
+  // `w: 1` markerar tyngd (dödsnära): minst två kort mellan två tunga, shufflen är
+  // annars semantiskt blind och kan lägga tre dödskort i rad.
+  function cardOk(state, card) {
+    if (typeof card === 'string' || !card) return true;
+    if (card.m && modeCap(state) !== 'djuphavet') return false;
+    if (card.w && state.heavyAt != null && state.cardsRevealed - state.heavyAt < 3) return false;
+    return true;
+  }
+
   function drawCard(state) {
     const lvl = levelById(state.levelId);
-    const q = ensureQueue(state, state.levelId);
+    let q = ensureQueue(state, state.levelId);
+    // Återstår bara sällskaps-gatade kort i kön? Börja om med en ny blandning i stället
+    // för att tvinga fram ett för tungt kort (gaten är hård).
+    const anyModeOk = (queue) => {
+      for (let j = queue.pos; j < queue.order.length; j++) {
+        const c = lvl.cards[queue.order[j]];
+        if (!(c && typeof c !== 'string' && c.m) || modeCap(state) === 'djuphavet') return true;
+      }
+      return false;
+    };
+    if (!anyModeOk(q) && lvl.cards.length > 1) {
+      state.queues[state.levelId] = null;
+      q = ensureQueue(state, state.levelId);
+    }
+    // Hitta första valbara kortet från kön och lyft fram det (olämpliga skjuts bakåt,
+    // inte bort — kön förblir komplett). Sällskaps-gaten (m) är hård; tyngd-spacingen (w)
+    // är mjuk och släpps som andrahandsval hellre än att inget kort dras.
+    const modeOk = (c) => !(c && typeof c !== 'string' && c.m) || modeCap(state) === 'djuphavet';
+    let pick = -1;
+    for (let j = q.pos; j < q.order.length; j++) {
+      if (cardOk(state, lvl.cards[q.order[j]])) { pick = j; break; }
+    }
+    if (pick < 0) for (let j = q.pos; j < q.order.length; j++) {
+      if (modeOk(lvl.cards[q.order[j]])) { pick = j; break; }   // acceptera w, aldrig m
+    }
+    if (pick < 0) pick = q.pos;                                  // nödfall: allt gated
+    if (pick !== q.pos) { const t = q.order[q.pos]; q.order[q.pos] = q.order[pick]; q.order[pick] = t; }
     const idx = q.order[q.pos];
     q.pos += 1;
     const card = lvl.cards[idx];
@@ -166,6 +203,7 @@
     const followupText = typeof card === 'string' ? null : card.f;
     state.card = { text, followupText, levelId: lvl.id, source: 'deck', followup: null };
     state.cardsRevealed += 1;
+    if (card && card.w) state.heavyAt = state.cardsRevealed;
   }
 
   // Speglingskort: en lekfull projektiv övning vars tolkning avslöjas efteråt.

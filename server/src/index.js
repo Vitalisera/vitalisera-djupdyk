@@ -170,16 +170,25 @@ export class Room {
     const actorId = att.playerId;
 
     if (msg.type === 'action' && msg.action) {
-      // Kort-engagemang: notera om det kort som lämnas behölls (Skicka vidare) eller byttes (Byt fråga).
+      // Kort-engagemang: notera om det kort som lämnas behölls (Skicka vidare) eller byttes
+      // (Byt fråga), hur länge det låg framme (dwell) och om följdfrågan drogs.
       const prev = this.game.card;
       const t = msg.action.type;
       this.game = Game.apply(this.game, msg.action, actorId);
       await this.persist();
       this.broadcast();
       await this.report(true);   // throttlad: håller fas/djup uppdaterat
-      if (prev && prev.text && (t === 'next' || t === 'skip') && ['deck', 'quote', 'parable', 'parcard'].includes(prev.source)) {
-        await this.stat({ card: { text: prev.text.slice(0, 160), source: prev.source, kept: t === 'next' ? 1 : 0, skipped: t === 'skip' ? 1 : 0 } });
+      const statable = prev && prev.text && ['deck', 'quote', 'parable', 'parcard'].includes(prev.source);
+      if (statable && (t === 'next' || t === 'skip')) {
+        // Dwell: tid kortet låg framme. Cappas (idle-flikar ska inte blåsa upp snittet).
+        const dwell = this._cardAt ? Math.min(Date.now() - this._cardAt, 20 * 60 * 1000) : 0;
+        await this.stat({ card: { text: prev.text.slice(0, 160), source: prev.source, kept: t === 'next' ? 1 : 0, skipped: t === 'skip' ? 1 : 0, dwell } });
+      } else if (statable && t === 'followup' && this.game.card && this.game.card.followup) {
+        await this.stat({ card: { text: prev.text.slice(0, 160), source: prev.source, followed: 1 } });
       }
+      // Nytt kort framme? Nollställ dwell-klockan.
+      const cur = this.game.card;
+      if (!prev || !cur || cur.text !== prev.text || cur.source !== prev.source) this._cardAt = Date.now();
     } else if (msg.type === 'hello') {
       const p = this.game.players.find((x) => x.id === actorId);
       if (p && msg.name) {
@@ -322,6 +331,8 @@ export class Registry {
       if (ev.card && ev.card.text) {
         const c = s.cards[ev.card.text] || (s.cards[ev.card.text] = { kept: 0, skipped: 0, source: ev.card.source || '' });
         c.kept += ev.card.kept || 0; c.skipped += ev.card.skipped || 0;
+        c.dwell = (c.dwell || 0) + (ev.card.dwell || 0);       // total framme-tid (ms)
+        c.follows = (c.follows || 0) + (ev.card.followed || 0); // ggr följdfrågan drogs
       }
       await this.ctx.storage.put('stats', s);
       return new Response('ok');
@@ -402,7 +413,8 @@ function renderDashboard(rooms, stats) {
   // 100%-behållna kort ut listan när det finns färre än 10 utbytta).
   const mostSwapped = cardArr.filter((c) => c.skipped > 0).sort((a, b) => (b.skipped / b.total) - (a.skipped / a.total) || b.skipped - a.skipped).slice(0, 10);
   const mostKept = cardArr.filter((c) => c.kept > 0).sort((a, b) => rate(b) - rate(a) || b.total - a.total).slice(0, 10);
-  const cardRow = (c) => `<div class="card-row"><span class="ct">${esc(c.text)}</span><span class="cr">behålls ${rate(c)}% · ${c.kept}/${c.total}</span></div>`;
+  const dwellAvg = (c) => { const m = c.total ? Math.round(c.dwell / c.total / 1000) : 0; return m >= 60 ? Math.floor(m / 60) + 'm ' + (m % 60) + 's' : m + 's'; };
+  const cardRow = (c) => `<div class="card-row"><span class="ct">${esc(c.text)}</span><span class="cr">behålls ${rate(c)}% · ${c.kept}/${c.total}${c.dwell ? ' · framme ' + dwellAvg(c) : ''}${c.follows ? ' · ↳ ' + c.follows : ''}</span></div>`;
   const totalsBlock = `
   <h2>Totalt sedan ${esc(sinceStr)}</h2>
   <div class="stats">
