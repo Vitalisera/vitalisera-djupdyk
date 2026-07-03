@@ -1127,7 +1127,9 @@ body.display-mode #app { max-width: none; }
 .tv-foot { color: var(--ink-dim); font-size: clamp(0.72rem, 1.2vw, 0.95rem); margin: 18px 0 0; letter-spacing: 0.04em; }
 /* Diskret väg ut ur TV-läget (fjärrkontroll/mus i hörnet). */
 .tv-exit { position: absolute; top: max(10px, env(safe-area-inset-top)); left: 14px; z-index: 5; width: 42px; height: 42px; border-radius: 50%; border: 0; background: rgba(255,255,255,0.06); color: var(--ink-soft); font-size: 1rem; cursor: pointer; opacity: 0.3; transition: opacity 0.2s; }
-.tv-exit:hover, .tv-exit:focus-visible { opacity: 1; }
+.tv-fs { position: absolute; top: max(10px, env(safe-area-inset-top)); right: 14px; z-index: 5; width: 42px; height: 42px; border-radius: 50%; border: 0; background: rgba(255,255,255,0.06); color: var(--ink-soft); font-size: 1.05rem; cursor: pointer; opacity: 0.3; transition: opacity 0.2s; }
+.tv-exit:hover, .tv-exit:focus-visible, .tv-fs:hover, .tv-fs:focus-visible { opacity: 1; }
+:fullscreen .tv-fs { display: none; }   /* redan i helskärm → dölj knappen */
 
 /* "Visa på TV"-panelen (på telefonen): kod + status. */
 .tvp-mark { font-size: 2rem; text-align: center; margin: 2px 0 2px; }
@@ -1257,6 +1259,7 @@ body.display-mode #app { max-width: none; }
     <!-- ============ DISPLAY (TV/laptop, passiv vy) ============ -->
     <section id="screen-display" class="screen">
       <button id="btn-tv-exit" class="tv-exit" type="button" aria-label="Avsluta TV-visningen">✕</button>
+      <button id="btn-tv-fs" class="tv-fs" type="button" aria-label="Helskärm och liggande">⛶</button>
       <div class="tv-wrap">
         <div class="tv-head">
           <span class="tv-depth" id="tv-depth"></span>
@@ -1522,7 +1525,7 @@ body.display-mode #app { max-width: none; }
       </div>
       <button id="btn-close-sheet" class="btn btn-primary full">Klar</button>
       <a class="site-link" href="https://vitalisera.se" target="_blank" rel="noopener">Mer från Vitalisera · vitalisera.se ↗</a>
-      <div style="text-align:center;font-size:0.68rem;color:var(--ink-dim);opacity:0.65;margin-top:6px;letter-spacing:0.04em;">version 2026-07-03 21:54</div>
+      <div style="text-align:center;font-size:0.68rem;color:var(--ink-dim);opacity:0.65;margin-top:6px;letter-spacing:0.04em;">version 2026-07-03 21:58</div>
     </div>
   </div>
 
@@ -4125,6 +4128,20 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
   Net.on('ended', () => { if (displayMode) showTvEnded(); });
   if ($('btn-tv-exit')) $('btn-tv-exit').onclick = leaveDisplay;
 
+  // "Gör den här (offer-)telefonen till TV-skärm": helskärm + lås liggande + wake lock,
+  // så att en telefon i display-läge fyller en 16:9-panel när man speglar den till TV:n
+  // via AirPlay/Chromecast. På iOS respekteras orienteringslåset först i helskärm.
+  let _wakeLock = null;
+  async function tvWakeLock() { try { if ('wakeLock' in navigator) _wakeLock = await navigator.wakeLock.request('screen'); } catch (_) {} }
+  async function tvFullscreen() {
+    try { const el = document.documentElement; if (el.requestFullscreen) await el.requestFullscreen(); } catch (_) {}
+    try { if (screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape'); } catch (_) {}
+    tvWakeLock();
+    if (displayMode) fitTvText();
+  }
+  if ($('btn-tv-fs')) $('btn-tv-fs').onclick = tvFullscreen;
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && displayMode && !_wakeLock) tvWakeLock(); });
+
   function paintDisplay(s) {
     showScreen('display');
     $('tv-code').textContent = Net.code || '••••';
@@ -4978,8 +4995,8 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
   function tvCastHint(kind) {
     const h = $('tvp-cast-hint');
     h.textContent = kind === 'airplay'
-      ? 'iPhone/iPad: svep fram Kontrollcenter, tryck Skärmdupplicering och välj din Apple TV eller AirPlay-skärm. Öppna djupet på telefonen först, så speglas det dit.'
-      : 'Android eller Chrome på datorn: öppna webbläsarens meny (⋮) och välj Casta, sedan din Chromecast. (På iPhone stöds inte Chromecast.)';
+      ? 'Bäst med en extra telefon som TV-skärm: öppna koden på den, tryck ⛶ för liggande helskärm, och spegla den till TV:n via Kontrollcenter, Skärmdupplicering. Stående telefon fyller aldrig en 16:9-skärm.'
+      : 'Android eller Chrome på datorn: öppna webbläsarens meny (⋮), Casta, välj din Chromecast. För AirPlay/spegling: gör en extra telefon till TV-skärm (⛶ liggande helskärm) och spegla den. (Chromecast stöds ej på iPhone.)';
     h.hidden = false;
   }
   $('btn-tvp-airplay').onclick = () => tvCastHint('airplay');

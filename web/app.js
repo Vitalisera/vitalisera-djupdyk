@@ -225,6 +225,20 @@
   Net.on('ended', () => { if (displayMode) showTvEnded(); });
   if ($('btn-tv-exit')) $('btn-tv-exit').onclick = leaveDisplay;
 
+  // "Gör den här (offer-)telefonen till TV-skärm": helskärm + lås liggande + wake lock,
+  // så att en telefon i display-läge fyller en 16:9-panel när man speglar den till TV:n
+  // via AirPlay/Chromecast. På iOS respekteras orienteringslåset först i helskärm.
+  let _wakeLock = null;
+  async function tvWakeLock() { try { if ('wakeLock' in navigator) _wakeLock = await navigator.wakeLock.request('screen'); } catch (_) {} }
+  async function tvFullscreen() {
+    try { const el = document.documentElement; if (el.requestFullscreen) await el.requestFullscreen(); } catch (_) {}
+    try { if (screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape'); } catch (_) {}
+    tvWakeLock();
+    if (displayMode) fitTvText();
+  }
+  if ($('btn-tv-fs')) $('btn-tv-fs').onclick = tvFullscreen;
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && displayMode && !_wakeLock) tvWakeLock(); });
+
   function paintDisplay(s) {
     showScreen('display');
     $('tv-code').textContent = Net.code || '••••';
@@ -1078,8 +1092,8 @@
   function tvCastHint(kind) {
     const h = $('tvp-cast-hint');
     h.textContent = kind === 'airplay'
-      ? 'iPhone/iPad: svep fram Kontrollcenter, tryck Skärmdupplicering och välj din Apple TV eller AirPlay-skärm. Öppna djupet på telefonen först, så speglas det dit.'
-      : 'Android eller Chrome på datorn: öppna webbläsarens meny (⋮) och välj Casta, sedan din Chromecast. (På iPhone stöds inte Chromecast.)';
+      ? 'Bäst med en extra telefon som TV-skärm: öppna koden på den, tryck ⛶ för liggande helskärm, och spegla den till TV:n via Kontrollcenter, Skärmdupplicering. Stående telefon fyller aldrig en 16:9-skärm.'
+      : 'Android eller Chrome på datorn: öppna webbläsarens meny (⋮), Casta, välj din Chromecast. För AirPlay/spegling: gör en extra telefon till TV-skärm (⛶ liggande helskärm) och spegla den. (Chromecast stöds ej på iPhone.)';
     h.hidden = false;
   }
   $('btn-tvp-airplay').onclick = () => tvCastHint('airplay');
