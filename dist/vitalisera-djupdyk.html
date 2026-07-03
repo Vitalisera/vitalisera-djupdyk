@@ -86,6 +86,7 @@ input, textarea { -webkit-user-select: text; user-select: text; -webkit-touch-ca
 #app {
   position: relative;
   z-index: 1;
+  height: 100vh;    /* fallback för gammal Chromium (webOS/Tizen-TV) där dvh saknas → höjden kollapsar */
   height: 100dvh;
   max-width: 600px;
   margin: 0 auto;
@@ -1521,7 +1522,7 @@ body.display-mode #app { max-width: none; }
       </div>
       <button id="btn-close-sheet" class="btn btn-primary full">Klar</button>
       <a class="site-link" href="https://vitalisera.se" target="_blank" rel="noopener">Mer från Vitalisera · vitalisera.se ↗</a>
-      <div style="text-align:center;font-size:0.68rem;color:var(--ink-dim);opacity:0.65;margin-top:6px;letter-spacing:0.04em;">version 2026-07-03 20:15</div>
+      <div style="text-align:center;font-size:0.68rem;color:var(--ink-dim);opacity:0.65;margin-top:6px;letter-spacing:0.04em;">version 2026-07-03 21:54</div>
     </div>
   </div>
 
@@ -5217,6 +5218,18 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
     // Visa på TV: passiv display som följer ett rum (ingen styrning här).
     const showCode = (params.get('visa') || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
     if (showCode) { startDisplay(showCode); return; }
+
+    // Smart-TV: klumpig webbläsare + gammal Chromium som renderar spelarvyn trasigt.
+    // Styr TV:n direkt till "skriv en kod"-vägen (bli display) i stället för spelar-hemmet.
+    // ?tv tvingar samma väg. tv-back leder tillbaka hem för den som ändå vill spela på TV:n.
+    const ua = navigator.userAgent || '';
+    const isTV = /webos|web0s|tizen|smart-?tv|smarttv|hbbtv|netcast|viera|bravia|aquos|googletv|android ?tv|crkey|nettv|philipstv|dlnadoc/i.test(ua);
+    if (params.get('tv') !== null || isTV) {
+      document.body.classList.add('tv-device');
+      showScreen('tv-entry');
+      const inp = $('tv-code-input'); if (inp) setTimeout(() => inp.focus(), 60);
+      return;
+    }
 
     const joinCode = (params.get('join') || '').toUpperCase();
 

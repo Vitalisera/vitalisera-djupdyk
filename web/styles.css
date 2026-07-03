@@ -66,6 +66,7 @@ input, textarea { -webkit-user-select: text; user-select: text; -webkit-touch-ca
 #app {
   position: relative;
   z-index: 1;
+  height: 100vh;    /* fallback för gammal Chromium (webOS/Tizen-TV) där dvh saknas → höjden kollapsar */
   height: 100dvh;
   max-width: 600px;
   margin: 0 auto;

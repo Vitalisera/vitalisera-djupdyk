@@ -1319,6 +1319,18 @@
     const showCode = (params.get('visa') || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
     if (showCode) { startDisplay(showCode); return; }
 
+    // Smart-TV: klumpig webbläsare + gammal Chromium som renderar spelarvyn trasigt.
+    // Styr TV:n direkt till "skriv en kod"-vägen (bli display) i stället för spelar-hemmet.
+    // ?tv tvingar samma väg. tv-back leder tillbaka hem för den som ändå vill spela på TV:n.
+    const ua = navigator.userAgent || '';
+    const isTV = /webos|web0s|tizen|smart-?tv|smarttv|hbbtv|netcast|viera|bravia|aquos|googletv|android ?tv|crkey|nettv|philipstv|dlnadoc/i.test(ua);
+    if (params.get('tv') !== null || isTV) {
+      document.body.classList.add('tv-device');
+      showScreen('tv-entry');
+      const inp = $('tv-code-input'); if (inp) setTimeout(() => inp.focus(), 60);
+      return;
+    }
+
     const joinCode = (params.get('join') || '').toUpperCase();
 
     // Runt bordet: återuppta ett lokalt spel (ligger bara på den här enheten).
