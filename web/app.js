@@ -460,7 +460,10 @@
         $('blot-shared').textContent = cfg.shared[s.card.sharedIdx % cfg.shared.length];
         const connected = (s.order || []).filter((id) => { const p = s.players.find((x) => x.id === id); return p && p.connected; });
         const myPos = Math.max(0, connected.indexOf(meId));
-        const cat = cfg.categories[myPos % cfg.categories.length];
+        // Skugga-frågorna (mörkast) bara på djupvatten och djupare.
+        const deepEnough = levelIndex(s.card.levelId || s.levelId) >= levelIndex('djupvatten');
+        const avail = cfg.categories.filter((c) => c.name !== 'Skugga' || deepEnough);
+        const cat = avail[myPos % avail.length];
         const q = cat.qs[hashStr(s.card.seed + ':' + meId) % cat.qs.length];
         $('blot-cat').textContent = 'Din fråga · ' + cat.name;
         $('blot-q').textContent = q;
@@ -682,8 +685,12 @@
   function loadShells() { try { return JSON.parse(localStorage.getItem(SHELL_KEY)) || []; } catch (_) { return []; } }
   function shellSaved(txt) { return loadShells().some((x) => x.text === txt); }
   function saveShell() {
-    const s = state(); if (!s || !s.card || !s.card.text) return;
-    const txt = s.card.text;
+    const s = state(); if (!s || !s.card) return;
+    // Bläckbilder har tom card.text (bilden är ordlös). Spara den personliga frågan
+    // som minne i stället, annars returnerar snäckan tyst (Roberts "går inte att trycka").
+    let txt = s.card.text;
+    if (!txt && s.card.source === 'inkblot') txt = 'Bläckbild · ' + ($('blot-q').textContent || '');
+    if (!txt) return;
     if (shellSaved(txt)) { toast('Den snäckan har du redan plockat upp'); return; }
     const lvl = levelMeta(s.card.levelId || s.levelId);
     const shells = loadShells();

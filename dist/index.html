@@ -824,6 +824,7 @@ input:focus { border-color: var(--depth); box-shadow: 0 0 0 3px color-mix(in srg
 }
 .blot-eyebrow { position: static; color: var(--brand-light); margin: 0; flex: 0 0 auto; }
 .blot-img { flex: 1 1 0; min-height: 28px; width: 100%; display: flex; align-items: center; justify-content: center; }
+.blot-img { pointer-events: none; }   /* goo-filtrets region (140%) får ej fånga klick från kontrollerna */
 .blot-img svg { width: auto; height: auto; max-width: 138px; max-height: 100%; display: block; filter: drop-shadow(0 6px 22px rgba(0,0,0,0.35)); }
 .blot-shared { font-size: 1.04rem; font-weight: 750; color: var(--ink); margin: 1px 6px 0; line-height: 1.3; flex: 0 0 auto; }
 .blot-mine { margin-top: 2px; padding: 10px 13px; border-radius: 14px; width: 100%; flex: 0 0 auto;
@@ -1519,7 +1520,7 @@ body.display-mode #app { max-width: none; }
       </div>
       <button id="btn-close-sheet" class="btn btn-primary full">Klar</button>
       <a class="site-link" href="https://vitalisera.se" target="_blank" rel="noopener">Mer från Vitalisera · vitalisera.se ↗</a>
-      <div style="text-align:center;font-size:0.68rem;color:var(--ink-dim);opacity:0.65;margin-top:6px;letter-spacing:0.04em;">version 2026-07-02 14:08</div>
+      <div style="text-align:center;font-size:0.68rem;color:var(--ink-dim);opacity:0.65;margin-top:6px;letter-spacing:0.04em;">version 2026-07-03 19:57</div>
     </div>
   </div>
 
@@ -1813,7 +1814,7 @@ const DECK = {
         { q: 'Om du fick bestämma menyn för hela bordet ikväll, vad skulle vi äta?', f: 'Förrätt, varmrätt eller efterrätt: vilken skulle du lägga mest krut på?' },
         { q: 'Vilken låt får dig att höja volymen varje gång den dyker upp?', f: 'Sjunger du med för full hals, eller njuter du helst i tysthet?' },
         { q: 'Vad är något helt onödigt som du ändå blir oförklarligt glad av?', f: 'Vem mer i ditt liv känner till den lilla svagheten?' },
-        { q: 'Om din vecka var en film, vilken titel skulle den ha?', f: 'Komedi, drama eller actionrysare: vilken genre hamnar den i?' },
+        { q: 'Vilken genre var din senaste vecka: komedi, drama eller actionrysare?', f: 'Och vilken titel skulle just det avsnittet få?' },
         { q: 'Vilken liten orättvisa i vardagen kan reta dig långt mer än den egentligen borde?', f: 'Vem brukar få höra dig sucka högt över just det?' },
         { q: 'Vad är det konstigaste du har googlat den senaste månaden?', f: 'Vad skulle någon tro om dig som råkade se din sökhistorik?' },
         { q: 'Vilket helt onödigt faktum bär du med dig som du gärna drar fram när tillfälle ges?', f: 'Vem brukar oftast drabbas av att du drar fram det?' },
@@ -1836,14 +1837,14 @@ const DECK = {
         { q: 'Vad skulle stå på skylten om du fick öppna din egen lilla butik eller kafé?', f: 'Vad skulle vara husets stora specialitet?' },
         { q: 'Vilken sysselsättning får dig att helt tappa känslan för tid?', f: 'När kollade du senast på klockan och blev helt förvånad?' },
         { q: 'Vad är det mest spontana du gjort den senaste tiden?', f: 'Ångrade du det efteråt, eller skulle du göra om det direkt?' },
-        { q: 'Om du fick ge dig själv ett smeknamn, vad skulle det bli?', f: 'Vem skulle skratta först om de hörde det?' },
-        { q: 'Vilken replik eller mening hör du i ditt huvud med en bestämd människas röst?', f: 'Vems röst är det, och vad är det de säger?' },
+        { q: 'Vilket smeknamn har du haft genom livet, och vem gav dig det?', f: 'Lever det kvar någonstans, eller dog det med sammanhanget?' },
+        { q: 'Vems röst hör du ibland inne i huvudet, och vad brukar den säga?', f: 'Lyder du den, eller säger du emot?' },
         { q: 'Vad är en liten lyx i vardagen som du verkligen unnar dig?', f: 'Hur ofta kostar du faktiskt på dig den?' },
         { q: 'Vad var senaste gången du kände dig oväntat stolt över något pyttelitet du fixat?', f: 'Vad var det egentligen du hade lyckats med?' },
         { q: 'Om du fick ha en knapp som pausade allt utom dig själv, när skulle du trycka på den först?', f: 'Skulle du bara vila, eller smyga iväg och göra något i smyg?' },
         { q: 'Vad är det första du brukar lägga märke till när du kommer till en ny plats?', f: 'Är det ljuden, dofterna eller människorna som fångar dig först?' },
         { q: 'Vad är den mysigaste platsen i ditt hem just nu?', f: 'Vem mer brukar lägga beslag på den?' },
-        { q: 'Om varje dag började med ett eget ljud, vilket ljud skulle få inleda din?', f: 'Mjukt och smygande, eller en rejäl väckarsignal?' },
+        { q: 'Vilket ljud skulle du helst vakna till varje morgon?', f: 'Mjukt och smygande, eller en rejäl väckarsignal?' },
         { q: 'Vilket helt vardagligt ögonblick brukar ge dig en liten oväntad lyckokänsla?', f: 'Vem mer skulle förstå glädjen i just det?' },
         { q: 'Vad skulle du beställa om någon sa att kvällens middag bjöd huset på, vad du än ville?', f: 'Skulle du gå loss på lyx, eller välja din trygga favorit?' },
         { q: 'Vilket ljud i ditt hem skulle du känna igen även med ögonen slutna?', f: 'Vad är det för ljud, och vad gör det med dig?' },
@@ -1853,7 +1854,7 @@ const DECK = {
         { q: 'Vilken tid på dygnet känns mest som din egen?', f: 'Är du ensam då, eller delar du stunden med någon?' },
         { q: 'Vilket vardagligt ord tycker du är konstigt fult eller fint när du verkligen tänker på det?', f: 'Säg ordet högt: blir det bättre eller värre?' },
         { q: 'Vilken smak påminner dig om sommarlov som barn?', f: 'Var brukade du få i dig den smaken?' },
-        { q: 'Vad är det första du gör när du kommer hem efter en lång dag?', f: 'Vad av det skulle de som känner dig säga är så typiskt du?' },
+        { q: 'Vad är det första du tar av dig eller lägger ifrån dig när du kliver in genom dörren?', f: 'Vad av det skulle de som känner dig säga är så typiskt du?' },
         { q: 'Om du fick en hel eftermiddag att bara pyssla med vad du ville, vad skulle händerna göra?', f: 'Skulle det bli stökigt och kreativt, eller stilla och pilligt?' },
         { q: 'Vilken plats i din stad eller bygd skulle du visa en besökare först?', f: 'Vad skulle du peka på allra först när ni kom dit?' },
         { q: 'Vad är ett litet knep du har för att muntra upp dig en grå dag?', f: 'Lärde någon dig det, eller kom du på det själv?' },
@@ -1914,7 +1915,7 @@ const DECK = {
         { q: 'Vad trodde du om vuxenlivet som barn som visade sig vara helt fel?', f: 'Skulle barnet du var bli besviket eller lättat?' },
         { q: 'Vilken del av din uppväxt är du tacksam för idag?', f: 'Vem har du att tacka för den?' },
         { q: 'Vad skulle du vilja vara känd för bland dem som verkligen känner dig?', f: 'Vem av dem ser det redan i dig?' },
-        { q: 'Vilken sorts framgång lockar dig idag jämfört med när du var yngre?', f: 'Vad ville unga du ha som inte längre lockar?' },
+        { q: 'Vilken sorts framgång tror du lockar dig om tio år?', f: 'Vad av det du jagar idag har hunnit blekna då, tror du?' },
         { q: 'Vad är något du säger ja till alldeles för ofta, eller nej till för sällan?', f: 'Vad är du rädd ska hända om du svarar tvärtom?' },
         { q: 'Om du fick lägga ett helt år på att bli riktigt bra på en sak, vad skulle du välja?', f: 'Vad lockar dig mest, att kunna det eller själva vägen dit?' },
         { q: 'Vad betyder vänskap för dig idag, och har det förändrats över tid?', f: 'Vem är vännen som lärt dig mest om det?' },
@@ -1987,7 +1988,7 @@ const DECK = {
         { q: 'Vad är en sak du gör för andra som du önskar att fler la märke till?', f: 'När kände du dig senast osynlig fast du gjorde just det?' },
         { q: 'Vilken person har trott på dig när du själv hade svårt att göra det?', f: 'Vad sa de i stunden som du minns nästan ordagrant?' },
         { q: 'Vad gör dig till en bra vän, tror du?', f: 'Vad skulle din äldsta vän svara på samma fråga om dig?' },
-        { q: 'När kände du dig senast riktigt nära någon, och vad hände i det ögonblicket?', f: 'Var var ni, och vad hände precis innan?' },
+        { q: 'När kände du dig senast riktigt nära någon, och vad hände i det ögonblicket?', f: 'Vad gjorde den andra i den stunden, kanske utan att själv veta om det?' },
         { q: 'Vad har du lärt dig om kärlek av att se andras relationer?', f: 'Vilket par tänker du på, och vad var det de gjorde?' },
         { q: 'Vilket sätt att visa omtanke betyder mest för dig att ta emot?', f: 'Vem är extra bra på att ge dig just det?' },
         { q: 'Vad är svårast att vara ärlig om i nära relationer?', f: 'När höll du senast inne med något du egentligen ville säga?' },
@@ -2001,9 +2002,9 @@ const DECK = {
         { q: 'Vad har en relation lärt dig om dig själv som du inte hade upptäckt på egen hand?', f: 'Vilken relation, och när föll polletten ner?' },
         { q: 'Vad är det enklaste någon kan göra för att få dig att känna dig välkommen?', f: 'När kände du dig senast riktigt välkomnad någonstans?' },
         { q: 'Vad brukar du och en nära vän skratta åt som ingen utomstående fattar?', f: 'Vilket ord eller minne räcker för att ni ska börja gapskratta?' },
-        { q: 'Vad gör du med dig själv för att orka stanna kvar hos någon som har det riktigt tungt?', f: 'Vem har du stannat kvar hos när det var som allra tyngst?' },
+        { q: 'Hur gör du för att orka stanna kvar hos någon som har det riktigt tungt?', f: 'Vem har du stannat kvar hos när det var som allra tyngst?' },
         { q: 'Vilken sorts tystnad mellan två människor känns skön snarare än obekväm?', f: 'Vem kan du köra en hel biltur med utan att säga ett ord?' },
-        { q: 'Vad behöver du våga lägga i en annan människas händer för att det ska kännas som tillit på riktigt?', f: 'Vem har du senast vågat lämna något riktigt ömtåligt till?' },
+        { q: 'Vad behöver du våga lämna ifrån dig för att det ska kännas som tillit på riktigt?', f: 'Vem har du senast vågat lämna något riktigt ömtåligt till?' },
         { q: 'Vilken liten gest från någon annan kan göra hela din dag bättre?', f: 'När gjorde någon precis en sån sak för dig senast?' },
         { q: 'Vad är du mån om att aldrig göra mot människor du bryr dig om?', f: 'Var lärde du dig att just det gör så ont?' },
         { q: 'Hur märker du på dig själv att du börjar släppa in någon på riktigt?', f: 'Vem släppte du in senast, och vad fick dig att våga?' },
@@ -2032,7 +2033,7 @@ const DECK = {
         { q: 'Vad får dig att känna dig riktigt uppskattad av någon?', f: 'När hände det senast, och vad var det de gjorde?' },
         { q: 'Hur reagerar du när någon du tycker om gör dig besviken?', f: 'Vem är allra svårast för dig att bli besviken på?' },
         { q: 'Vad är det bästa rådet en annan människa har gett dig om relationer?', f: 'Vem gav dig det, och i vilket läge i livet?' },
-        { q: 'Som vem längtar du efter att bli sedd när du möter en människa för första gången?', f: 'Vem ser dig redan precis på det sättet idag?' },
+        { q: 'Hur hoppas du bli sedd av en människa som möter dig för allra första gången?', f: 'Vem ser dig redan precis på det sättet idag?' },
         { q: 'Vad behöver du efter en konflikt för att kunna mötas igen?', f: 'Vem är du allra bäst på att hitta tillbaka till efter ett gräl?' },
         { q: 'Hur visar du tacksamhet mot någon som ställt upp för dig?', f: 'Vem ställde senast upp för dig, och vad gjorde du tillbaka?' },
         { q: 'Vad är något du gjort för någon annan som du själv blev stolt över?', f: 'För vem, och vad var det du gjorde?' },
@@ -2087,7 +2088,7 @@ const DECK = {
         { q: 'Vilket ord skulle göra mest ont att höra någon säga om dig?', f: 'Är det för att det är osant, eller för att du ibland är rädd att det är sant?' },
         { q: 'Vad gör du fortfarande mest för att inte göra någon annan besviken?', f: 'Vem märker ens att du gör det?' },
         { q: 'Vilken längtan har du gett upp för att den kändes orimlig att ha?', f: 'Skulle den kännas lika orimlig om en vän bar på den?' },
-        { q: 'Vad bär du på som du tror att ingen skulle förstå om du berättade?', f: 'Vem skulle du minst förvänta dig att ändå förstod?' },
+        { q: 'Vad bär du just nu som ingen annan känner tyngden av?', f: 'Vad skulle förändras om en enda människa visste?' },
         { q: 'När senast kände du dig liten inför någon annan?', f: 'Vad brukar få dig att känna dig stor igen?' },
         { q: 'Vad är något du burit länge och ibland tvivlar på att du kan lägga ner?', f: 'Hur ser de dagar ut då det väger lite lättare?' },
         { q: 'Vilken del av ditt liv låtsas du har mer ordning på än den har?', f: 'Vem skulle bli mest förvånad om de visste hur det egentligen ser ut?' },
@@ -2185,12 +2186,12 @@ const DECK = {
         { q: 'Vilken sorg har förvandlats till något du nästan är tacksam för med tiden?', f: 'Vad gav den dig som du inte hade haft annars?' },
         { q: 'Vad skulle du vilja att en människa du älskar visste att de räddade hos dig?', f: 'Vad var det de gjorde, utan att ens veta om det?' },
         { q: 'Vad betyder det för dig att känna dig hel, sprickor och allt?', f: 'Vilken spricka har du börjat tycka om?' },
-        { q: 'Vilket liv kunde ha blivit ditt om du valt annorlunda, och kan du se på det med frid?', f: 'Vad gör den andra versionen av dig just nu, tror du?' },
+        { q: 'Vilket liv kunde ha blivit ditt om du hade valt annorlunda?', f: 'Vad gör den versionen av dig just nu, tror du, och kan du se på den med frid?' },
         { q: 'Vad har du gett upp att kontrollera, och hur har det förändrat hur du andas?', f: 'Vad oroar du dig mindre för nu?' },
         { q: 'Vilken kärlek gav du som aldrig riktigt blev mottagen, och hur bär du den idag?', f: 'Till vem gav du den?' },
         { q: 'Vad skulle du vilja viska till någon som är på väg att lämna den här världen?', f: 'Vems ansikte ser du framför dig när du tänker på det?' },
         { q: 'Vilken del av ditt liv har varit en gåva som du först nu förstår värdet av?', f: 'Vem gav dig den gåvan?' },
-        { q: 'Vad skulle behöva vara sant för att du skulle kunna lägga dig ner i kväll fullkomligt försonad?', f: 'Vad av det ligger faktiskt inom din räckhåll ikväll?' },
+        { q: 'Vad skulle behöva vara sant för att du skulle kunna lägga dig ner i kväll fullkomligt försonad?', f: 'Vad av det ligger faktiskt inom räckhåll för dig ikväll?' },
         { q: 'Vilken röst inom dig har du till slut lärt dig att lita på framför alla andras?', f: 'Vad säger den till dig just nu?' },
         { q: 'Vad i din historia vill du att den ska få sluta med, om du själv fick skriva slutet?', f: 'Vilken bild skulle du vilja ha på sista sidan?' },
         { q: 'Vilken människa har gjort dig modigare bara genom att finnas till?', f: 'Vad vågade du göra tack vare dem?' },
@@ -2309,10 +2310,10 @@ const DECK = {
       'Vad känns bilden som?',
     ],
     categories: [
-      { name: 'Fördjupning', qs: ['Vad i bilden känns mest laddat?', 'Vilken del drar blicken till sig, och varför?', 'Var i bilden finns mest rörelse?'] },
-      { name: 'Relation', qs: ['Om bilden visar två krafter, vilka är de?', 'Vad i bilden hör ihop, och vad är åtskilt?', 'Om två gestalter möts här, vad gör de med varandra?'] },
-      { name: 'Beslut', qs: ['Vad i bilden vill framåt, och vad håller emot?', 'Om bilden var ett vägval, vart pekar den?', 'Vad är på väg att hända härnäst i bilden?'] },
-      { name: 'Skugga', qs: ['Vad i bilden undviker du att titta på?', 'Vilken del känns mörkast eller mest obekväm?', 'Vad döljer sig mitt i bilden?'] },
+      { name: 'Fördjupning', qs: ['Vad i bilden känns mest laddat, och var i ditt liv känns något likadant just nu?', 'Vilken del drar blicken till sig, och vad i ditt eget liv drar dig på samma sätt?', 'Var i bilden finns mest rörelse, och vart är du själv på väg just nu?'] },
+      { name: 'Relation', qs: ['Vilka två krafter i ditt eget liv påminner om det du ser här?', 'Vad i bilden hör ihop och vad är åtskilt, och känner du igen det från en relation just nu?', 'Om två gestalter möts här, vad påminner det om mellan dig och någon du känner?'] },
+      { name: 'Beslut', qs: ['Om något i bilden är på väg någonstans, vad i ditt liv är på väg åt samma håll?', 'Om bilden var ett vägval, vilket vägval står du själv inför?', 'Vad i bilden vill framåt och vad håller emot, och var känner du samma dragkamp?'] },
+      { name: 'Skugga', qs: ['Det du helst inte tittar på i bilden, vad tittar du helst inte på i ditt liv just nu?', 'Vilken del känns mörkast, och vad i dig känns likadant ibland?', 'Vad döljer sig mitt i bilden, och vad brukar du själv dölja?'] },
       { name: 'Humor', qs: ['Ge bilden en titel som om den vore en dålig svensk film från 1987.', 'Om bilden var en logga, för vilket påhittat företag?', 'Vad heter varelsen i bilden?'] },
     ],
   },
@@ -2481,7 +2482,7 @@ const DECK = {
       { q: 'Den droppe som urholkar stenen gör det inte genom kraft, utan genom att falla ofta.', by: 'Ofta tillskrivet Ovidius', f: 'Underskattar vi det lilla och upprepade till förmån för det stora och dramatiska? Vad i våra liv formas mest av det vi gör om och om igen?' },
       { q: 'Det vi inte gör medvetet kommer tillbaka som öde.', by: 'Ofta tillskrivet Carl Gustav Jung', f: 'Styrs vi mer av det vi inte vill se hos oss själva än av det vi planerar? Hur mycket av "ödet" är egentligen det vi vägrat titta på?' },
       { q: 'Världen är min föreställning.', by: 'Arthur Schopenhauer', f: 'Skapar vårt sinne den värld vi lever i, eller speglar det bara en värld som finns där ute oavsett oss? Och spelar skillnaden någon roll?' },
-      { q: 'Den längsta resan är resan inåt.', by: 'Dag Hammarskjöld', f: 'Varför är det ofta svårare att förstå sig själv än att förstå världen omkring oss? Och flyr vi ibland utåt just för att slippa resan inåt?' },
+      { q: 'Uppmärksamhet är den sällsyntaste och renaste formen av generositet.', by: 'Simone Weil', f: 'Vad ger vi egentligen en människa när vi ger henne vår fulla uppmärksamhet? Och varför är det så mycket svårare än att ge nästan vad som helst annat?' },
       { q: 'Vad du tänker, det blir du.', by: 'Ofta tillskrivet Buddha', f: 'Formar våra tankar långsamt den vi blir, som vatten formar sten? Och om så är fallet, hur mycket ansvar har vi för vad vi tänker?' },
       { q: 'Att leva är det sällsyntaste i världen. De flesta existerar bara.', by: 'Oscar Wilde', f: 'Vad är skillnaden mellan att leva och att bara existera? Och varför nöjer sig så många med att existera när de innerst inne anar skillnaden?' },
     ],
@@ -3767,6 +3768,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
 <script>
 // Vitalisera djupdyk, procedurell symmetrisk bläckbild (Rorschach-känsla).
 // Samma frö ger exakt samma bild på alla enheter. Inget behov av bildfiler.
+// Ren funktion av seedet: samma seed → samma bild överallt, servern berörs ej.
 (function (global) {
   'use strict';
 
@@ -3779,36 +3781,114 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
     };
   }
 
-  // Bygger en spegelsymmetrisk organisk form av sammansmälta ellipser (gooey-filter).
-  function svg(seed, color) {
-    const w = 300, h = 360, cx = w / 2;
+  const W = 300, H = 360, CX = W / 2;
+
+  // Genererar formens parametrar ur ett frö. Riktiga Rorschach-tavlor har en
+  // kroppsaxel med utskott (lemmar/vingar) och konkava vikar, inte bara runda
+  // klumpar. Vi bygger därför: huvudmassa + mittspalt + utskott + bett + stänk.
+  function genBlot(seed) {
     const rnd = mulberry32((seed | 0) || 1);
-    let s = '';
+    const main = [];
     const n = 9 + Math.floor(rnd() * 6);
     for (let i = 0; i < n; i++) {
-      const x = (cx - 6 - rnd() * (w * 0.40));
-      const y = (h * 0.12 + rnd() * h * 0.76);
+      const x = CX - 6 - rnd() * (W * 0.40);
+      const y = H * 0.12 + rnd() * H * 0.76;
       const r = 10 + rnd() * 54;
-      const rx = (r * (0.55 + rnd() * 0.95)).toFixed(1);
-      const ry = (r * (0.55 + rnd() * 0.95)).toFixed(1);
-      const rot = (rnd() * 60 - 30).toFixed(1);
-      s += `<ellipse transform="rotate(${rot} ${x.toFixed(1)} ${y.toFixed(1)})" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="${rx}" ry="${ry}"/>`;
-      s += `<ellipse transform="rotate(${(-rot)} ${(w - x).toFixed(1)} ${y.toFixed(1)})" cx="${(w - x).toFixed(1)}" cy="${y.toFixed(1)}" rx="${rx}" ry="${ry}"/>`;
+      const rx = r * (0.55 + rnd() * 0.95);
+      const ry = r * (0.55 + rnd() * 0.95);
+      const rot = rnd() * 60 - 30;
+      main.push({ x, y, rx, ry, rot });
     }
-    // Mittspalt så formen hänger ihop kring symmetriaxeln.
+    // Mittspalt så halvorna hänger ihop kring symmetriaxeln.
+    const center = [];
     const m = 3 + Math.floor(rnd() * 3);
     for (let i = 0; i < m; i++) {
-      const y = (h * 0.16 + rnd() * h * 0.66).toFixed(1);
+      const y = H * 0.16 + rnd() * H * 0.66;
       const r = 16 + rnd() * 36;
-      s += `<ellipse cx="${cx}" cy="${y}" rx="${(r * 0.8).toFixed(1)}" ry="${r.toFixed(1)}"/>`;
+      center.push({ y, rx: r * 0.8, ry: r });
     }
-    const fid = 'goo' + (seed | 0);
-    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet" aria-hidden="true">`
-      + `<defs><filter id="${fid}" x="-20%" y="-20%" width="140%" height="140%">`
-      + `<feGaussianBlur stdDeviation="7"/>`
-      + `<feColorMatrix values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 26 -11"/>`
-      + `</filter></defs>`
-      + `<g filter="url(#${fid})" fill="${color}">${s}</g></svg>`;
+    // Utskott: kraftigt avlånga ellipser som strålar UT från massans kant
+    // (rx 4-6x ry, rotation lutad utåt). Ger vingar, lemmar, tentakler.
+    const prot = [];
+    const p = 3 + Math.floor(rnd() * 3);
+    for (let i = 0; i < p; i++) {
+      const base = main[Math.floor(rnd() * main.length)];
+      const ry = 6 + rnd() * 9;
+      const rx = ry * (4 + rnd() * 2);
+      const dir = base.x < CX ? -1 : 1;                       // pekar utåt från axeln
+      const rot = dir * (35 + rnd() * 55);                    // ~±(35..90) grader
+      const x = base.x + dir * (base.rx * 0.5 + rnd() * 26);
+      const y = base.y + (rnd() * 44 - 22);
+      prot.push({ x, y, rx, ry, rot });
+    }
+    // Konkava bett: skär in i silhuetten (via mask) för vikar, hål och anatomi.
+    const bite = [];
+    const b = 2 + Math.floor(rnd() * 3);
+    for (let i = 0; i < b; i++) {
+      const base = main[Math.floor(rnd() * main.length)];
+      const r = 11 + rnd() * 24;
+      const x = base.x + (rnd() * 2 - 1) * base.rx;           // vid kanten
+      const y = base.y + (rnd() * 2 - 1) * base.ry;
+      bite.push({ x, y, rx: r, ry: r * (0.65 + rnd() * 0.6) });
+    }
+    // Stänk: små droppar utanför huvudmassan, egen svagare goo (bläckkänsla).
+    const spl = [];
+    const sp = 4 + Math.floor(rnd() * 5);
+    for (let i = 0; i < sp; i++) {
+      const x = CX - 10 - rnd() * (W * 0.44);
+      const y = H * 0.08 + rnd() * H * 0.84;
+      spl.push({ x, y, r: 1.5 + rnd() * 4 });
+    }
+    // Formindex: belöna avlånga huvudellipser + vertikal spridning (undvik runt).
+    let elong = 0, minY = H, maxY = 0;
+    for (const e of main) {
+      if (Math.max(e.rx, e.ry) / Math.max(1, Math.min(e.rx, e.ry)) > 1.7) elong++;
+      minY = Math.min(minY, e.y); maxY = Math.max(maxY, e.y);
+    }
+    const index = elong + ((maxY - minY) / H > 0.5 ? 2 : 0);
+    return { main, center, prot, bite, spl, index };
+  }
+
+  function svg(seed, color) {
+    // Deterministisk omdragning om formen blir för rund. Regeln är en ren funktion
+    // av seedet → alla enheter drar om identiskt.
+    let s = (seed | 0) || 1, g;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      g = genBlot(s);
+      if (g.index >= 2) break;
+      s = (s * 31 + 7) | 0;
+    }
+    const f1 = (v) => v.toFixed(1);
+    // Speglade positiva former (huvudmassa + utskott).
+    let pos = '';
+    const mir = (o) => {
+      pos += `<ellipse transform="rotate(${f1(o.rot)} ${f1(o.x)} ${f1(o.y)})" cx="${f1(o.x)}" cy="${f1(o.y)}" rx="${f1(o.rx)}" ry="${f1(o.ry)}"/>`;
+      pos += `<ellipse transform="rotate(${f1(-o.rot)} ${f1(W - o.x)} ${f1(o.y)})" cx="${f1(W - o.x)}" cy="${f1(o.y)}" rx="${f1(o.rx)}" ry="${f1(o.ry)}"/>`;
+    };
+    g.main.forEach(mir);
+    g.prot.forEach(mir);
+    g.center.forEach((o) => { pos += `<ellipse cx="${CX}" cy="${f1(o.y)}" rx="${f1(o.rx)}" ry="${f1(o.ry)}"/>`; });
+    // Mask: vit = synligt, svarta bett = urskuret. Speglade.
+    let mask = `<rect width="${W}" height="${H}" fill="#fff"/>`;
+    g.bite.forEach((o) => {
+      mask += `<ellipse cx="${f1(o.x)}" cy="${f1(o.y)}" rx="${f1(o.rx)}" ry="${f1(o.ry)}" fill="#000"/>`;
+      mask += `<ellipse cx="${f1(W - o.x)}" cy="${f1(o.y)}" rx="${f1(o.rx)}" ry="${f1(o.ry)}" fill="#000"/>`;
+    });
+    // Stänk (speglade små droppar).
+    let spl = '';
+    g.spl.forEach((o) => {
+      spl += `<circle cx="${f1(o.x)}" cy="${f1(o.y)}" r="${f1(o.r)}"/>`;
+      spl += `<circle cx="${f1(W - o.x)}" cy="${f1(o.y)}" r="${f1(o.r)}"/>`;
+    });
+    const gid = 'goo' + s, mid = 'bite' + s, sid = 'spl' + s;
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" aria-hidden="true">`
+      + `<defs>`
+      + `<filter id="${gid}" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="7"/><feColorMatrix values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 26 -11"/></filter>`
+      + `<filter id="${sid}" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="1.6"/><feColorMatrix values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -7"/></filter>`
+      + `<mask id="${mid}">${mask}</mask>`
+      + `</defs>`
+      + `<g filter="url(#${gid})" mask="url(#${mid})" fill="${color}">${pos}</g>`
+      + `<g filter="url(#${sid})" fill="${color}">${spl}</g></svg>`;
   }
 
   global.Inkblot = { svg };
@@ -4278,7 +4358,10 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
         $('blot-shared').textContent = cfg.shared[s.card.sharedIdx % cfg.shared.length];
         const connected = (s.order || []).filter((id) => { const p = s.players.find((x) => x.id === id); return p && p.connected; });
         const myPos = Math.max(0, connected.indexOf(meId));
-        const cat = cfg.categories[myPos % cfg.categories.length];
+        // Skugga-frågorna (mörkast) bara på djupvatten och djupare.
+        const deepEnough = levelIndex(s.card.levelId || s.levelId) >= levelIndex('djupvatten');
+        const avail = cfg.categories.filter((c) => c.name !== 'Skugga' || deepEnough);
+        const cat = avail[myPos % avail.length];
         const q = cat.qs[hashStr(s.card.seed + ':' + meId) % cat.qs.length];
         $('blot-cat').textContent = 'Din fråga · ' + cat.name;
         $('blot-q').textContent = q;
@@ -4500,8 +4583,12 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
   function loadShells() { try { return JSON.parse(localStorage.getItem(SHELL_KEY)) || []; } catch (_) { return []; } }
   function shellSaved(txt) { return loadShells().some((x) => x.text === txt); }
   function saveShell() {
-    const s = state(); if (!s || !s.card || !s.card.text) return;
-    const txt = s.card.text;
+    const s = state(); if (!s || !s.card) return;
+    // Bläckbilder har tom card.text (bilden är ordlös). Spara den personliga frågan
+    // som minne i stället, annars returnerar snäckan tyst (Roberts "går inte att trycka").
+    let txt = s.card.text;
+    if (!txt && s.card.source === 'inkblot') txt = 'Bläckbild · ' + ($('blot-q').textContent || '');
+    if (!txt) return;
     if (shellSaved(txt)) { toast('Den snäckan har du redan plockat upp'); return; }
     const lvl = levelMeta(s.card.levelId || s.levelId);
     const shells = loadShells();
