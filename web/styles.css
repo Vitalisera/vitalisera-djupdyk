@@ -1099,6 +1099,13 @@ body.display-mode #app { max-width: none; }
   display: block; text-transform: uppercase; letter-spacing: 0.14em;
   font-size: 0.6em; color: var(--accent, #7fe3ef); margin-bottom: 8px;
 }
+/* QR med join-länken (display-lobbyn). Vit bricka: QR kräver ljus bakgrund för skanning. */
+.tv-qr { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: clamp(16px, 4vh, 36px); }
+.tv-qr[hidden] { display: none; }
+.tv-qr-img { width: clamp(140px, 24vh, 230px); background: #fff; border-radius: 14px; padding: 10px; box-shadow: 0 10px 34px rgba(0, 0, 0, 0.35); }
+.tv-qr-img svg { display: block; width: 100%; height: auto; }
+.tv-qr-hint { margin: 0; color: var(--ink-soft); font-size: clamp(0.82rem, 1.5vw, 1.05rem); }
+
 .tv-players {
   display: flex; flex-wrap: wrap; gap: 10px 14px; justify-content: center;
   margin-top: clamp(16px, 4vh, 40px); min-height: 1.4em;

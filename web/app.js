@@ -210,6 +210,7 @@
     $('tv-eyebrow').textContent = ''; $('tv-depth').textContent = '';
     $('tv-followup').textContent = ''; $('tv-followup').classList.remove('show');
     $('tv-players').innerHTML = '';
+    $('tv-qr').hidden = true;
     $('tv-text').textContent = 'Dyket är avslutat. Tack för att ni dök tillsammans.';
     fitTvText();
   }
@@ -239,9 +240,28 @@
   if ($('btn-tv-fs')) $('btn-tv-fs').onclick = tvFullscreen;
   document.addEventListener('visibilitychange', () => { if (!document.hidden && displayMode && !_wakeLock) tvWakeLock(); });
 
+  // QR med join-länken i display-lobbyn: telefonen skannar och är med direkt.
+  // ALDRIG för Runt bordet-spegling (code 'LOKAL'): en join på relä-koden skulle skapa
+  // ett riktigt spel i relä-rummet och tysta speglingen. Bara riktiga nätrum.
+  function updateTvQr(s) {
+    const box = $('tv-qr'); if (!box) return;
+    const isMirror = !!(s && s.code === 'LOKAL');
+    // Endast vid BEKRÄFTAD nätlobby (state framme). Vid null-state vet vi inte om rummet
+    // är en spegling under uppstart, och en skannad join på relä-koden skulle döda den.
+    const show = !isMirror && !!Net.code && !!(s && s.phase === 'lobby') && !!window.QR;
+    box.hidden = !show;
+    if (!show) return;
+    const url = location.origin + location.pathname + '?join=' + Net.code;
+    if (box.dataset.url !== url) {
+      box.dataset.url = url;
+      try { $('tv-qr-img').innerHTML = window.QR.svg(url, { margin: 2 }); } catch (_) { box.hidden = true; }
+    }
+  }
+
   function paintDisplay(s) {
     showScreen('display');
     $('tv-code').textContent = Net.code || '••••';
+    updateTvQr(s);
     const turnEl = $('tv-turn'), eyebrow = $('tv-eyebrow'), textEl = $('tv-text'),
       fu = $('tv-followup'), blot = $('tv-blot'), depthEl = $('tv-depth');
     const noFu = () => { fu.textContent = ''; fu.classList.remove('show'); };
@@ -1073,6 +1093,7 @@
     $('tvpanel-code').textContent = code;
     $('btn-tvpanel-stop').hidden = !Net.local;              // "sluta visa" är bara relevant för spegling
     $('tvp-cast-hint').hidden = true;
+    $('btn-tvp-cast-api').hidden = !window.PresentationRequest;   // Chrome/Android med Cast
     updateTvPanelStatus();
     $('tvpanel').classList.add('open'); $('tvpanel').setAttribute('aria-hidden', 'false');
   }
@@ -1087,6 +1108,17 @@
     else toast('Länk: ' + url);
   };
   $('btn-tvpanel-stop').onclick = () => { if (Net.stopMirror) Net.stopMirror(); closeTvPanel(); toast('Slutade visa på TV.'); };
+  // Presentation API: låt Chrome/Android lista Cast-mottagare och ladda display-URL:en
+  // direkt på TV:n (Chromecast/Google TV/Android TV), utan att någon startar TV-webbläsaren.
+  $('btn-tvp-cast-api').onclick = () => {
+    if (Net.local && Net.startMirror) Net.startMirror();
+    const url = tvDisplayUrl();
+    if (!displayCode()) { toast('Skapa eller gå med i ett dyk först.'); return; }
+    try {
+      const pr = new PresentationRequest([url]);
+      pr.start().then(() => { toast('Öppnar dyket på TV:n …'); closeTvPanel(); }).catch(() => toast('Ingen TV att casta till hittades.'));
+    } catch (_) { toast('Casta stöds inte i den här webbläsaren.'); }
+  };
   // Spegling via AirPlay/Chromecast går inte att starta från en webbsida (media-API:er
   // resp. eget Cast-bygge krävs), så ikonerna visar hur man gör i respektive system.
   function tvCastHint(kind) {

@@ -143,6 +143,10 @@
             <div class="tv-blot" id="tv-blot" hidden></div>
             <p class="tv-text" id="tv-text">Väntar på dyket…</p>
             <span class="tv-followup" id="tv-followup"></span>
+            <div class="tv-qr" id="tv-qr" hidden>
+              <div class="tv-qr-img" id="tv-qr-img" aria-hidden="true"></div>
+              <p class="tv-qr-hint">Skanna med telefonen så är du med i dyket.</p>
+            </div>
           </div>
         </div>
         <div class="tv-players" id="tv-players"></div>
@@ -431,6 +435,7 @@
         </button>
       </div>
       <p class="tvp-cast-hint" id="tvp-cast-hint" hidden></p>
+      <button id="btn-tvp-cast-api" class="btn btn-glass full" hidden>📡 Casta direkt till en Chromecast / Google TV</button>
       <div class="sheet-actions">
         <button id="btn-tvpanel-copy" class="btn btn-glass full">🔗 Kopiera länk till TV:n</button>
         <button id="btn-tvpanel-stop" class="btn btn-ghost full" hidden>Sluta visa på TV</button>
@@ -678,6 +683,7 @@
   <script src="net-ws.js"></script>
   <script src="ocean.js"></script>
   <script src="inkblot.js"></script>
+  <script src="vendor/qr.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

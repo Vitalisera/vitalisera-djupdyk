@@ -36,7 +36,7 @@ cssInlined = cssInlined.split('url(icons/icon.svg)').join('url("' + iconSvgUri +
 const markUri = 'data:image/png;base64,' + fs.readFileSync(path.join(web, 'icons/vitalisera-mark.png')).toString('base64');
 cssInlined = cssInlined.split('url(icons/vitalisera-mark.png)').join('url("' + markUri + '")');
 
-const scripts = ['data/questions.js', 'game.js', 'net-ws.js', 'ocean.js', 'inkblot.js', 'app.js']
+const scripts = ['data/questions.js', 'game.js', 'net-ws.js', 'ocean.js', 'inkblot.js', 'vendor/qr.js', 'app.js']
   .map((f) => `<script>\n${read(f)}\n</script>`)
   .join('\n');
 
