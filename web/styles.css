@@ -807,6 +807,18 @@ input:focus { border-color: var(--depth); box-shadow: 0 0 0 3px color-mix(in srg
 .blot-eyebrow { position: static; color: var(--brand-light); margin: 0; flex: 0 0 auto; }
 .blot-img { flex: 1 1 0; min-height: 28px; width: 100%; display: flex; align-items: center; justify-content: center; }
 .blot-img { pointer-events: none; }   /* goo-filtrets region (140%) får ej fånga klick från kontrollerna */
+/* Pulsmekanik: bilden tonar fram ur oskärpa när kortet vänds. */
+.card.flip .blot-img svg { animation: blot-in 2.2s var(--ease) both; }
+@keyframes blot-in { from { filter: blur(16px); opacity: 0; } to { filter: blur(0); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .card.flip .blot-img svg { animation: none; } }
+.blot-words { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+.blot-words-lede { margin: 0; font-size: 0.88rem; color: var(--ink-soft); text-align: center; }
+.blot-word-row { display: flex; gap: 8px; }
+.blot-word-row input { flex: 1; min-width: 0; }
+.blot-word-status { margin: 0; font-size: 0.78rem; color: var(--ink-dim); text-align: center; }
+.blot-all-words { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; width: 100%; }
+.blot-word { display: inline-flex; gap: 6px; align-items: baseline; background: rgba(255,255,255,0.06); border: 1px solid var(--glass-brd); border-radius: 999px; padding: 4px 12px; font-size: 0.82rem; }
+.blot-word b { font-weight: 700; color: var(--ink-soft); font-size: 0.74rem; }
 .blot-img svg { width: auto; height: auto; max-width: 138px; max-height: 100%; display: block; filter: drop-shadow(0 6px 22px rgba(0,0,0,0.35)); }
 .blot-shared { font-size: 1.04rem; font-weight: 750; color: var(--ink); margin: 1px 6px 0; line-height: 1.3; flex: 0 0 auto; }
 .blot-mine { margin-top: 2px; padding: 10px 13px; border-radius: 14px; width: 100%; flex: 0 0 auto;

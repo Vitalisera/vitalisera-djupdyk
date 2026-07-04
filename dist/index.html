@@ -827,6 +827,18 @@ input:focus { border-color: var(--depth); box-shadow: 0 0 0 3px color-mix(in srg
 .blot-eyebrow { position: static; color: var(--brand-light); margin: 0; flex: 0 0 auto; }
 .blot-img { flex: 1 1 0; min-height: 28px; width: 100%; display: flex; align-items: center; justify-content: center; }
 .blot-img { pointer-events: none; }   /* goo-filtrets region (140%) får ej fånga klick från kontrollerna */
+/* Pulsmekanik: bilden tonar fram ur oskärpa när kortet vänds. */
+.card.flip .blot-img svg { animation: blot-in 2.2s var(--ease) both; }
+@keyframes blot-in { from { filter: blur(16px); opacity: 0; } to { filter: blur(0); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .card.flip .blot-img svg { animation: none; } }
+.blot-words { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+.blot-words-lede { margin: 0; font-size: 0.88rem; color: var(--ink-soft); text-align: center; }
+.blot-word-row { display: flex; gap: 8px; }
+.blot-word-row input { flex: 1; min-width: 0; }
+.blot-word-status { margin: 0; font-size: 0.78rem; color: var(--ink-dim); text-align: center; }
+.blot-all-words { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; width: 100%; }
+.blot-word { display: inline-flex; gap: 6px; align-items: baseline; background: rgba(255,255,255,0.06); border: 1px solid var(--glass-brd); border-radius: 999px; padding: 4px 12px; font-size: 0.82rem; }
+.blot-word b { font-weight: 700; color: var(--ink-soft); font-size: 0.74rem; }
 .blot-img svg { width: auto; height: auto; max-width: 138px; max-height: 100%; display: block; filter: drop-shadow(0 6px 22px rgba(0,0,0,0.35)); }
 .blot-shared { font-size: 1.04rem; font-weight: 750; color: var(--ink); margin: 1px 6px 0; line-height: 1.3; flex: 0 0 auto; }
 .blot-mine { margin-top: 2px; padding: 10px 13px; border-radius: 14px; width: 100%; flex: 0 0 auto;
@@ -1417,6 +1429,17 @@ body.display-mode #app { max-width: none; }
             <div class="card-blot" id="card-blot" hidden>
               <span class="card-eyebrow blot-eyebrow">✦ Bläckbild</span>
               <div class="blot-img" id="blot-img"></div>
+              <!-- Ordfas: var och en låser blint in vad hen ser; alla klara → samtidig avtäckning -->
+              <div class="blot-words" id="blot-words" hidden>
+                <p class="blot-words-lede">Vad ser du? Lås in i smyg, avtäcks när alla är klara.</p>
+                <div class="blot-word-row">
+                  <input id="blot-word-input" type="text" maxlength="48" placeholder="1 till 3 ord" autocomplete="off" enterkeyhint="done" />
+                  <button id="btn-blot-lock" class="btn btn-primary" type="button">Lås in</button>
+                </div>
+                <p class="blot-word-status" id="blot-word-status"></p>
+                <button id="btn-blot-reveal" class="btn btn-glass full" type="button" hidden>Avtäck allas ord nu</button>
+              </div>
+              <div class="blot-all-words" id="blot-all-words" hidden></div>
               <p class="blot-shared" id="blot-shared"></p>
               <div class="blot-mine">
                 <span class="blot-cat" id="blot-cat"></span>
@@ -1517,6 +1540,7 @@ body.display-mode #app { max-width: none; }
 
         <div class="sheet-group" id="grp-host">
           <span class="sheet-group-h">Spelledaren</span>
+          <button id="btn-lock" class="btn btn-glass full">🔒 Lås dyket för nya</button>
           <button id="btn-closing" class="btn btn-glass full">🍃 Dra ett avslutningskort</button>
           <button id="btn-finish" class="btn btn-glass full">🫧 Stig upp och avsluta</button>
           <button id="btn-restart" class="btn btn-glass full">↩ Tillbaka till lobbyn</button>
@@ -1536,7 +1560,7 @@ body.display-mode #app { max-width: none; }
       </div>
       <button id="btn-close-sheet" class="btn btn-primary full">Klar</button>
       <a class="site-link" href="https://vitalisera.se" target="_blank" rel="noopener">Mer från Vitalisera · vitalisera.se ↗</a>
-      <div style="text-align:center;font-size:0.68rem;color:var(--ink-dim);opacity:0.65;margin-top:6px;letter-spacing:0.04em;">version 2026-07-03 22:29</div>
+      <div style="text-align:center;font-size:0.68rem;color:var(--ink-dim);opacity:0.65;margin-top:6px;letter-spacing:0.04em;">version 2026-07-04 11:11</div>
     </div>
   </div>
 
@@ -1600,7 +1624,7 @@ body.display-mode #app { max-width: none; }
         <h3 class="intro-h"><span class="intro-n">2</span> Varje runda</h3>
         <ol class="intro-round">
           <li><b>Läs högt.</b> Den vars tur det är läser kortet för de andra.</li>
-          <li><b>Samtala.</b> Prata fritt kring frågan, helt utan tidsgräns. Stanna kvar så länge det känns bra.</li>
+          <li><b>Samtala.</b> Uppläsaren svarar först, sedan är ordet fritt: alla får svara och flika in. Ett samtal, ingen förhörsrunda.</li>
           <li><b>Skicka vidare.</b> När ni är klara går turen till nästa.</li>
         </ol>
         <div class="intro-actions">
@@ -1659,13 +1683,13 @@ body.display-mode #app { max-width: none; }
 
       <section class="manual-section">
         <h3 class="intro-h"><span class="intro-n">3</span> Roller</h3>
-        <p class="intro-p"><b>Spelledaren</b> är den som skapade dyket. Spelledaren styr det som formar hela stunden: byter djup, drar avslutningskort, avslutar dyket och går tillbaka till lobbyn.</p>
+        <p class="intro-p"><b>Spelledaren</b> är den som skapade dyket. Spelledaren styr det som formar hela stunden: byter djup, drar avslutningskort, låser dyket så att inga nya kan ansluta mitt i, avslutar dyket och går tillbaka till lobbyn.</p>
         <p class="intro-p"><b>Alla deltagare</b> kan läsa sin egen fråga, skicka turen vidare, ge tillbaka turen och be om en paus med bojen. Den som har turen driver sitt eget kort: följdfråga, byt fråga och specialkort.</p>
       </section>
 
       <section class="manual-section">
         <h3 class="intro-h"><span class="intro-n">4</span> Spelets gång</h3>
-        <p class="intro-p">Den vars tur det är läser kortet högt och svarar först. Sedan pratar ni fritt kring frågan, helt utan tidsgräns. Stanna kvar så länge det känns bra.</p>
+        <p class="intro-p">Den vars tur det är läser kortet högt och svarar först. Sedan är ordet fritt: alla får gärna svara på samma fråga, i den ordning det faller sig, och det är helt okej att flika in medan någon annan berättar. Det här är ett samtal, inte en förhörsrunda. Ingen måste svara, och ingen klocka tickar.</p>
         <p class="intro-p">Vill du minnas en särskild fråga? Tryck på snäckan 🐚 på kortet, så sparas den till slutet, bara på din telefon. När ni stiger upp får ni en sammanfattning av dyket och kan dela ett litet vykort från djupet.</p>
         <div class="intro-actions">
           <span class="intro-chip is-main"><b class="ic">→</b><span>Skicka vidare</span><em>turen och ett nytt kort till nästa</em></span>
@@ -1692,7 +1716,7 @@ body.display-mode #app { max-width: none; }
         <p class="intro-p">Då och då dyker ett annat slags kort upp, som en krydda i samtalet:</p>
         <div class="manual-cards">
           <div class="manual-card-row"><span class="mc-ic">✨</span><span><b class="mc-nm">Spegling.</b> <span class="mc-desc">Du målar upp en inre scen (ett berg, en bro …) och beskriver den; sedan finns en tolkning att ta fram av vad den kan spegla hos dig.</span></span></div>
-          <div class="manual-card-row"><span class="mc-ic">✦</span><span><b class="mc-nm">Bläckbild.</b> <span class="mc-desc">En abstrakt bild som var och en tolkar tyst utifrån en fråga. Sedan delar ni vad ni såg.</span></span></div>
+          <div class="manual-card-row"><span class="mc-ic">✦</span><span><b class="mc-nm">Bläckbild.</b> <span class="mc-desc">En bild tonar fram och var och en låser i smyg in ett par ord om vad hen ser. När alla låst avtäcks orden samtidigt: skillnaderna mellan era tolkningar är samtalet. Den vars ord ligger längst från uppläsarens börjar berätta. På grundare djup är frågorna lekfulla, längre ner mer utforskande.</span></span></div>
           <div class="manual-card-row"><span class="mc-ic">🌊</span><span><b class="mc-nm">Para ihop två.</b> <span class="mc-desc">Den vars tur det är bjuder in en annan deltagare; ni två får ett kort bara för er, något ömsesidigt att säga eller göra. <i>(Minst två deltagare, och att ni nått Revet.)</i></span></span></div>
           <div class="manual-card-row"><span class="mc-ic">🤫</span><span><b class="mc-nm">Tystnad.</b> <span class="mc-desc">En kort stund tillsammans, helt utan ord. <i>(Minst två deltagare.)</i></span></span></div>
           <div class="manual-card-row"><span class="mc-ic">🪷</span><span><b class="mc-nm">Visdomsberättelse.</b> <span class="mc-desc">En kort sedelärande berättelse ur zen, taoism, sufism och liknande källor. Den vars tur det är läser den högt, sedan finns en eftertanke att samtala kring.</span></span></div>
@@ -1858,21 +1882,21 @@ const DECK = {
         { q: 'Vilket smeknamn har du haft genom livet, och vem gav dig det?', f: 'Lever det kvar någonstans, eller dog det med sammanhanget?' },
         { q: 'Vems röst hör du ibland inne i huvudet, och vad brukar den säga?', f: 'Lyder du den, eller säger du emot?' },
         { q: 'Vad är en liten lyx i vardagen som du verkligen unnar dig?', f: 'Hur ofta kostar du faktiskt på dig den?' },
-        { q: 'Vad var senaste gången du kände dig oväntat stolt över något pyttelitet du fixat?', f: 'Vad var det egentligen du hade lyckats med?' },
+        { q: 'Vad var senaste gången du kände dig oväntat stolt över något pyttelitet du fixat?', f: 'Vem hade du mest lust att visa upp det för?' },
         { q: 'Om du fick ha en knapp som pausade allt utom dig själv, när skulle du trycka på den först?', f: 'Skulle du bara vila, eller smyga iväg och göra något i smyg?' },
         { q: 'Vad är det första du brukar lägga märke till när du kommer till en ny plats?', f: 'Är det ljuden, dofterna eller människorna som fångar dig först?' },
         { q: 'Vad är den mysigaste platsen i ditt hem just nu?', f: 'Vem mer brukar lägga beslag på den?' },
         { q: 'Vilket ljud skulle du helst vakna till varje morgon?', f: 'Mjukt och smygande, eller en rejäl väckarsignal?' },
         { q: 'Vilket helt vardagligt ögonblick brukar ge dig en liten oväntad lyckokänsla?', f: 'Vem mer skulle förstå glädjen i just det?' },
         { q: 'Vad skulle du beställa om någon sa att kvällens middag bjöd huset på, vad du än ville?', f: 'Skulle du gå loss på lyx, eller välja din trygga favorit?' },
-        { q: 'Vilket ljud i ditt hem skulle du känna igen även med ögonen slutna?', f: 'Vad är det för ljud, och vad gör det med dig?' },
+        { q: 'Vilket ljud i ditt hem skulle du känna igen även med ögonen slutna?', f: 'Blir du lugn av det, eller är det ett ljud du bara står ut med?' },
         { q: 'Om du fick byta ut vädret utanför fönstret just nu, vad skulle du trolla fram?', f: 'Vad skulle du genast vilja göra i det vädret?' },
         { q: 'Vilket föremål i ditt hem skulle en främling gissa helt fel om av att se det?', f: 'Vad skulle de tro, och vad är den riktiga historien?' },
         { q: 'Vad är det fånigaste du kan bli riktigt road av?', f: 'Vem delar den fåniga humorn med dig?' },
         { q: 'Vilken tid på dygnet känns mest som din egen?', f: 'Är du ensam då, eller delar du stunden med någon?' },
         { q: 'Vilket vardagligt ord tycker du är konstigt fult eller fint när du verkligen tänker på det?', f: 'Säg ordet högt: blir det bättre eller värre?' },
         { q: 'Vilken smak påminner dig om sommarlov som barn?', f: 'Var brukade du få i dig den smaken?' },
-        { q: 'Vad är det första du tar av dig eller lägger ifrån dig när du kliver in genom dörren?', f: 'Vad av det skulle de som känner dig säga är så typiskt du?' },
+        { q: 'Vad är det första du tar av dig eller lägger ifrån dig när du kliver in genom dörren?', f: 'Har det en bestämd plats, eller landar det där det landar?' },
         { q: 'Om du fick en hel eftermiddag att bara pyssla med vad du ville, vad skulle händerna göra?', f: 'Skulle det bli stökigt och kreativt, eller stilla och pilligt?' },
         { q: 'Vilken plats i din stad eller bygd skulle du visa en besökare först?', f: 'Vad skulle du peka på allra först när ni kom dit?' },
         { q: 'Vad är ett litet knep du har för att muntra upp dig en grå dag?', f: 'Lärde någon dig det, eller kom du på det själv?' },
@@ -1933,7 +1957,7 @@ const DECK = {
         { q: 'Vad trodde du om vuxenlivet som barn som visade sig vara helt fel?', f: 'Skulle barnet du var bli besviket eller lättat?' },
         { q: 'Vilken del av din uppväxt är du tacksam för idag?', f: 'Vem har du att tacka för den?' },
         { q: 'Vad skulle du vilja vara känd för bland dem som verkligen känner dig?', f: 'Vem av dem ser det redan i dig?' },
-        { q: 'Vilken sorts framgång tror du lockar dig om tio år?', f: 'Vad av det du jagar idag har hunnit blekna då, tror du?' },
+        { q: 'Vilken sorts framgång tror du lockar dig om tio år?', f: 'Vem i ditt liv verkar redan leva den sortens framgång?' },
         { q: 'Vad är något du säger ja till alldeles för ofta, eller nej till för sällan?', f: 'Vad är du rädd ska hända om du svarar tvärtom?' },
         { q: 'Om du fick lägga ett helt år på att bli riktigt bra på en sak, vad skulle du välja?', f: 'Vad lockar dig mest, att kunna det eller själva vägen dit?' },
         { q: 'Vad betyder vänskap för dig idag, och har det förändrats över tid?', f: 'Vem är vännen som lärt dig mest om det?' },
@@ -1968,7 +1992,7 @@ const DECK = {
         { q: 'Vad är något du köpt billigt eller fått gratis som betytt oväntat mycket?', f: 'Var i hemmet finns den nu?' },
         { q: 'Vilken egenskap beundrar du hos andra och försöker odla hos dig själv?', f: 'Vem är det du tänker på som har den?' },
         { q: 'Vad får dig att tappa lusten mitt i något du egentligen valt själv?', f: 'Vad var det som tog över lusten den senaste gången?' },
-        { q: 'Vad skulle du vilja bli bättre på att märka i din vanliga dag?', f: 'Vad missade du senast som du önskat att du sett?' },
+        { q: 'Vad skulle du vilja bli bättre på att märka i din vanliga dag?', f: 'Vem i din närhet är bäst på att lägga märke till just sådant?' },
         { q: 'Vilken plats utomhus får dig att andas djupare bara av att vara där?', f: 'När var du där sist?' },
         { q: 'Vad är en sak du gör annorlunda nu än för fem år sedan, i det tysta?', f: 'Vem skulle bli förvånad om de visste?' },
         { q: 'Vilken slags dagar känner du dig mest i takt med dig själv?', f: 'När infann sig en sådan dag senast?' },
@@ -1988,7 +2012,7 @@ const DECK = {
       subtitle: 'Mellan oss',
       intro: 'Nu blir vattnet rikare och lite mer levande. Här möter du frågor som rör vid något. Det får skava lite. Du är i trygga händer.',
       cards: [
-        { q: 'Vad är det första du la märke till hos någon vid det här bordet?', f: 'Vem vid bordet, och vad var det du såg?' },
+        { q: 'Vad är det första du la märke till hos någon vid det här bordet?', f: 'Stämmer det första intrycket fortfarande, eller har det hunnit ändras?' },
         { q: 'Vilken vänskap i ditt liv är du allra mest tacksam för, och varför?', f: 'Vad är en sak den vännen gjort som du aldrig glömt?' },
         { q: 'Vad gör att du känner dig verkligt sedd av en annan människa?', f: 'Berätta om en gång då någon såg dig precis så.' },
         { q: 'När någon du bryr dig om har det tungt, hur visar du att du finns där?', f: 'Vem var den senaste du fanns där för, och vad gjorde du?' },
@@ -2006,7 +2030,7 @@ const DECK = {
         { q: 'Vad är en sak du gör för andra som du önskar att fler la märke till?', f: 'När kände du dig senast osynlig fast du gjorde just det?' },
         { q: 'Vilken person har trott på dig när du själv hade svårt att göra det?', f: 'Vad sa de i stunden som du minns nästan ordagrant?' },
         { q: 'Vad gör dig till en bra vän, tror du?', f: 'Vad skulle din äldsta vän svara på samma fråga om dig?' },
-        { q: 'När kände du dig senast riktigt nära någon, och vad hände i det ögonblicket?', f: 'Vad gjorde den andra i den stunden, kanske utan att själv veta om det?' },
+        { q: 'När kände du dig senast riktigt nära någon, och vad hände i det ögonblicket?', f: 'Vet den personen om hur mycket den stunden betydde för dig?' },
         { q: 'Vad har du lärt dig om kärlek av att se andras relationer?', f: 'Vilket par tänker du på, och vad var det de gjorde?' },
         { q: 'Vilket sätt att visa omtanke betyder mest för dig att ta emot?', f: 'Vem är extra bra på att ge dig just det?' },
         { q: 'Vad är svårast att vara ärlig om i nära relationer?', f: 'När höll du senast inne med något du egentligen ville säga?' },
@@ -2038,9 +2062,9 @@ const DECK = {
         { q: 'Vilken person fick dig att känna dig sedd första gången ni träffades?', f: 'Var var ni, och vad var det de gjorde?' },
         { q: 'Vad är något du saknar att göra tillsammans med någon?', f: 'Med vem, och när gjorde ni det senast?' },
         { q: 'Hur reagerar du när någon visar dig oväntad omtanke?', f: 'När hände det senast, och vad var det de gjorde?' },
-        { q: 'Vad har en vän gjort för dig som du aldrig riktigt tackat för?', f: 'Vem är det, och vad var det de gjorde?' },
+        { q: 'Vad har en vän gjort för dig som du aldrig riktigt tackat för?', f: 'Vad hindrar dig från att tacka dem nu, så här långt efteråt?' },
         { q: 'Vilken sida av dig blir lättare att vara när du är med rätt människor?', f: 'Vem får fram just den sidan av dig?' },
-        { q: 'Vilken oväntad vänlighet från en främling har stannat kvar i dig?', f: 'Var var du, och vad var det personen gjorde?' },
+        { q: 'Vilken oväntad vänlighet från en främling har stannat kvar i dig?', f: 'Har du hunnit skicka den vänligheten vidare till någon annan?' },
         { q: 'I vilket slags sällskap känner du att du får ta plats precis som du är?', f: 'Vilken grupp eller person känns precis så för dig?' },
         { q: 'Vad är svårast för dig att tacka nej till när någon ber dig om något?', f: 'När sa du senast ja fast du innerst inne ville säga nej?' },
         { q: 'Vilken sorts uppmärksamhet från andra betyder mest för dig?', f: 'Vem ger dig den oftast?' },
@@ -2054,7 +2078,7 @@ const DECK = {
         { q: 'Hur hoppas du bli sedd av en människa som möter dig för allra första gången?', f: 'Vem ser dig redan precis på det sättet idag?' },
         { q: 'Vad behöver du efter en konflikt för att kunna mötas igen?', f: 'Vem är du allra bäst på att hitta tillbaka till efter ett gräl?' },
         { q: 'Hur visar du tacksamhet mot någon som ställt upp för dig?', f: 'Vem ställde senast upp för dig, och vad gjorde du tillbaka?' },
-        { q: 'Vad är något du gjort för någon annan som du själv blev stolt över?', f: 'För vem, och vad var det du gjorde?' },
+        { q: 'Vad är något du gjort för någon annan som du själv blev stolt över?', f: 'Fick personen någonsin veta vad det betydde för dig att få göra det?' },
         { q: 'Vilken egenskap hos andra får dig genast att slappna av i deras närvaro?', f: 'Vem vid det här bordet har den egenskapen?' },
         { q: 'Vad gör att du känner dig nära någon även när ni inte hörs på länge?', f: 'Vem kan du plocka upp tråden med precis där ni slutade?' },
         { q: 'Vem skulle du vilja känna bättre än du gör idag?', f: 'Vad skulle du vilja fråga den personen om du vågade?' },
@@ -2076,7 +2100,7 @@ const DECK = {
         { q: 'Vilken känsla har du svårast att låta dig själv känna?', f: 'Var brukar den ta vägen istället när du trycker undan den?' },
         { q: 'Vad i ditt liv önskar du att du var modig nog att ändra på?', f: 'Vad skulle vara det minsta första steget som ändå räknades?' },
         { q: 'Vilken del av dig själv har du lärt dig att gömma genom åren?', f: 'Vem fick senast se en glimt av den ändå?' },
-        { q: 'Vad skulle du göra annorlunda om du visste att ingen skulle döma dig?', f: 'Tror du fler skulle göra precis samma sak, eller är ditt svar ditt eget?' },
+        { q: 'Vad skulle du göra annorlunda om du visste att ingen skulle döma dig?', f: 'Vems dom är det egentligen du är mest rädd för?' },
         { q: 'Vilket misstag har lärt dig mest om vem du vill vara?', f: 'Skulle du tacka det misstaget idag, eller helst sluppit det?' },
         { q: 'Vad är en sorg du bär som sällan får ta plats?', f: 'Vad skulle behövas för att ge den lite plats ikväll?' },
         { m: 'vanner', q: 'När senast grät du, och vad var det som bröt fram?', f: 'Mår du oftast bättre efteråt, eller känns det mest blottande?' },
@@ -2088,7 +2112,7 @@ const DECK = {
         { q: 'Vad har du förlåtit dig själv för, och vad bär du fortfarande på?', f: 'Vad gjorde det första lättare att släppa?' },
         { q: 'Vilken förändring i dig själv är du mest stolt över men berättar sällan om?', f: 'Vem skulle bli gladast om du berättade det för dem?' },
         { q: 'Vad skulle du vilja släppa taget om men inte riktigt vågar?', f: 'Vem skulle du vara utan det, tror du?' },
-        { q: 'När kände du dig senast riktigt sårbar, och vad gjorde du med den känslan?', f: 'Brukar du dela sådant med någon, eller bära det ensam?' },
+        { q: 'När kände du dig senast riktigt sårbar, och vad gjorde du med den känslan?', f: 'Vem i ditt liv får se dig sårbar utan att du ångrar det efteråt?' },
         { q: 'Vad är en dröm du gav upp, och vad fick dig att göra det?', f: 'Vad skulle krävas för att damma av en liten del av den?' },
         { q: 'Vilken rädsla har styrt fler av dina val än du vill medge?', f: 'Vilket val tror du den hindrat dig mest från?' },
         { q: 'Vad önskar du att fler frågade dig om?', f: 'Vad skulle du helst vilja berätta om de gjorde det?' },
@@ -2171,17 +2195,17 @@ const DECK = {
         { q: 'Vad har varit din största lärdom om vad det innebär att vara människa?', f: 'Vem lärde dig det utan att ens veta om det?' },
         { q: 'Vilken sanning om dig själv har du först nyligen vågat möta?', f: 'Vad blev lättare när du väl mötte den?' },
         { q: 'Vad skulle behöva läka för att du skulle känna dig hel?', f: 'Vem skulle först märka att du läkt?' },
-        { q: 'Om du fick lämna ett enda budskap till världen efter dig, vad skulle det vara?', f: 'Vilka få ord skulle få plats på en skylt?' },
+        { q: 'Om du fick lämna ett enda budskap till världen efter dig, vad skulle det vara?', f: 'Vem hoppas du mest av alla tar det till sig?' },
         { q: 'Vad har du varit tvungen att förlora för att förstå vad som verkligen betyder något?', f: 'Vad håller du nu hårdare om än förr?' },
         { q: 'Vilken version av dig själv längtar du tillbaka till, eller framåt mot?', f: 'Vad gjorde den versionen som du saknar att göra?' },
         { q: 'Vad i ditt liv vill du försona dig med innan det är för sent?', f: 'Vad skulle ett första litet steg dit vara?' },
         { q: 'Vad har du aldrig berättat för någon för att du var rädd att inte bli förstådd?', f: 'Vem tror du ändå skulle förstå om du vågade?' },
-        { q: 'Om de som känner dig bäst fick beskriva ditt hjärta, vad hoppas du att de skulle säga?', f: 'Vilket enda ord hoppas du dyker upp?' },
+        { q: 'Om de som känner dig bäst fick beskriva ditt hjärta, vad hoppas du att de skulle säga?', f: 'Vem av dem skulle träffa mest rätt, tror du?' },
         { q: 'Vad skulle du vilja säga till dig själv som barn, om barnet kunde höra dig nu?', f: 'Hur gammalt är barnet du ser framför dig?' },
         { q: 'Vad i ditt liv har du burit som en hemlig styrka, fast världen aldrig fått se den?', f: 'Vem skulle bli stolt om de äntligen fick se den?' },
         { q: 'Om du kunde lägga din hand på axeln på den du var som mest vilsen, vad skulle du viska?', f: 'Hur gammal var du då?' },
         { q: 'Vad har du gett av dig själv utan att någonsin be om något tillbaka?', f: 'Vem fick mest av det?' },
-        { q: 'Vilket ögonblick fick dig att förstå att du faktiskt blivit älskad?', f: 'Vad var det de gjorde, helt enkelt?' },
+        { q: 'Vilket ögonblick fick dig att förstå att du faktiskt blivit älskad?', f: 'Har du någonsin berättat för dem vad den stunden betydde?' },
         { q: 'Vad i dig hoppas du lever vidare i någon annan långt efter att du är borta?', f: 'Hos vem ser du redan en glimt av det?' },
         { q: 'Vad har du slutat vara rädd för, och vad fick rädslan att slutligen släppa?', f: 'Vad vågar du göra nu som du inte vågade förr?' },
         { q: 'Vilken tystnad mellan dig och en annan människa önskar du att du kunde bryta?', f: 'Vilken enda mening skulle bryta den?' },
@@ -2204,7 +2228,7 @@ const DECK = {
         { q: 'Vilken sorg har förvandlats till något du nästan är tacksam för med tiden?', f: 'Vad gav den dig som du inte hade haft annars?' },
         { q: 'Vad skulle du vilja att en människa du älskar visste att de räddade hos dig?', f: 'Vad var det de gjorde, utan att ens veta om det?' },
         { q: 'Vad betyder det för dig att känna dig hel, sprickor och allt?', f: 'Vilken spricka har du börjat tycka om?' },
-        { q: 'Vilket liv kunde ha blivit ditt om du hade valt annorlunda?', f: 'Vad gör den versionen av dig just nu, tror du, och kan du se på den med frid?' },
+        { q: 'Vilket liv kunde ha blivit ditt om du hade valt annorlunda?', f: 'Vad i ditt liv idag skulle den versionen avundas dig mest?' },
         { q: 'Vad har du gett upp att kontrollera, och hur har det förändrat hur du andas?', f: 'Vad oroar du dig mindre för nu?' },
         { q: 'Vilken kärlek gav du som aldrig riktigt blev mottagen, och hur bär du den idag?', f: 'Till vem gav du den?' },
         { q: 'Vad skulle du vilja viska till någon som är på väg att lämna den här världen?', f: 'Vems ansikte ser du framför dig när du tänker på det?' },
@@ -2462,25 +2486,25 @@ const DECK = {
   quotes: {
     ytan: [
       { q: 'Allt är mycket osäkert, och det är just det som gör mig lugn.', by: 'Tove Jansson', f: 'Vi söker oftast trygghet i kontroll och säkra svar. Men kan det motsatta vara sant: att lugnet ligger i att acceptera att vi inte vet? Är ovisshet något att frukta eller något att luta sig mot?' },
-      { q: 'En resa på tusen mil börjar med ett enda steg.', by: 'Laozi, Tao Te Ching', f: 'Varför känns det första steget ofta tyngst av alla? Är det själva storleken på målet som förlamar oss? Och skulle vi våga mer om vi bara såg nästa steg istället för hela vägen?' },
+      { q: 'En resa på tusen mil börjar med ett enda steg.', by: 'Laozi, Tao Te Ching', f: 'Varför känns det första steget ofta tyngst av alla? Och skulle vi våga mer om vi bara såg nästa steg istället för hela vägen?' },
       { q: 'Det väsentliga är osynligt för ögat.', by: 'Antoine de Saint-Exupéry, Lille prinsen', f: 'Vi lägger stor vikt vid det vi kan se, mäta och visa upp. Men är det viktigaste i livet sådant som aldrig syns? Hur mycket missar vi när vi bara litar på ögat?' },
-      { q: 'Ibland är de allra minsta sakerna som tar störst plats i hjärtat.', by: 'A.A. Milne, Nalle Puh', f: 'Varför är det ofta de små ögonblicken vi minns, inte de stora bedrifterna? Underskattar vi vardagens värde medan vi jagar det märkvärdiga? Vad gör egentligen en liten sak stor?' },
+      { q: 'Ibland är de allra minsta sakerna som tar störst plats i hjärtat.', by: 'A.A. Milne, Nalle Puh', f: 'Varför är det ofta de små ögonblicken vi minns, inte de stora bedrifterna? Och vad gör egentligen en liten sak stor?' },
       { q: 'Det finns två sätt att leva: som om ingenting är ett mirakel, eller som om allt är det.', by: 'Ofta tillskrivet Albert Einstein', f: 'Samma värld kan upplevas som grå eller full av under, beroende på blicken. Är förundran en gåva man föds med eller något man kan öva upp? Och vad förlorar vi när vi slutar förundras?' },
-      { q: 'Om tjugo år kommer du att vara mer besviken över det du inte gjorde än det du gjorde.', by: 'Ofta tillskrivet Mark Twain', f: 'Ångrar vi verkligen våra misstag mer än våra uteblivna chanser? Är försiktighet ett skydd eller en tyst förlust? Var går gränsen mellan klokhet och feghet?' },
+      { q: 'Om tjugo år kommer du att vara mer besviken över det du inte gjorde än det du gjorde.', by: 'Ofta tillskrivet Mark Twain', f: 'Ångrar vi verkligen våra misstag mer än våra uteblivna chanser? Och är försiktighet ett skydd eller en tyst förlust?' },
       { q: 'Det finns ingen väg till lyckan. Lyckan är vägen.', by: 'Ofta tillskrivet Buddha', f: 'Vi behandlar ofta lyckan som ett mål vi ska nå "sedan": efter examen, efter karriären, efter pensionen. Finns det en risk att vi skjuter upp livet i väntan på det? Kan lyckan vara ett sätt att gå snarare än en plats att komma till?' },
-      { q: 'Livet är antingen ett vågat äventyr eller ingenting alls.', by: 'Helen Keller', f: 'Måste ett liv innehålla risk för att vara värt att leva? Eller finns det ett stilla mod i det trygga och vardagliga som vi underskattar? Är trygghet och äventyr verkligen varandras motsatser?' },
+      { q: 'Livet är antingen ett vågat äventyr eller ingenting alls.', by: 'Helen Keller', f: 'Måste ett liv innehålla risk för att vara värt att leva? Eller finns det ett stilla mod i det trygga och vardagliga som vi underskattar?' },
       { q: 'Den som blickar utåt drömmer. Den som blickar inåt vaknar.', by: 'Carl Gustav Jung', f: 'Vi söker ofta svaren utanför oss själva: i andra, i prestationer, i nästa sak. Men hur väl känner vi egentligen vår egen insida? Är självkännedom en lyx eller en grundförutsättning för ett gott liv?' },
-      { q: 'Människor glömmer vad du sa och vad du gjorde, men de glömmer aldrig hur du fick dem att känna.', by: 'Maya Angelou', f: 'Om det är känslan vi lämnar efter oss som blir kvar, vad säger det om vad som verkligen betyder något mellan människor? Underskattar vi de små bemötandena? Vilket avtryck väljer vi att lämna?' },
-      { q: 'Borta bra, men hemma bäst.', by: 'Svenskt ordspråk', f: 'Är hemma en plats, en känsla eller en vana? Behöver vi resa bort för att förstå vad vi har? Eller kan längtan efter hemmet ibland hindra oss från att verkligen upptäcka världen?' },
-      { q: 'Det är inte det som händer oss som påverkar oss, utan hur vi förhåller oss till det.', by: 'Ofta tillskrivet Epiktetos', f: 'Hur mycket av vårt välmående ligger faktiskt i vår egen hand? Är det befriande eller orättvist att lägga så stor vikt vid vårt eget förhållningssätt? Finns det situationer där tanken inte räcker?' },
-      { q: 'Ja visst gör det ont när knoppar brister.', by: 'Karin Boye', f: 'Måste det göra ont att växa? Finns det någon verklig förändring som inte kostar något? Eller romantiserar vi smärtan när vi säger att den förädlar oss?' },
+      { q: 'Människor glömmer vad du sa och vad du gjorde, men de glömmer aldrig hur du fick dem att känna.', by: 'Maya Angelou', f: 'Om det är känslan vi lämnar efter oss som blir kvar, vad säger det om vad som verkligen betyder något mellan människor? Och underskattar vi de små bemötandena?' },
+      { q: 'Borta bra, men hemma bäst.', by: 'Svenskt ordspråk', f: 'Är hemma en plats, en känsla eller en vana? Och kan längtan efter det ibland hindra oss från att verkligen upptäcka världen?' },
+      { q: 'Det är inte det som händer oss som påverkar oss, utan hur vi förhåller oss till det.', by: 'Ofta tillskrivet Epiktetos', f: 'Är det befriande eller orättvist att lägga så stor vikt vid vårt eget förhållningssätt? Och finns det situationer där tanken inte räcker?' },
+      { q: 'Ja visst gör det ont när knoppar brister.', by: 'Karin Boye', f: 'Måste det göra ont att växa? Eller romantiserar vi smärtan när vi säger att den förädlar oss?' },
       { q: 'Stora ting görs av en rad små ting som förts samman.', by: 'Vincent van Gogh', f: 'Vi hyllar gärna de stora ögonblicken och bortser från det tålmodiga slitet bakom. Underskattar vi det lilla och vardagliga? Är tålamod en bortglömd dygd i en värld som vill ha allt nu?' },
-      { q: 'En dag utan skratt är en bortkastad dag.', by: 'Ofta tillskrivet Charlie Chaplin', f: 'Tar vi humor och lättsamhet på tillräckligt stort allvar? Är skratt bara förströelse, eller något djupt mänskligt vi behöver för att uthärda livet? Kan en alltför allvarlig tillvaro vara ett liv som gått förlorat?' },
-      { q: 'Var dig själv. Alla andra är redan upptagna.', by: 'Ofta tillskrivet Oscar Wilde', f: 'Vi säger lätt "var dig själv", men hur vet man ens vem det är? Hur mycket av oss formas av andras blickar och förväntningar? Är äkthet något man hittar eller något man vågar?' },
-      { q: 'Lyckan i ditt liv beror på kvaliteten på dina tankar.', by: 'Ofta tillskrivet Marcus Aurelius', f: 'Om våra tankar färgar hela vår upplevelse av livet, borde vi då vårda dem som vi vårdar vår hälsa? Kan man lära sig att tänka bättre? Eller är det en farlig förenkling att lägga lyckan på tankens axlar?' },
-      { q: 'Ge barnen kärlek, mer kärlek och ännu mer kärlek, så kommer folkvettet av sig själv.', by: 'Astrid Lindgren', f: 'Tror vi mer på fostran genom regler och krav än genom kärlek? Kan trygghet och värme forma en människa bättre än tillsägelser? Och gäller det egentligen bara barn, eller oss alla?' },
+      { q: 'En dag utan skratt är en bortkastad dag.', by: 'Ofta tillskrivet Charlie Chaplin', f: 'Tar vi humor och lättsamhet på tillräckligt stort allvar? Är skratt bara förströelse, eller något djupt mänskligt vi behöver för att uthärda livet?' },
+      { q: 'Var dig själv. Alla andra är redan upptagna.', by: 'Ofta tillskrivet Oscar Wilde', f: 'Vi säger lätt "var dig själv", men hur vet man ens vem det är? Och är äkthet något man hittar eller något man vågar?' },
+      { q: 'Lyckan i ditt liv beror på kvaliteten på dina tankar.', by: 'Ofta tillskrivet Marcus Aurelius', f: 'Om våra tankar färgar hela vår upplevelse av livet, borde vi då vårda dem som vi vårdar vår hälsa? Eller är det en farlig förenkling att lägga lyckan på tankens axlar?' },
+      { q: 'Ge barnen kärlek, mer kärlek och ännu mer kärlek, så kommer folkvettet av sig själv.', by: 'Astrid Lindgren', f: 'Tror vi mer på fostran genom regler och krav än genom kärlek? Och gäller det egentligen bara barn, eller oss alla?' },
       { q: 'Rikedom är förmågan att till fullo uppleva livet.', by: 'Henry David Thoreau', f: 'Vi mäter ofta rikedom i pengar och ägodelar. Men om verklig rikedom är förmågan att vara närvarande, vem är då egentligen rik? Kan man äga mycket och ändå leva fattigt?' },
-      { q: 'Framtiden tillhör dem som tror på sina drömmars skönhet.', by: 'Ofta tillskrivet Eleanor Roosevelt', f: 'Är det naivt eller nödvändigt att tro på sina drömmar? Hur mycket av det vi vågar göra bestäms av vad vi tillåter oss att hoppas på? Kan en dröm forma verkligheten, eller lurar den oss bara?' },
+      { q: 'Framtiden tillhör dem som tror på sina drömmars skönhet.', by: 'Ofta tillskrivet Eleanor Roosevelt', f: 'Är det naivt eller nödvändigt att tro på sina drömmar? Och hur mycket av det vi vågar göra bestäms av vad vi tillåter oss att hoppas på?' },
     ],
     grundvatten: [
       { q: 'Vi blir vad vi upprepade gånger gör. Förträfflighet är därför inte en handling, utan en vana.', by: 'Ofta tillskrivet Aristoteles', f: 'Om vi är summan av våra vanor, hur fria är vi egentligen? Formar vi våra vanor, eller formar de oss tills vi inte längre märker det?' },
@@ -2745,6 +2769,9 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
     const p = state.players.find((x) => x.id === playerId);
     if (p) p.connected = connected;
     if (!connected && state.turnId === playerId) advanceTurn(state);
+    // Tappar någon uppkopplingen mitt i bläckbildens ordfas ska de kvarvarande inte
+    // fastna på "väntar": pröva avtäckningsvillkoret mot de som är kvar.
+    if (!connected) maybeRevealInkblot(state);
     return state;
   }
 
@@ -2883,13 +2910,26 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
   function drawInkblot(state) {
     const cfg = DECK.inkblot;
     if (!cfg) { drawCard(state); return; }
+    // Pulsmekanik (nätspel): bilden tonar fram, var och en låser blint in 1-3 ord om
+    // vad hen ser, och när alla låst sker en samtidig avtäckning. Deltat mellan
+    // tolkningarna är samtalet. Runt bordet (en enhet) kör klassiskt flöde direkt.
+    const local = state.code === 'LOKAL';
     state.card = {
       source: 'inkblot',
       seed: 1 + Math.floor(Math.random() * 1e9),
       sharedIdx: Math.floor(Math.random() * cfg.shared.length),
+      words: {}, revealed: local,
       text: '', followupText: null, levelId: state.levelId, followup: null,
     };
     state.cardsRevealed += 1;
+  }
+
+  // Alla uppkopplade har låst in ord? Då avtäcker vi samtidigt.
+  function maybeRevealInkblot(state) {
+    const c = state.card;
+    if (!c || c.source !== 'inkblot' || c.revealed) return;
+    const live = state.players.filter((p) => p.connected);
+    if (live.length && live.every((p) => c.words[p.id])) c.revealed = true;
   }
 
   // Strömmar: ett ömsesidighetskort där två personer paras ihop. Den vars tur
@@ -3035,6 +3075,9 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
       }
       case 'setSession': { if (state.phase !== 'playing') state.session = action.session; break; }
       case 'setMode': { if (state.phase !== 'playing') state.mode = action.mode; break; }
+      // Lås dyket: värden stänger dörren för NYA deltagare mitt i ett känsligt samtal.
+      // Kända spelare (med sin identitetshemlighet) återansluter alltid, låst eller ej.
+      case 'setLock': { if (isHost(state, actorId)) state.locked = !!action.on; break; }
       // Första andetaget: vem som helst får släppa ritualen när alla är redo.
       case 'beginDive': { state.ritual = false; break; }
       // Bojen: en anonym paus-ventil. Vem som helst får be om en paus, och vem
@@ -3131,6 +3174,29 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
         drawInkblot(state);
         break;
       }
+      // Bläckbildens ordfas: vem som helst uppkopplad låser in sina ord (går att
+      // ändra tills avtäckningen). När alla låst → samtidig reveal.
+      case 'inkblotWord': {
+        const c = state.card;
+        if (!c || c.source !== 'inkblot' || c.revealed) break;
+        const p = state.players.find((x) => x.id === actorId && x.connected);
+        if (!p) break;
+        const w = String(action.text || '').trim().slice(0, 48);
+        if (!w) break;
+        if (!c.words) c.words = {};   // äldre kort (draget före deployen) saknar fältet
+        c.words[actorId] = w;
+        maybeRevealInkblot(state);
+        break;
+      }
+      // Nödventil: den som har turen (eller värden) kan avtäcka utan att vänta
+      // (någon somnade, tappade uppkopplingen, vill inte skriva).
+      case 'inkblotReveal': {
+        const c = state.card;
+        if (!c || c.source !== 'inkblot' || c.revealed) break;
+        if (!canControl(state, actorId)) break;
+        c.revealed = true;
+        break;
+      }
       case 'skip': {
         if (state.phase !== 'playing' || !canControl(state, actorId)) break;
         pushHistory(state);
@@ -3221,6 +3287,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
         state.ritual = false;
         state.pause = null;
         state.ascent = null;
+        state.locked = false;   // tillbaka i lobbyn = dörren öppen igen
         break;
       }
       case 'rename': {
@@ -3392,11 +3459,11 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
         else if (msg && msg.type === 'ended') { this._emit('ended'); }
         else if (msg && msg.type === 'secret' && msg.secret) { this._saveSecret(msg.secret); }
         else if (msg && msg.type === 'denied') {
-          // Servern nekade identiteten: sluta försöka (annars evig retry-loop).
+          // Servern nekade (fel identitet eller låst dyk): sluta försöka (annars evig retry-loop).
           this._alive = false;
           clearTimeout(this._retryTimer); this._retryTimer = null;
           this.clearSession();
-          this._emit('denied');
+          this._emit('denied', { reason: msg.reason || '' });
         }
       };
       ws.onclose = () => {
@@ -4733,7 +4800,8 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
     const isMirror = !!(s && s.code === 'LOKAL');
     // Endast vid BEKRÄFTAD nätlobby (state framme). Vid null-state vet vi inte om rummet
     // är en spegling under uppstart, och en skannad join på relä-koden skulle döda den.
-    const show = !isMirror && !!Net.code && !!(s && s.phase === 'lobby') && !!window.QR;
+    // Låst dyk = ingen inbjudan att visa.
+    const show = !isMirror && !!Net.code && !!(s && s.phase === 'lobby') && !s.locked && !!window.QR;
     box.hidden = !show;
     if (!show) return;
     const url = location.origin + location.pathname + '?join=' + Net.code;
@@ -4815,7 +4883,16 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
       blot.hidden = false;
       blot.innerHTML = window.Inkblot.svg(s.card.seed, BLOT_COLOR);
       const cfg = window.DECK.inkblot;
-      textEl.textContent = cfg.shared[s.card.sharedIdx % cfg.shared.length];
+      const words = s.card.words || {};
+      if (s.card.revealed === false) {
+        const live = s.players.filter((p) => p.connected);
+        const n = live.filter((p) => words[p.id]).length;
+        textEl.textContent = 'Alla låser i smyg in vad de ser … ' + n + ' av ' + live.length + ' klara.';
+      } else if (Object.keys(words).length) {
+        textEl.textContent = s.players.filter((p) => words[p.id]).map((p) => p.name + ': ' + words[p.id]).join('  ·  ');
+      } else {
+        textEl.textContent = cfg.shared[s.card.sharedIdx % cfg.shared.length];
+      }
     } else {
       blot.hidden = true;
       textEl.textContent = s.card ? s.card.text : '…';
@@ -4975,17 +5052,49 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
       $('card-blot').hidden = !isInkblot;
       if (isInkblot && window.Inkblot && window.DECK.inkblot) {
         const cfg = window.DECK.inkblot;
-        $('blot-img').innerHTML = window.Inkblot.svg(s.card.seed, BLOT_COLOR);
+        // Rita bara om bilden när fröet byts (annars startar tona-fram-animationen om
+        // vid varje state-uppdatering).
+        const bi = $('blot-img');
+        if (bi.dataset.seed !== String(s.card.seed)) { bi.dataset.seed = String(s.card.seed); bi.innerHTML = window.Inkblot.svg(s.card.seed, BLOT_COLOR); }
+
+        // Pulsmekanik: ordfas tills alla låst in, sedan samtidig avtäckning.
+        const revealed = s.card.revealed !== false;   // äldre kort utan fältet = klassiskt flöde
+        const words = s.card.words || {};
+        const live = s.players.filter((p) => p.connected);
+        const lockedN = live.filter((p) => words[p.id]).length;
+        const iLocked = !!words[meId];
+        $('blot-words').hidden = revealed;
+        $('blot-shared').hidden = !revealed;
+        document.querySelector('.blot-mine').hidden = !revealed;
+        if (!revealed) {
+          $('blot-word-status').textContent = lockedN + ' av ' + live.length + ' har låst in' + (iLocked ? ' · ditt ord är inne' : '');
+          $('btn-blot-lock').textContent = iLocked ? 'Ändra' : 'Lås in';
+          // Nödventil för turen/värden om någon inte skriver.
+          $('btn-blot-reveal').hidden = !(myTurn || s.hostId === meId) || lockedN === 0;
+        }
+        // Avtäckta ord: deltat mellan tolkningarna är samtalet.
+        const aw = $('blot-all-words');
+        aw.hidden = !revealed || !Object.keys(words).length;
+        if (!aw.hidden) {
+          aw.innerHTML = s.players.filter((p) => words[p.id]).map((p) =>
+            '<span class="blot-word"><b>' + escapeHtml(p.name) + '</b>' + escapeHtml(words[p.id]) + '</span>').join('');
+        }
+
         $('blot-shared').textContent = cfg.shared[s.card.sharedIdx % cfg.shared.length];
         const connected = (s.order || []).filter((id) => { const p = s.players.find((x) => x.id === id); return p && p.connected; });
         const myPos = Math.max(0, connected.indexOf(meId));
-        // Skugga-frågorna (mörkast) bara på djupvatten och djupare.
-        const deepEnough = levelIndex(s.card.levelId || s.levelId) >= levelIndex('djupvatten');
-        const avail = cfg.categories.filter((c) => c.name !== 'Skugga' || deepEnough);
+        // Djupgradering: Ytan/Grundvatten är ren lek (bara Humor), Revet öppnar
+        // Fördjupning/Relation/Beslut, Djupvatten och djupare öppnar Skugga.
+        const bli = levelIndex(s.card.levelId || s.levelId);
+        const avail = cfg.categories.filter((c) =>
+          c.name === 'Humor'
+          || (bli >= levelIndex('djupvatten'))
+          || (bli >= levelIndex('revet') && c.name !== 'Skugga'));
         const cat = avail[myPos % avail.length];
         const q = cat.qs[hashStr(s.card.seed + ':' + meId) % cat.qs.length];
         $('blot-cat').textContent = 'Din fråga · ' + cat.name;
-        $('blot-q').textContent = q;
+        // Förankra i spelarens egna inlåsta ord när de finns.
+        $('blot-q').textContent = (revealed && words[meId] ? 'Du sa "' + words[meId] + '". ' : '') + q;
       }
 
       // Strömmar: den som har turen väljer en partner, övriga vittnar.
@@ -5049,6 +5158,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
       if (flipKey !== lastCardKey) {
         card.classList.remove('flip'); void card.offsetWidth; card.classList.add('flip');
         lastCardKey = flipKey;
+        if (isInkblot) $('blot-word-input').value = '';   // nytt frö = tomt ordfält
         if (isSilence) startSilence(); else stopSilence();
         if (navigator.vibrate) { try { navigator.vibrate(isWhirl ? [8, 30, 8, 30, 8] : 8); } catch (_) {} }
       }
@@ -5171,8 +5281,15 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
       return f.myTurn ? 'Säg det du vill till gruppen. När du är klar går turen vidare till nästa.' : (f.turnP ? `${f.turnP.name} säger något till gruppen innan ni stiger upp.` : 'Snart är det din tur att säga något.');
     }
     if (f.isInkblot) {
-      if (d) return f.myTurn ? 'Ni ser samma bild och har var sin egen fråga om den. Dela med varandra och skicka vidare när ni är klara.' : 'Ni ser samma bild. Din egen fråga står ovanför.';
-      return f.myTurn ? 'Alla svarar på den gemensamma frågan, och var och en på sin egen. Skicka vidare när ni är klara.' : 'Alla svarar på bilden. Din egen fråga står ovanför.';
+      const c = s.card;
+      if (c && c.revealed === false) {
+        return 'Titta på bilden och lås i smyg in ett par ord om vad du ser. När alla låst avtäcks orden samtidigt.';
+      }
+      const revealTip = c && c.words && Object.keys(c.words).length > 1
+        ? 'Be den vars ord ligger längst från ditt att börja berätta. '
+        : '';
+      if (d) return f.myTurn ? revealTip + 'Ni ser samma bild och har var sin egen fråga om den. Dela med varandra och skicka vidare när ni är klara.' : 'Ni ser samma bild. Din egen fråga står ovanför.';
+      return f.myTurn ? revealTip + 'Alla svarar på den gemensamma frågan, och var och en på sin egen. Skicka vidare när ni är klara.' : 'Alla svarar på bilden. Din egen fråga står ovanför.';
     }
     if (f.myTurn) {
       if (f.isReflection) return 'Gör övningen i fantasin och dela det ni vill. Tryck Tolkning när ni är nyfikna på vad det kan betyda.';
@@ -5426,8 +5543,23 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
     statusTimer = setTimeout(render, everConnected ? 1500 : 0);
   });
   Net.on('error', (msg) => { toast(msg); });
-  Net.on('denied', () => {
-    toast('Ditt spelar-id används redan i det här rummet från en annan enhet.');
+  Net.on('denied', (d) => {
+    const locked = d && d.reason === 'låst';
+    if (displayMode) {
+      // TV:n: visa beskedet stort och stanna kvar (ingen spelar-toast + hem-hopp).
+      showScreen('display');
+      $('tv-turn').hidden = true; $('tv-blot').hidden = true; $('tv-qr').hidden = true;
+      $('tv-followup').textContent = ''; $('tv-followup').classList.remove('show');
+      $('tv-players').innerHTML = ''; $('tv-eyebrow').textContent = ''; $('tv-depth').textContent = '';
+      $('tv-text').textContent = locked
+        ? 'Dyket är låst av värden just nu. Be värden öppna det, så kan skärmen ansluta igen.'
+        : 'Skärmen kunde inte ansluta till dyket.';
+      fitTvText();
+      return;
+    }
+    toast(locked
+      ? 'Dyket är låst av värden just nu. Be dem öppna det, eller vänta till nästa dyk.'
+      : 'Ditt spelar-id används redan i det här rummet från en annan enhet.');
     leave();
   });
   let droppedT = 0;
@@ -5640,6 +5772,15 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
   $('btn-tv-lobby').onclick = openTvPanel;
   $('btn-shell').onclick = saveShell;
   $('btn-buoy').onclick = () => { Net.dispatch({ type: 'buoy' }); };
+  // Bläckbildens ordfas: lås in (eller ändra) det du ser; turen/värden kan avtäcka i förtid.
+  function lockBlotWord() {
+    const w = $('blot-word-input').value.trim();
+    if (!w) { toast('Skriv först ett par ord om vad du ser.'); return; }
+    Net.dispatch({ type: 'inkblotWord', text: w });
+  }
+  $('btn-blot-lock').onclick = lockBlotWord;
+  $('blot-word-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); lockBlotWord(); $('blot-word-input').blur(); } });
+  $('btn-blot-reveal').onclick = () => Net.dispatch({ type: 'inkblotReveal' });
   $('btn-strom-accept').onclick = () => { Snd.resume(); Net.dispatch({ type: 'acceptPartner' }); };
   $('btn-strom-decline').onclick = () => { Net.dispatch({ type: 'declinePartner' }); };
   $('btn-begin-dive').onclick = () => { Snd.resume(); Net.dispatch({ type: 'beginDive' }); };
@@ -5665,6 +5806,9 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
     $('btn-strom').hidden = s.players.filter((p) => p.connected).length < 2;          // kräver två
     const inv = $('btn-invite-game'); if (inv) inv.hidden = isLocal;                  // ingen inbjudan lokalt
     $('sheet-note').hidden = canDrive;
+    // Lås dyket: bara meningsfullt i nätläge (lokalt finns inga anslutningar att stänga ute).
+    $('btn-lock').hidden = isLocal;
+    $('btn-lock').textContent = s.locked ? '🔓 Öppna dyket för nya igen' : '🔒 Lås dyket för nya';
     updateSoundLabel();
     $('game-invite-code').textContent = s.code;
     $('sheet').classList.add('open'); $('sheet').setAttribute('aria-hidden', 'false');
@@ -5703,6 +5847,12 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
   $('btn-silence').onclick = () => { Net.dispatch({ type: 'silence' }); closeSheet(); };
   $('btn-postcard').onclick = savePostcard;
   $('btn-closing').onclick = () => { Net.dispatch({ type: 'closing' }); closeSheet(); };
+  $('btn-lock').onclick = () => {
+    const s = state(); const on = !(s && s.locked);
+    Net.dispatch({ type: 'setLock', on });
+    closeSheet();
+    toast(on ? 'Dyket är låst. Inga nya kan ansluta, men alla som är med kan återansluta.' : 'Dyket är öppet för nya igen.');
+  };
   $('btn-pass').onclick = () => { Net.dispatch({ type: 'passTurn' }); closeSheet(); };
   $('btn-pass-back').onclick = () => { Net.dispatch({ type: 'turnBack' }); closeSheet(); };
   $('btn-finish').onclick = () => { Net.dispatch({ type: 'finish' }); closeSheet(); };

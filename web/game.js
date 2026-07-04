@@ -112,6 +112,9 @@
     const p = state.players.find((x) => x.id === playerId);
     if (p) p.connected = connected;
     if (!connected && state.turnId === playerId) advanceTurn(state);
+    // Tappar någon uppkopplingen mitt i bläckbildens ordfas ska de kvarvarande inte
+    // fastna på "väntar": pröva avtäckningsvillkoret mot de som är kvar.
+    if (!connected) maybeRevealInkblot(state);
     return state;
   }
 
@@ -250,13 +253,26 @@
   function drawInkblot(state) {
     const cfg = DECK.inkblot;
     if (!cfg) { drawCard(state); return; }
+    // Pulsmekanik (nätspel): bilden tonar fram, var och en låser blint in 1-3 ord om
+    // vad hen ser, och när alla låst sker en samtidig avtäckning. Deltat mellan
+    // tolkningarna är samtalet. Runt bordet (en enhet) kör klassiskt flöde direkt.
+    const local = state.code === 'LOKAL';
     state.card = {
       source: 'inkblot',
       seed: 1 + Math.floor(Math.random() * 1e9),
       sharedIdx: Math.floor(Math.random() * cfg.shared.length),
+      words: {}, revealed: local,
       text: '', followupText: null, levelId: state.levelId, followup: null,
     };
     state.cardsRevealed += 1;
+  }
+
+  // Alla uppkopplade har låst in ord? Då avtäcker vi samtidigt.
+  function maybeRevealInkblot(state) {
+    const c = state.card;
+    if (!c || c.source !== 'inkblot' || c.revealed) return;
+    const live = state.players.filter((p) => p.connected);
+    if (live.length && live.every((p) => c.words[p.id])) c.revealed = true;
   }
 
   // Strömmar: ett ömsesidighetskort där två personer paras ihop. Den vars tur
@@ -402,6 +418,9 @@
       }
       case 'setSession': { if (state.phase !== 'playing') state.session = action.session; break; }
       case 'setMode': { if (state.phase !== 'playing') state.mode = action.mode; break; }
+      // Lås dyket: värden stänger dörren för NYA deltagare mitt i ett känsligt samtal.
+      // Kända spelare (med sin identitetshemlighet) återansluter alltid, låst eller ej.
+      case 'setLock': { if (isHost(state, actorId)) state.locked = !!action.on; break; }
       // Första andetaget: vem som helst får släppa ritualen när alla är redo.
       case 'beginDive': { state.ritual = false; break; }
       // Bojen: en anonym paus-ventil. Vem som helst får be om en paus, och vem
@@ -498,6 +517,29 @@
         drawInkblot(state);
         break;
       }
+      // Bläckbildens ordfas: vem som helst uppkopplad låser in sina ord (går att
+      // ändra tills avtäckningen). När alla låst → samtidig reveal.
+      case 'inkblotWord': {
+        const c = state.card;
+        if (!c || c.source !== 'inkblot' || c.revealed) break;
+        const p = state.players.find((x) => x.id === actorId && x.connected);
+        if (!p) break;
+        const w = String(action.text || '').trim().slice(0, 48);
+        if (!w) break;
+        if (!c.words) c.words = {};   // äldre kort (draget före deployen) saknar fältet
+        c.words[actorId] = w;
+        maybeRevealInkblot(state);
+        break;
+      }
+      // Nödventil: den som har turen (eller värden) kan avtäcka utan att vänta
+      // (någon somnade, tappade uppkopplingen, vill inte skriva).
+      case 'inkblotReveal': {
+        const c = state.card;
+        if (!c || c.source !== 'inkblot' || c.revealed) break;
+        if (!canControl(state, actorId)) break;
+        c.revealed = true;
+        break;
+      }
       case 'skip': {
         if (state.phase !== 'playing' || !canControl(state, actorId)) break;
         pushHistory(state);
@@ -588,6 +630,7 @@
         state.ritual = false;
         state.pause = null;
         state.ascent = null;
+        state.locked = false;   // tillbaka i lobbyn = dörren öppen igen
         break;
       }
       case 'rename': {

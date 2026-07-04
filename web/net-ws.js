@@ -139,11 +139,11 @@
         else if (msg && msg.type === 'ended') { this._emit('ended'); }
         else if (msg && msg.type === 'secret' && msg.secret) { this._saveSecret(msg.secret); }
         else if (msg && msg.type === 'denied') {
-          // Servern nekade identiteten: sluta försöka (annars evig retry-loop).
+          // Servern nekade (fel identitet eller låst dyk): sluta försöka (annars evig retry-loop).
           this._alive = false;
           clearTimeout(this._retryTimer); this._retryTimer = null;
           this.clearSession();
-          this._emit('denied');
+          this._emit('denied', { reason: msg.reason || '' });
         }
       };
       ws.onclose = () => {

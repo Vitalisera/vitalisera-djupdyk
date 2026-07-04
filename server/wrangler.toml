@@ -31,4 +31,6 @@ new_sqlite_classes = ["Registry"]
 name = "JOIN_RL"
 type = "ratelimit"
 namespace_id = "1001"
-simple = { limit = 30, period = 60 }
+# 120/min: rymmer en hel sällskaps återanslutningsstorm bakom EN wifi-IP (8 telefoner +
+# TV som retry:ar var 6:e sekund) men stoppar ändå kod-skanning (32^4 koder ≈ dagar).
+simple = { limit = 120, period = 60 }

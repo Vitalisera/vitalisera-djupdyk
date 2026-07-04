@@ -102,6 +102,15 @@ export class Room {
     // rum. Räknas ALDRIG som spelare: inget addPlayer, ingen meta, ingen rapport,
     // och den skapar inte ett rum (en TV riktad mot en tom kod ska inte starta dyk).
     if (url.searchParams.get('display') === '1') {
+      // Låst dyk skyddar även mot passiva tittare: en utomstående med koden ska inte
+      // kunna läsa kort, namn och avtäckta ord via TV-vägen. (En TV som laddar om
+      // under låset stängs ute tills värden låser upp — medveten avvägning.)
+      if (this.game && this.game.locked) {
+        const ldp = new WebSocketPair();
+        ldp[1].accept();
+        try { ldp[1].send(JSON.stringify({ type: 'denied', reason: 'låst' })); ldp[1].close(4403, 'locked'); } catch (_) {}
+        return new Response(null, { status: 101, webSocket: ldp[0] });
+      }
       const pair = new WebSocketPair();
       this.ctx.acceptWebSocket(pair[1], ['display']);
       pair[1].serializeAttachment({ display: true });
@@ -135,6 +144,15 @@ export class Room {
       try { dp[1].send(JSON.stringify({ type: 'denied', reason: 'identitet' })); dp[1].close(4403, 'denied'); } catch (_) {}
       return new Response(null, { status: 101, webSocket: dp[0] });
     }
+    // Låst dyk: värden har stängt dörren för NYA deltagare. Kända spelare (med sin
+    // hemlighet) återansluter alltid, låst eller ej.
+    if (!known && this.game && this.game.locked) {
+      const lp = new WebSocketPair();
+      lp[1].accept();
+      try { lp[1].send(JSON.stringify({ type: 'denied', reason: 'låst' })); lp[1].close(4403, 'locked'); } catch (_) {}
+      return new Response(null, { status: 101, webSocket: lp[0] });
+    }
+
     // Okänt id: adoptera klientens hemlighet om den skickar en (samma enhet har EN
     // hemlighet för alla rum), annars utfärda en ny och skicka tillbaka den.
     let issuedSecret = null;

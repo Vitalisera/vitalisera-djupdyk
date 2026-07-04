@@ -281,6 +281,17 @@
             <div class="card-blot" id="card-blot" hidden>
               <span class="card-eyebrow blot-eyebrow">✦ Bläckbild</span>
               <div class="blot-img" id="blot-img"></div>
+              <!-- Ordfas: var och en låser blint in vad hen ser; alla klara → samtidig avtäckning -->
+              <div class="blot-words" id="blot-words" hidden>
+                <p class="blot-words-lede">Vad ser du? Lås in i smyg, avtäcks när alla är klara.</p>
+                <div class="blot-word-row">
+                  <input id="blot-word-input" type="text" maxlength="48" placeholder="1 till 3 ord" autocomplete="off" enterkeyhint="done" />
+                  <button id="btn-blot-lock" class="btn btn-primary" type="button">Lås in</button>
+                </div>
+                <p class="blot-word-status" id="blot-word-status"></p>
+                <button id="btn-blot-reveal" class="btn btn-glass full" type="button" hidden>Avtäck allas ord nu</button>
+              </div>
+              <div class="blot-all-words" id="blot-all-words" hidden></div>
               <p class="blot-shared" id="blot-shared"></p>
               <div class="blot-mine">
                 <span class="blot-cat" id="blot-cat"></span>
@@ -381,6 +392,7 @@
 
         <div class="sheet-group" id="grp-host">
           <span class="sheet-group-h">Spelledaren</span>
+          <button id="btn-lock" class="btn btn-glass full">🔒 Lås dyket för nya</button>
           <button id="btn-closing" class="btn btn-glass full">🍃 Dra ett avslutningskort</button>
           <button id="btn-finish" class="btn btn-glass full">🫧 Stig upp och avsluta</button>
           <button id="btn-restart" class="btn btn-glass full">↩ Tillbaka till lobbyn</button>
@@ -464,7 +476,7 @@
         <h3 class="intro-h"><span class="intro-n">2</span> Varje runda</h3>
         <ol class="intro-round">
           <li><b>Läs högt.</b> Den vars tur det är läser kortet för de andra.</li>
-          <li><b>Samtala.</b> Prata fritt kring frågan, helt utan tidsgräns. Stanna kvar så länge det känns bra.</li>
+          <li><b>Samtala.</b> Uppläsaren svarar först, sedan är ordet fritt: alla får svara och flika in. Ett samtal, ingen förhörsrunda.</li>
           <li><b>Skicka vidare.</b> När ni är klara går turen till nästa.</li>
         </ol>
         <div class="intro-actions">
@@ -523,13 +535,13 @@
 
       <section class="manual-section">
         <h3 class="intro-h"><span class="intro-n">3</span> Roller</h3>
-        <p class="intro-p"><b>Spelledaren</b> är den som skapade dyket. Spelledaren styr det som formar hela stunden: byter djup, drar avslutningskort, avslutar dyket och går tillbaka till lobbyn.</p>
+        <p class="intro-p"><b>Spelledaren</b> är den som skapade dyket. Spelledaren styr det som formar hela stunden: byter djup, drar avslutningskort, låser dyket så att inga nya kan ansluta mitt i, avslutar dyket och går tillbaka till lobbyn.</p>
         <p class="intro-p"><b>Alla deltagare</b> kan läsa sin egen fråga, skicka turen vidare, ge tillbaka turen och be om en paus med bojen. Den som har turen driver sitt eget kort: följdfråga, byt fråga och specialkort.</p>
       </section>
 
       <section class="manual-section">
         <h3 class="intro-h"><span class="intro-n">4</span> Spelets gång</h3>
-        <p class="intro-p">Den vars tur det är läser kortet högt och svarar först. Sedan pratar ni fritt kring frågan, helt utan tidsgräns. Stanna kvar så länge det känns bra.</p>
+        <p class="intro-p">Den vars tur det är läser kortet högt och svarar först. Sedan är ordet fritt: alla får gärna svara på samma fråga, i den ordning det faller sig, och det är helt okej att flika in medan någon annan berättar. Det här är ett samtal, inte en förhörsrunda. Ingen måste svara, och ingen klocka tickar.</p>
         <p class="intro-p">Vill du minnas en särskild fråga? Tryck på snäckan 🐚 på kortet, så sparas den till slutet, bara på din telefon. När ni stiger upp får ni en sammanfattning av dyket och kan dela ett litet vykort från djupet.</p>
         <div class="intro-actions">
           <span class="intro-chip is-main"><b class="ic">→</b><span>Skicka vidare</span><em>turen och ett nytt kort till nästa</em></span>
@@ -556,7 +568,7 @@
         <p class="intro-p">Då och då dyker ett annat slags kort upp, som en krydda i samtalet:</p>
         <div class="manual-cards">
           <div class="manual-card-row"><span class="mc-ic">✨</span><span><b class="mc-nm">Spegling.</b> <span class="mc-desc">Du målar upp en inre scen (ett berg, en bro …) och beskriver den; sedan finns en tolkning att ta fram av vad den kan spegla hos dig.</span></span></div>
-          <div class="manual-card-row"><span class="mc-ic">✦</span><span><b class="mc-nm">Bläckbild.</b> <span class="mc-desc">En abstrakt bild som var och en tolkar tyst utifrån en fråga. Sedan delar ni vad ni såg.</span></span></div>
+          <div class="manual-card-row"><span class="mc-ic">✦</span><span><b class="mc-nm">Bläckbild.</b> <span class="mc-desc">En bild tonar fram och var och en låser i smyg in ett par ord om vad hen ser. När alla låst avtäcks orden samtidigt: skillnaderna mellan era tolkningar är samtalet. Den vars ord ligger längst från uppläsarens börjar berätta. På grundare djup är frågorna lekfulla, längre ner mer utforskande.</span></span></div>
           <div class="manual-card-row"><span class="mc-ic">🌊</span><span><b class="mc-nm">Para ihop två.</b> <span class="mc-desc">Den vars tur det är bjuder in en annan deltagare; ni två får ett kort bara för er, något ömsesidigt att säga eller göra. <i>(Minst två deltagare, och att ni nått Revet.)</i></span></span></div>
           <div class="manual-card-row"><span class="mc-ic">🤫</span><span><b class="mc-nm">Tystnad.</b> <span class="mc-desc">En kort stund tillsammans, helt utan ord. <i>(Minst två deltagare.)</i></span></span></div>
           <div class="manual-card-row"><span class="mc-ic">🪷</span><span><b class="mc-nm">Visdomsberättelse.</b> <span class="mc-desc">En kort sedelärande berättelse ur zen, taoism, sufism och liknande källor. Den vars tur det är läser den högt, sedan finns en eftertanke att samtala kring.</span></span></div>

@@ -248,7 +248,8 @@
     const isMirror = !!(s && s.code === 'LOKAL');
     // Endast vid BEKRÄFTAD nätlobby (state framme). Vid null-state vet vi inte om rummet
     // är en spegling under uppstart, och en skannad join på relä-koden skulle döda den.
-    const show = !isMirror && !!Net.code && !!(s && s.phase === 'lobby') && !!window.QR;
+    // Låst dyk = ingen inbjudan att visa.
+    const show = !isMirror && !!Net.code && !!(s && s.phase === 'lobby') && !s.locked && !!window.QR;
     box.hidden = !show;
     if (!show) return;
     const url = location.origin + location.pathname + '?join=' + Net.code;
@@ -330,7 +331,16 @@
       blot.hidden = false;
       blot.innerHTML = window.Inkblot.svg(s.card.seed, BLOT_COLOR);
       const cfg = window.DECK.inkblot;
-      textEl.textContent = cfg.shared[s.card.sharedIdx % cfg.shared.length];
+      const words = s.card.words || {};
+      if (s.card.revealed === false) {
+        const live = s.players.filter((p) => p.connected);
+        const n = live.filter((p) => words[p.id]).length;
+        textEl.textContent = 'Alla låser i smyg in vad de ser … ' + n + ' av ' + live.length + ' klara.';
+      } else if (Object.keys(words).length) {
+        textEl.textContent = s.players.filter((p) => words[p.id]).map((p) => p.name + ': ' + words[p.id]).join('  ·  ');
+      } else {
+        textEl.textContent = cfg.shared[s.card.sharedIdx % cfg.shared.length];
+      }
     } else {
       blot.hidden = true;
       textEl.textContent = s.card ? s.card.text : '…';
@@ -490,17 +500,49 @@
       $('card-blot').hidden = !isInkblot;
       if (isInkblot && window.Inkblot && window.DECK.inkblot) {
         const cfg = window.DECK.inkblot;
-        $('blot-img').innerHTML = window.Inkblot.svg(s.card.seed, BLOT_COLOR);
+        // Rita bara om bilden när fröet byts (annars startar tona-fram-animationen om
+        // vid varje state-uppdatering).
+        const bi = $('blot-img');
+        if (bi.dataset.seed !== String(s.card.seed)) { bi.dataset.seed = String(s.card.seed); bi.innerHTML = window.Inkblot.svg(s.card.seed, BLOT_COLOR); }
+
+        // Pulsmekanik: ordfas tills alla låst in, sedan samtidig avtäckning.
+        const revealed = s.card.revealed !== false;   // äldre kort utan fältet = klassiskt flöde
+        const words = s.card.words || {};
+        const live = s.players.filter((p) => p.connected);
+        const lockedN = live.filter((p) => words[p.id]).length;
+        const iLocked = !!words[meId];
+        $('blot-words').hidden = revealed;
+        $('blot-shared').hidden = !revealed;
+        document.querySelector('.blot-mine').hidden = !revealed;
+        if (!revealed) {
+          $('blot-word-status').textContent = lockedN + ' av ' + live.length + ' har låst in' + (iLocked ? ' · ditt ord är inne' : '');
+          $('btn-blot-lock').textContent = iLocked ? 'Ändra' : 'Lås in';
+          // Nödventil för turen/värden om någon inte skriver.
+          $('btn-blot-reveal').hidden = !(myTurn || s.hostId === meId) || lockedN === 0;
+        }
+        // Avtäckta ord: deltat mellan tolkningarna är samtalet.
+        const aw = $('blot-all-words');
+        aw.hidden = !revealed || !Object.keys(words).length;
+        if (!aw.hidden) {
+          aw.innerHTML = s.players.filter((p) => words[p.id]).map((p) =>
+            '<span class="blot-word"><b>' + escapeHtml(p.name) + '</b>' + escapeHtml(words[p.id]) + '</span>').join('');
+        }
+
         $('blot-shared').textContent = cfg.shared[s.card.sharedIdx % cfg.shared.length];
         const connected = (s.order || []).filter((id) => { const p = s.players.find((x) => x.id === id); return p && p.connected; });
         const myPos = Math.max(0, connected.indexOf(meId));
-        // Skugga-frågorna (mörkast) bara på djupvatten och djupare.
-        const deepEnough = levelIndex(s.card.levelId || s.levelId) >= levelIndex('djupvatten');
-        const avail = cfg.categories.filter((c) => c.name !== 'Skugga' || deepEnough);
+        // Djupgradering: Ytan/Grundvatten är ren lek (bara Humor), Revet öppnar
+        // Fördjupning/Relation/Beslut, Djupvatten och djupare öppnar Skugga.
+        const bli = levelIndex(s.card.levelId || s.levelId);
+        const avail = cfg.categories.filter((c) =>
+          c.name === 'Humor'
+          || (bli >= levelIndex('djupvatten'))
+          || (bli >= levelIndex('revet') && c.name !== 'Skugga'));
         const cat = avail[myPos % avail.length];
         const q = cat.qs[hashStr(s.card.seed + ':' + meId) % cat.qs.length];
         $('blot-cat').textContent = 'Din fråga · ' + cat.name;
-        $('blot-q').textContent = q;
+        // Förankra i spelarens egna inlåsta ord när de finns.
+        $('blot-q').textContent = (revealed && words[meId] ? 'Du sa "' + words[meId] + '". ' : '') + q;
       }
 
       // Strömmar: den som har turen väljer en partner, övriga vittnar.
@@ -564,6 +606,7 @@
       if (flipKey !== lastCardKey) {
         card.classList.remove('flip'); void card.offsetWidth; card.classList.add('flip');
         lastCardKey = flipKey;
+        if (isInkblot) $('blot-word-input').value = '';   // nytt frö = tomt ordfält
         if (isSilence) startSilence(); else stopSilence();
         if (navigator.vibrate) { try { navigator.vibrate(isWhirl ? [8, 30, 8, 30, 8] : 8); } catch (_) {} }
       }
@@ -686,8 +729,15 @@
       return f.myTurn ? 'Säg det du vill till gruppen. När du är klar går turen vidare till nästa.' : (f.turnP ? `${f.turnP.name} säger något till gruppen innan ni stiger upp.` : 'Snart är det din tur att säga något.');
     }
     if (f.isInkblot) {
-      if (d) return f.myTurn ? 'Ni ser samma bild och har var sin egen fråga om den. Dela med varandra och skicka vidare när ni är klara.' : 'Ni ser samma bild. Din egen fråga står ovanför.';
-      return f.myTurn ? 'Alla svarar på den gemensamma frågan, och var och en på sin egen. Skicka vidare när ni är klara.' : 'Alla svarar på bilden. Din egen fråga står ovanför.';
+      const c = s.card;
+      if (c && c.revealed === false) {
+        return 'Titta på bilden och lås i smyg in ett par ord om vad du ser. När alla låst avtäcks orden samtidigt.';
+      }
+      const revealTip = c && c.words && Object.keys(c.words).length > 1
+        ? 'Be den vars ord ligger längst från ditt att börja berätta. '
+        : '';
+      if (d) return f.myTurn ? revealTip + 'Ni ser samma bild och har var sin egen fråga om den. Dela med varandra och skicka vidare när ni är klara.' : 'Ni ser samma bild. Din egen fråga står ovanför.';
+      return f.myTurn ? revealTip + 'Alla svarar på den gemensamma frågan, och var och en på sin egen. Skicka vidare när ni är klara.' : 'Alla svarar på bilden. Din egen fråga står ovanför.';
     }
     if (f.myTurn) {
       if (f.isReflection) return 'Gör övningen i fantasin och dela det ni vill. Tryck Tolkning när ni är nyfikna på vad det kan betyda.';
@@ -941,8 +991,23 @@
     statusTimer = setTimeout(render, everConnected ? 1500 : 0);
   });
   Net.on('error', (msg) => { toast(msg); });
-  Net.on('denied', () => {
-    toast('Ditt spelar-id används redan i det här rummet från en annan enhet.');
+  Net.on('denied', (d) => {
+    const locked = d && d.reason === 'låst';
+    if (displayMode) {
+      // TV:n: visa beskedet stort och stanna kvar (ingen spelar-toast + hem-hopp).
+      showScreen('display');
+      $('tv-turn').hidden = true; $('tv-blot').hidden = true; $('tv-qr').hidden = true;
+      $('tv-followup').textContent = ''; $('tv-followup').classList.remove('show');
+      $('tv-players').innerHTML = ''; $('tv-eyebrow').textContent = ''; $('tv-depth').textContent = '';
+      $('tv-text').textContent = locked
+        ? 'Dyket är låst av värden just nu. Be värden öppna det, så kan skärmen ansluta igen.'
+        : 'Skärmen kunde inte ansluta till dyket.';
+      fitTvText();
+      return;
+    }
+    toast(locked
+      ? 'Dyket är låst av värden just nu. Be dem öppna det, eller vänta till nästa dyk.'
+      : 'Ditt spelar-id används redan i det här rummet från en annan enhet.');
     leave();
   });
   let droppedT = 0;
@@ -1155,6 +1220,15 @@
   $('btn-tv-lobby').onclick = openTvPanel;
   $('btn-shell').onclick = saveShell;
   $('btn-buoy').onclick = () => { Net.dispatch({ type: 'buoy' }); };
+  // Bläckbildens ordfas: lås in (eller ändra) det du ser; turen/värden kan avtäcka i förtid.
+  function lockBlotWord() {
+    const w = $('blot-word-input').value.trim();
+    if (!w) { toast('Skriv först ett par ord om vad du ser.'); return; }
+    Net.dispatch({ type: 'inkblotWord', text: w });
+  }
+  $('btn-blot-lock').onclick = lockBlotWord;
+  $('blot-word-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); lockBlotWord(); $('blot-word-input').blur(); } });
+  $('btn-blot-reveal').onclick = () => Net.dispatch({ type: 'inkblotReveal' });
   $('btn-strom-accept').onclick = () => { Snd.resume(); Net.dispatch({ type: 'acceptPartner' }); };
   $('btn-strom-decline').onclick = () => { Net.dispatch({ type: 'declinePartner' }); };
   $('btn-begin-dive').onclick = () => { Snd.resume(); Net.dispatch({ type: 'beginDive' }); };
@@ -1180,6 +1254,9 @@
     $('btn-strom').hidden = s.players.filter((p) => p.connected).length < 2;          // kräver två
     const inv = $('btn-invite-game'); if (inv) inv.hidden = isLocal;                  // ingen inbjudan lokalt
     $('sheet-note').hidden = canDrive;
+    // Lås dyket: bara meningsfullt i nätläge (lokalt finns inga anslutningar att stänga ute).
+    $('btn-lock').hidden = isLocal;
+    $('btn-lock').textContent = s.locked ? '🔓 Öppna dyket för nya igen' : '🔒 Lås dyket för nya';
     updateSoundLabel();
     $('game-invite-code').textContent = s.code;
     $('sheet').classList.add('open'); $('sheet').setAttribute('aria-hidden', 'false');
@@ -1218,6 +1295,12 @@
   $('btn-silence').onclick = () => { Net.dispatch({ type: 'silence' }); closeSheet(); };
   $('btn-postcard').onclick = savePostcard;
   $('btn-closing').onclick = () => { Net.dispatch({ type: 'closing' }); closeSheet(); };
+  $('btn-lock').onclick = () => {
+    const s = state(); const on = !(s && s.locked);
+    Net.dispatch({ type: 'setLock', on });
+    closeSheet();
+    toast(on ? 'Dyket är låst. Inga nya kan ansluta, men alla som är med kan återansluta.' : 'Dyket är öppet för nya igen.');
+  };
   $('btn-pass').onclick = () => { Net.dispatch({ type: 'passTurn' }); closeSheet(); };
   $('btn-pass-back').onclick = () => { Net.dispatch({ type: 'turnBack' }); closeSheet(); };
   $('btn-finish').onclick = () => { Net.dispatch({ type: 'finish' }); closeSheet(); };
