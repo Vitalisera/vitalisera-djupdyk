@@ -155,8 +155,12 @@
 
     _scheduleRetry() {
       if (!this._alive || this._retryTimer) return;
-      this._clientRetry = Math.min(this._clientRetry + 1, 8);
-      const delay = Math.min(700 * Math.pow(1.4, this._clientRetry), 6000);
+      // Dold flik: ingen retry alls (kvarglömda flikar stod annars och tickade mot
+      // servern dygnet runt). poke() på visibilitychange/online återansluter direkt.
+      if (typeof document !== 'undefined' && document.hidden) return;
+      this._clientRetry = Math.min(this._clientRetry + 1, 12);
+      // Snabb i början (spelkänslan), backar av mot 30 s för långlivade avbrott.
+      const delay = Math.min(700 * Math.pow(1.4, this._clientRetry), 30000);
       this._retryTimer = setTimeout(() => { this._retryTimer = null; if (this._alive) this._connect(false); }, delay);
     },
 
@@ -248,13 +252,20 @@
       try { ws = new WebSocket(WS_BASE + '/room/' + encodeURIComponent(this._mirrorCode) + '?mirror=1'); }
       catch (_) { this._mirrorRetry(); return; }
       this._mirrorWs = ws;
-      ws.onopen = () => { this._emit('mirror', { phase: 'on', code: this._mirrorCode }); this._mirrorSend(); };
+      ws.onopen = () => { this._mirrorRetryN = 0; this._emit('mirror', { phase: 'on', code: this._mirrorCode }); this._mirrorSend(); };
       ws.onclose = () => { if (this._mirrorAlive) { this._emit('mirror', { phase: 'connecting', code: this._mirrorCode }); this._mirrorRetry(); } };
       ws.onerror = () => {};
     },
     _mirrorRetry() {
       if (!this._mirrorAlive || this._mirrorTimer) return;
-      this._mirrorTimer = setTimeout(() => { this._mirrorTimer = null; if (this._mirrorAlive) this._mirrorConnect(); }, 1500);
+      // Exponentiell backoff med högt tak + paus när fliken är dold. En kvarglömd
+      // telefon med bruten spegling (och wake lock) hamrade annars servern var 1,5:e
+      // sekund dygnet runt: ~57 000 anrop/dygn, nog för att äta hela Free-dagskvoten.
+      // poke() (visibilitychange) återupptar direkt när skärmen är framme igen.
+      if (typeof document !== 'undefined' && document.hidden) return;
+      this._mirrorRetryN = Math.min((this._mirrorRetryN || 0) + 1, 10);
+      const delay = Math.min(1500 * Math.pow(1.6, this._mirrorRetryN), 60000);
+      this._mirrorTimer = setTimeout(() => { this._mirrorTimer = null; if (this._mirrorAlive) this._mirrorConnect(); }, delay);
     },
     _mirrorSend() {
       const ws = this._mirrorWs;
