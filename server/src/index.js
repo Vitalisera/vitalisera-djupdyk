@@ -138,7 +138,20 @@ export class Room {
     const sec = (url.searchParams.get('s') || '').slice(0, 64);
     const known = this.secrets[playerId];
     if (known && known !== sec) {
-      // Fel hemlighet: acceptera kort (ej hibernation-poolen), säg nej, stäng.
+      if (!sec) {
+        // LEGACY-klient (kod från före hemlighets-stödet): den förstår inte 'denied'
+        // och en stängd socket ger evig 6-sekunders-retry — en handfull kvarglömda
+        // enheter åt upp hela Free-dagskvoten så (uppmätt: 5 400 anrop/h, konstant).
+        // PARKERA i stället: acceptera i hibernation-poolen utan spelarkoppling och
+        // STÄNG INTE. Enheten tror den är ansluten, tystnar, och får ingenting
+        // (ingen playerId-tagg → broadcast/spel/summary ser den aldrig).
+        const pk = new WebSocketPair();
+        this.ctx.acceptWebSocket(pk[1], ['parked']);
+        pk[1].serializeAttachment({ parked: true });
+        try { pk[1].send(JSON.stringify({ type: 'denied', reason: 'identitet' })); } catch (_) {}
+        return new Response(null, { status: 101, webSocket: pk[0] });
+      }
+      // Ny klient med FEL hemlighet (riktig konflikt): säg nej och stäng — den hanterar det.
       const dp = new WebSocketPair();
       dp[1].accept();
       try { dp[1].send(JSON.stringify({ type: 'denied', reason: 'identitet' })); dp[1].close(4403, 'denied'); } catch (_) {}
@@ -208,6 +221,7 @@ export class Room {
     try { msg = JSON.parse(raw); } catch (_) { return; }
     if (!msg || typeof msg !== 'object') return;
     const att = ws.deserializeAttachment() || {};
+    if (att.parked) return;    // parkerad legacy-socket: overifierad, får aldrig agera
     if (att.display) return;   // en TV-display är passiv, den styr aldrig spelet
     if (att.mirror) {
       // Telefonen (Runt bordet) speglar sin lokala state hit → vidarebefordra till TV:n.
@@ -263,7 +277,12 @@ export class Room {
   // TTL: ett dygn efter senaste anslutning. Är någon kvar → skjut fram; annars glöm
   // rummet helt (spelstat, hemligheter och IP/geo/UTM-metadata städas ur lagringen).
   async alarm() {
-    const anyOnline = this.ctx.getWebSockets().some((s) => s.readyState === WebSocket.OPEN);
+    // Bara riktiga spelare (playerId) skjuter upp städningen. Parkerade legacy-sockets
+    // och kvarglömda displayer ska inte hålla ett dött rum vid liv i evighet.
+    const anyOnline = this.ctx.getWebSockets().some((s) => {
+      const a = s.deserializeAttachment() || {};
+      return s.readyState === WebSocket.OPEN && a.playerId;
+    });
     if (anyOnline) { try { await this.ctx.storage.setAlarm(Date.now() + 24 * 3600 * 1000); } catch (_) {} return; }
     try { await this.report(false, true, 0); } catch (_) {}
     try { await this.ctx.storage.deleteAll(); } catch (_) {}
@@ -311,6 +330,9 @@ export class Room {
   broadcast() {
     const payload = JSON.stringify({ type: 'state', state: this.game });
     for (const ws of this.ctx.getWebSockets()) {
+      // Parkerade legacy-sockets är overifierade: de får ALDRIG spelstate.
+      const a = ws.deserializeAttachment() || {};
+      if (a.parked) continue;
       try { ws.send(payload); } catch (_) {}
     }
   }
