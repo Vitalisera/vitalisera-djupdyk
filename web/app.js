@@ -186,17 +186,22 @@
     const fu = $('tv-followup');
     if (!stage || !card || !text) return;
     const vw = window.innerWidth, vh = window.innerHeight;
-    // Kapa scenens höjd till det VERKLIGT synliga (visualViewport). På iOS refererar layoutens
-    // vh/dvh ibland till adressfält-dolt-läget medan mindre faktiskt syns; utan kap centreras
-    // kortet i en för hög scen och halva hamnar bakom adressfältet (telefon-i-liggande som TV).
+    // Kapa hela TV-omslaget till den VERKLIGT synliga höjden (visualViewport) så flex-layouten
+    // fördelar rätt: scenen får resten medan footern (turindikator + fotnot) behåller sin plats.
+    // På iOS refererar vh/dvh annars till adressfält-DOLT-läget medan mindre faktiskt syns → utan
+    // kap växer kortet ner bakom adressfältet/footern (telefon-i-liggande som TV-skärm).
     const vvH = (window.visualViewport && window.visualViewport.height) || vh;
-    const stageTop = stage.getBoundingClientRect().top;
-    stage.style.maxHeight = Math.max(0, vvH - stageTop) + 'px';
+    const wrap = document.querySelector('.tv-wrap');
+    if (wrap) {
+      // max-height, inte height: .tv-wrap är flex:1 (grow) och skulle strunta i en explicit height.
+      const wrapTop = wrap.getBoundingClientRect().top;
+      wrap.style.maxHeight = Math.max(0, vvH - wrapTop) + 'px';
+    }
     let size = Math.max(20, Math.min(vw * 0.052, vh * 0.12));   // generös startstorlek
     const apply = (px) => { text.style.fontSize = px + 'px'; if (fu) fu.style.fontSize = (px * 0.62) + 'px'; };
     apply(size);
-    // Krymp texten (och följdfrågan proportionellt) tills hela kortet får plats på höjden.
-    // Scenen är nu kapad till synligt område, så inget får rinna ut. Konvergerar, golv 16px.
+    // Krymp texten (och följdfrågan proportionellt) tills hela kortet får plats i scenen.
+    // Omslaget är nu kapat till synligt område, så inget får rinna ut. Konvergerar, golv 16px.
     for (let i = 0; i < 20; i++) {
       const avail = stage.clientHeight - 12;
       const need = card.scrollHeight;
