@@ -175,7 +175,7 @@
 
   // ---- Display-vy ("Visa på TV"): passiv, stor, ingen styrning ------------
   // En TV/laptop som bara speglar rummets state. Styrs av en fjärr-telefon.
-  function renderDisplay(s) { paintDisplay(s); fitTvText(); }
+  function renderDisplay(s) { paintDisplay(s); fitTvText(); requestAnimationFrame(() => { if (displayMode) fitTvText(); }); }
 
   // Skala kortets text så hela kortet får plats på höjden (TV:n kan inte skrolla),
   // och så att den stora ytan på en bred skärm faktiskt används. Mäter och krymper.
@@ -186,17 +186,23 @@
     const fu = $('tv-followup');
     if (!stage || !card || !text) return;
     const vw = window.innerWidth, vh = window.innerHeight;
+    // Kapa scenens höjd till det VERKLIGT synliga (visualViewport). På iOS refererar layoutens
+    // vh/dvh ibland till adressfält-dolt-läget medan mindre faktiskt syns; utan kap centreras
+    // kortet i en för hög scen och halva hamnar bakom adressfältet (telefon-i-liggande som TV).
+    const vvH = (window.visualViewport && window.visualViewport.height) || vh;
+    const stageTop = stage.getBoundingClientRect().top;
+    stage.style.maxHeight = Math.max(0, vvH - stageTop) + 'px';
     let size = Math.max(20, Math.min(vw * 0.052, vh * 0.12));   // generös startstorlek
     const apply = (px) => { text.style.fontSize = px + 'px'; if (fu) fu.style.fontSize = (px * 0.62) + 'px'; };
     apply(size);
-    // Krymp texten (och följdfrågan proportionellt) tills hela kortet får plats på
-    // höjden. TV:n kan inte skrolla, så inget får rinna ut. Konvergerar, golv 18px.
-    for (let i = 0; i < 18; i++) {
+    // Krymp texten (och följdfrågan proportionellt) tills hela kortet får plats på höjden.
+    // Scenen är nu kapad till synligt område, så inget får rinna ut. Konvergerar, golv 16px.
+    for (let i = 0; i < 20; i++) {
       const avail = stage.clientHeight - 12;
       const need = card.scrollHeight;
       if (!(avail > 0) || !(need > 0)) break;   // under övergång kan höjden vara 0 → undvik NaN
-      if (need <= avail || size <= 18) break;
-      size = Math.max(18, size * Math.max(0.8, Math.sqrt(avail / need)));
+      if (need <= avail || size <= 16) break;
+      size = Math.max(16, size * Math.max(0.8, Math.sqrt(avail / need)));
       apply(size);
     }
   }
@@ -1018,6 +1024,18 @@
   document.addEventListener('visibilitychange', () => { if (!document.hidden && Net.poke) Net.poke(); });
   window.addEventListener('online', () => { if (Net.poke) Net.poke(); });
   window.addEventListener('resize', () => { if (displayMode) fitTvText(); });
+  // iOS: adressfältet som tonar in/ut ändrar den synliga höjden UTAN ett tillförlitligt
+  // resize-event. visualViewport fångar det → passa om texten så den aldrig klipps.
+  if (window.visualViewport) {
+    const vvRefit = () => { if (displayMode) fitTvText(); };
+    window.visualViewport.addEventListener('resize', vvRefit);
+    window.visualViewport.addEventListener('scroll', vvRefit);
+  }
+  // Fraunces kan ladda EFTER första mätningen (mätning mot fallback-fonten blir för liten
+  // → texten växer och överflödar). Passa om varje gång ett typsnitt laddats klart.
+  if (document.fonts && document.fonts.addEventListener) {
+    document.fonts.addEventListener('loadingdone', () => { if (displayMode) fitTvText(); });
+  }
 
   function persistEntry() {
     try { localStorage.setItem('vd_last', JSON.stringify({ role: Net.role, code: Net.code })); } catch (_) {}
