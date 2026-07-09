@@ -1495,5 +1495,75 @@
     maybeShowIntro();
   }
 
+  // ---- In-app-browser (Facebook/Instagram m.fl.): guida ut till riktig webbläsare ----
+  // Delade länkar öppnas ofta i appens egen webbläsare, där PWA:n inte kan installeras
+  // och en del funktioner strular. Vi kan inte tvinga ut länken, men vi upptäcker läget
+  // och visar en banner: instruktion (⋯ → Öppna i webbläsare) + på Android en intent-knapp
+  // som hoppar direkt till Chrome. Körs FÖRE boot() så ?join= finns kvar i intent-länken.
+  // Hela blocket är try/catch:at: en in-app-browser-detektering får ALDRIG kunna sänka boot().
+  (function inAppBrowser() {
+    try {
+      const banner = $('iab-banner');
+      const textEl = $('iab-text');
+      if (!banner || !textEl) return;
+      const p = new URLSearchParams(location.search);
+      if (p.get('visa') || p.get('tv') !== null || p.get('print')) return; // TV/visa/utskrift: inte relevant
+      const standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)
+        || window.navigator.standalone === true;
+      if (standalone) return; // installerad PWA kan aldrig vara en in-app-browser
+      let dismissed = false;
+      try { dismissed = sessionStorage.getItem('vd_iab_dismissed') === '1'; } catch (_) {}
+      if (dismissed) return;
+
+      const ua = navigator.userAgent || '';
+      // Ordning: Instagram/Messenger före Facebook (deras UA innehåller också FBAN-tokens).
+      const apps = [
+        { re: /Instagram/i, name: 'Instagram' },
+        { re: /Messenger|MessengerForiOS|Orca/i, name: 'Messenger' },
+        { re: /FBAN|FBAV|FB_IAB|FBIOS/i, name: 'Facebook' },
+        { re: /\bLine\//i, name: 'Line' },
+        { re: /Snapchat/i, name: 'Snapchat' },
+        { re: /TikTok|musical_ly|BytedanceWebview/i, name: 'TikTok' },
+        { re: /LinkedInApp/i, name: 'LinkedIn' },
+        { re: /Twitter|TwitterAndroid/i, name: 'X' },
+        { re: /MicroMessenger/i, name: 'WeChat' },
+      ];
+      const hit = apps.find((a) => a.re.test(ua));
+      if (!hit) return; // vanlig webbläsare: ingen banner
+
+      // Undvik possessiv (blir konstigt för Line/X m.fl.): "webbläsaren i <app>".
+      const lead = '<b>Du är i den inbyggda webbläsaren i ' + hit.name + '.</b> ';
+      const openBtn = $('iab-open');
+
+      if (/android/i.test(ua) && openBtn) {
+        // intent:// hoppar ut till Chrome, med fallback om Chrome saknas.
+        // Escapa #, ; och % i URI-delen (host är redan validerad av URL) så att inget
+        // användarstyrt i sökvägen/frågan kan tolkas som intent-syntax och byta paket/scheme.
+        const u = new URL(location.href);
+        const safe = (u.pathname + u.search).replace(/[#;%]/g, (c) => '%' + c.charCodeAt(0).toString(16).toUpperCase());
+        const fallback = encodeURIComponent(location.href);
+        openBtn.href = 'intent://' + u.host + safe
+          + '#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=' + fallback + ';end';
+        openBtn.hidden = false;
+        textEl.innerHTML = lead + 'Öppna djupdyk i Chrome för att kunna installera appen och få full funktion.';
+      } else {
+        textEl.innerHTML = lead + 'Öppna i Safari för full funktion: tryck på <b>•••</b> och välj <b>Öppna i webbläsare</b>.';
+      }
+
+      const app = $('app');
+      const close = $('iab-close');
+      if (close) close.onclick = () => {
+        banner.hidden = true;
+        document.body.classList.remove('iab-open');
+        if (app) app.style.paddingTop = '';
+        try { sessionStorage.setItem('vd_iab_dismissed', '1'); } catch (_) {}
+      };
+      banner.hidden = false;
+      document.body.classList.add('iab-open');
+      // Dynamisk topp-padding: bannerns höjd varierar med radbrytning + safe-area (notch).
+      if (app) app.style.paddingTop = banner.offsetHeight + 'px';
+    } catch (_) { /* får aldrig blockera boot() */ }
+  })();
+
   boot();
 })();

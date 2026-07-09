@@ -1177,10 +1177,53 @@ body.display-mode #app { max-width: none; }
 .video-panel { max-width: 480px; text-align: center; }
 .video-player { width: 100%; aspect-ratio: 9 / 16; max-height: 66vh; border-radius: 16px; background: #000; margin: 12px auto 16px; display: block; }
 
+/* In-app-browser-banner (Facebook/Instagram m.fl.): guidar ut till riktig webbläsare. */
+.iab-banner {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 60;
+  background: linear-gradient(180deg, rgba(8,50,63,0.97), rgba(6,34,44,0.95));
+  border-bottom: 1px solid rgba(111,190,203,0.35);
+  box-shadow: 0 6px 22px rgba(0,0,0,0.35);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  padding: calc(env(safe-area-inset-top, 0px) + 9px) 12px 9px;
+  animation: iab-in 0.35s ease both;
+}
+@keyframes iab-in { from { transform: translateY(-100%); opacity: 0; } to { transform: none; opacity: 1; } }
+.iab-inner { max-width: 640px; margin: 0 auto; display: flex; align-items: center; gap: 10px; }
+.iab-ico { font-size: 1.15rem; flex: 0 0 auto; line-height: 1; }
+.iab-text { flex: 1; margin: 0; color: var(--ink); font-size: 0.82rem; line-height: 1.35; }
+.iab-text b { color: var(--depth-text, #bfe4ea); font-weight: 600; }
+.iab-btn {
+  flex: 0 0 auto; display: inline-flex; align-items: center; text-decoration: none;
+  background: var(--accent); color: var(--accent-ink);
+  font: inherit; font-size: 0.82rem; font-weight: 600;
+  padding: 8px 13px; border-radius: 11px; white-space: nowrap;
+}
+.iab-btn:hover, .iab-btn:focus-visible { filter: brightness(1.06); }
+.iab-x {
+  flex: 0 0 auto; width: 30px; height: 30px; border-radius: 9px;
+  border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.06);
+  color: var(--ink-soft); font-size: 0.9rem; line-height: 1; cursor: pointer;
+}
+.iab-x:hover, .iab-x:focus-visible { background: rgba(255,255,255,0.12); color: var(--ink); }
+body.iab-open #app { padding-top: 62px; }
+@media (max-width: 380px) { .iab-text { font-size: 0.76rem; } .iab-btn { padding: 7px 10px; } }
+
 </style>
 </head>
 <body>
   <canvas id="ocean" aria-hidden="true"></canvas>
+
+  <!-- Banner när appen körs i en apps inbyggda webbläsare (Facebook, Instagram m.fl.).
+       Där går PWA:n inte att installera och en del funktioner strular. Texten och
+       ev. Android-knapp sätts i app.js beroende på app och plattform. -->
+  <div id="iab-banner" class="iab-banner" hidden role="region" aria-label="Öppna i din webbläsare">
+    <div class="iab-inner">
+      <span class="iab-ico" aria-hidden="true">🌊</span>
+      <p class="iab-text" id="iab-text"></p>
+      <a id="iab-open" class="iab-btn" hidden rel="noopener">Öppna i Chrome</a>
+      <button id="iab-close" class="iab-x" type="button" aria-label="Stäng">✕</button>
+    </div>
+  </div>
 
   <div id="app">
 
@@ -1573,7 +1616,7 @@ body.display-mode #app { max-width: none; }
       </div>
       <button id="btn-close-sheet" class="btn btn-primary full">Klar</button>
       <a class="site-link" href="https://vitalisera.se" target="_blank" rel="noopener">Mer från Vitalisera · vitalisera.se ↗</a>
-      <div style="text-align:center;font-size:0.68rem;color:var(--ink-dim);opacity:0.65;margin-top:6px;letter-spacing:0.04em;">version 2026-07-09 15:17</div>
+      <div style="text-align:center;font-size:0.68rem;color:var(--ink-dim);opacity:0.65;margin-top:6px;letter-spacing:0.04em;">version 2026-07-09 15:41</div>
     </div>
   </div>
 
@@ -1630,6 +1673,7 @@ body.display-mode #app { max-width: none; }
           <li>En skapar ett dyk och delar <b>rumskoden</b> eller länken. De andra går med, i samma rum eller på distans.</li>
           <li>Välj <b>startdjup</b> och tryck Starta. Alla ser samma kort samtidigt.</li>
           <li>Ni kan också dela <b>en telefon</b> (Runt bordet) eller visa kortet stort på en <b>TV</b>. Mer i handboken.</li>
+          <li>Öppnas länken inuti <b>Facebook</b> eller <b>Instagram</b>? En banner visar hur du öppnar djupdyk i din vanliga webbläsare, där allt fungerar fullt ut.</li>
         </ul>
       </section>
 
@@ -1690,6 +1734,7 @@ body.display-mode #app { max-width: none; }
       <section class="manual-section">
         <h3 class="intro-h"><span class="intro-n">2</span> Kom igång</h3>
         <p class="intro-p">En av er skapar ett dyk och får en fyrteckens <b>rumskod</b> och en länk. Dela koden eller länken med de andra. De skriver in koden, eller öppnar länken och hamnar direkt i ert rum.</p>
+        <p class="intro-p"><b>Öppnas länken inuti Facebook, Instagram eller Messenger?</b> Deras inbyggda webbläsare kan inte lägga djupdyk på hemskärmen och en del funktioner fungerar sämre. En banner högst upp visar då hur du öppnar spelet i din vanliga webbläsare (Safari eller Chrome), på Android med ett enda tryck. Vi rekommenderar det.</p>
         <p class="intro-p">Ni kan sitta i <b>samma rum</b> eller vara <b>på distans</b>, det fungerar lika bra. Välj startdjup och tryck Starta. Sedan ser alla samma kort samtidigt.</p>
         <p class="intro-p">Det finns tre sätt att spela: <b>var och en på sin telefon</b>, <b>Runt bordet</b> på en enda telefon som ni turas om att hålla, eller <b>Visa på TV</b> där kortet syns stort på en TV eller dator medan en telefon styr. De två sista beskrivs längre ner.</p>
       </section>
@@ -6070,6 +6115,76 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
     showScreen('home');
     maybeShowIntro();
   }
+
+  // ---- In-app-browser (Facebook/Instagram m.fl.): guida ut till riktig webbläsare ----
+  // Delade länkar öppnas ofta i appens egen webbläsare, där PWA:n inte kan installeras
+  // och en del funktioner strular. Vi kan inte tvinga ut länken, men vi upptäcker läget
+  // och visar en banner: instruktion (⋯ → Öppna i webbläsare) + på Android en intent-knapp
+  // som hoppar direkt till Chrome. Körs FÖRE boot() så ?join= finns kvar i intent-länken.
+  // Hela blocket är try/catch:at: en in-app-browser-detektering får ALDRIG kunna sänka boot().
+  (function inAppBrowser() {
+    try {
+      const banner = $('iab-banner');
+      const textEl = $('iab-text');
+      if (!banner || !textEl) return;
+      const p = new URLSearchParams(location.search);
+      if (p.get('visa') || p.get('tv') !== null || p.get('print')) return; // TV/visa/utskrift: inte relevant
+      const standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)
+        || window.navigator.standalone === true;
+      if (standalone) return; // installerad PWA kan aldrig vara en in-app-browser
+      let dismissed = false;
+      try { dismissed = sessionStorage.getItem('vd_iab_dismissed') === '1'; } catch (_) {}
+      if (dismissed) return;
+
+      const ua = navigator.userAgent || '';
+      // Ordning: Instagram/Messenger före Facebook (deras UA innehåller också FBAN-tokens).
+      const apps = [
+        { re: /Instagram/i, name: 'Instagram' },
+        { re: /Messenger|MessengerForiOS|Orca/i, name: 'Messenger' },
+        { re: /FBAN|FBAV|FB_IAB|FBIOS/i, name: 'Facebook' },
+        { re: /\bLine\//i, name: 'Line' },
+        { re: /Snapchat/i, name: 'Snapchat' },
+        { re: /TikTok|musical_ly|BytedanceWebview/i, name: 'TikTok' },
+        { re: /LinkedInApp/i, name: 'LinkedIn' },
+        { re: /Twitter|TwitterAndroid/i, name: 'X' },
+        { re: /MicroMessenger/i, name: 'WeChat' },
+      ];
+      const hit = apps.find((a) => a.re.test(ua));
+      if (!hit) return; // vanlig webbläsare: ingen banner
+
+      // Undvik possessiv (blir konstigt för Line/X m.fl.): "webbläsaren i <app>".
+      const lead = '<b>Du är i den inbyggda webbläsaren i ' + hit.name + '.</b> ';
+      const openBtn = $('iab-open');
+
+      if (/android/i.test(ua) && openBtn) {
+        // intent:// hoppar ut till Chrome, med fallback om Chrome saknas.
+        // Escapa #, ; och % i URI-delen (host är redan validerad av URL) så att inget
+        // användarstyrt i sökvägen/frågan kan tolkas som intent-syntax och byta paket/scheme.
+        const u = new URL(location.href);
+        const safe = (u.pathname + u.search).replace(/[#;%]/g, (c) => '%' + c.charCodeAt(0).toString(16).toUpperCase());
+        const fallback = encodeURIComponent(location.href);
+        openBtn.href = 'intent://' + u.host + safe
+          + '#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=' + fallback + ';end';
+        openBtn.hidden = false;
+        textEl.innerHTML = lead + 'Öppna djupdyk i Chrome för att kunna installera appen och få full funktion.';
+      } else {
+        textEl.innerHTML = lead + 'Öppna i Safari för full funktion: tryck på <b>•••</b> och välj <b>Öppna i webbläsare</b>.';
+      }
+
+      const app = $('app');
+      const close = $('iab-close');
+      if (close) close.onclick = () => {
+        banner.hidden = true;
+        document.body.classList.remove('iab-open');
+        if (app) app.style.paddingTop = '';
+        try { sessionStorage.setItem('vd_iab_dismissed', '1'); } catch (_) {}
+      };
+      banner.hidden = false;
+      document.body.classList.add('iab-open');
+      // Dynamisk topp-padding: bannerns höjd varierar med radbrytning + safe-area (notch).
+      if (app) app.style.paddingTop = banner.offsetHeight + 'px';
+    } catch (_) { /* får aldrig blockera boot() */ }
+  })();
 
   boot();
 })();

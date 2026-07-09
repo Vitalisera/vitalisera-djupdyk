@@ -34,6 +34,18 @@
 <body>
   <canvas id="ocean" aria-hidden="true"></canvas>
 
+  <!-- Banner när appen körs i en apps inbyggda webbläsare (Facebook, Instagram m.fl.).
+       Där går PWA:n inte att installera och en del funktioner strular. Texten och
+       ev. Android-knapp sätts i app.js beroende på app och plattform. -->
+  <div id="iab-banner" class="iab-banner" hidden role="region" aria-label="Öppna i din webbläsare">
+    <div class="iab-inner">
+      <span class="iab-ico" aria-hidden="true">🌊</span>
+      <p class="iab-text" id="iab-text"></p>
+      <a id="iab-open" class="iab-btn" hidden rel="noopener">Öppna i Chrome</a>
+      <button id="iab-close" class="iab-x" type="button" aria-label="Stäng">✕</button>
+    </div>
+  </div>
+
   <div id="app">
 
     <!-- ============ START ============ -->
@@ -482,6 +494,7 @@
           <li>En skapar ett dyk och delar <b>rumskoden</b> eller länken. De andra går med, i samma rum eller på distans.</li>
           <li>Välj <b>startdjup</b> och tryck Starta. Alla ser samma kort samtidigt.</li>
           <li>Ni kan också dela <b>en telefon</b> (Runt bordet) eller visa kortet stort på en <b>TV</b>. Mer i handboken.</li>
+          <li>Öppnas länken inuti <b>Facebook</b> eller <b>Instagram</b>? En banner visar hur du öppnar djupdyk i din vanliga webbläsare, där allt fungerar fullt ut.</li>
         </ul>
       </section>
 
@@ -542,6 +555,7 @@
       <section class="manual-section">
         <h3 class="intro-h"><span class="intro-n">2</span> Kom igång</h3>
         <p class="intro-p">En av er skapar ett dyk och får en fyrteckens <b>rumskod</b> och en länk. Dela koden eller länken med de andra. De skriver in koden, eller öppnar länken och hamnar direkt i ert rum.</p>
+        <p class="intro-p"><b>Öppnas länken inuti Facebook, Instagram eller Messenger?</b> Deras inbyggda webbläsare kan inte lägga djupdyk på hemskärmen och en del funktioner fungerar sämre. En banner högst upp visar då hur du öppnar spelet i din vanliga webbläsare (Safari eller Chrome), på Android med ett enda tryck. Vi rekommenderar det.</p>
         <p class="intro-p">Ni kan sitta i <b>samma rum</b> eller vara <b>på distans</b>, det fungerar lika bra. Välj startdjup och tryck Starta. Sedan ser alla samma kort samtidigt.</p>
         <p class="intro-p">Det finns tre sätt att spela: <b>var och en på sin telefon</b>, <b>Runt bordet</b> på en enda telefon som ni turas om att hålla, eller <b>Visa på TV</b> där kortet syns stort på en TV eller dator medan en telefon styr. De två sista beskrivs längre ner.</p>
       </section>
