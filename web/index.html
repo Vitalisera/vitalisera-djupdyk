@@ -736,11 +736,11 @@
           <input id="fb-name" type="text" maxlength="80" placeholder="Om vi får återkomma till dig" autocomplete="name"></label>
 
         <p class="fb-privacy">Vi skickar med lite anonym kontext om din session (läge, längd, vilka kort ni sett) så vi förstår svaret bättre. Inga namn på dina medspelare, ingen chatt, inget av det ni delade i samtalet.</p>
-        <p class="fb-error" id="fb-error" hidden></p>
+        <p class="fb-error" id="fb-error" role="alert" hidden></p>
         <button id="btn-fb-send" class="btn btn-primary full">Skicka</button>
         <button id="btn-fb-close" class="btn btn-glass full">Inte nu</button>
       </div>
-      <div id="fb-done" class="fb-done" hidden>
+      <div id="fb-done" class="fb-done" role="status" hidden>
         <div class="fb-done-mark" aria-hidden="true">🌊</div>
         <h3 class="sheet-title">Tack, det betyder mycket</h3>
         <p class="sheet-note">Din feedback är på väg till oss. Den hjälper djupdyk att bli lite bättre för nästa grupp som dyker.</p>

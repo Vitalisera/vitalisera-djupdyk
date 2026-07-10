@@ -1235,6 +1235,9 @@ body.iab-open #app { padding-top: 62px; }
 /* Panelen fokuseras programmatiskt vid öppning (a11y) — ingen synlig ram. */
 .sheet-panel:focus { outline: none; }
 
+/* Respektera minskad rörelse: stäng av tack-markörens animation. */
+@media (prefers-reduced-motion: reduce) { .fb-done-mark { animation: none; } }
+
 </style>
 </head>
 <body>
@@ -1645,7 +1648,7 @@ body.iab-open #app { padding-top: 62px; }
       </div>
       <button id="btn-close-sheet" class="btn btn-primary full">Klar</button>
       <a class="site-link" href="https://vitalisera.se" target="_blank" rel="noopener">Mer från Vitalisera · vitalisera.se ↗</a>
-      <div id="app-version" style="text-align:center;font-size:0.68rem;color:var(--ink-dim);opacity:0.65;margin-top:6px;letter-spacing:0.04em;">version 2026-07-10 15:13</div>
+      <div id="app-version" style="text-align:center;font-size:0.68rem;color:var(--ink-dim);opacity:0.65;margin-top:6px;letter-spacing:0.04em;">version 2026-07-10 15:20</div>
     </div>
   </div>
 
@@ -1942,11 +1945,11 @@ body.iab-open #app { padding-top: 62px; }
           <input id="fb-name" type="text" maxlength="80" placeholder="Om vi får återkomma till dig" autocomplete="name"></label>
 
         <p class="fb-privacy">Vi skickar med lite anonym kontext om din session (läge, längd, vilka kort ni sett) så vi förstår svaret bättre. Inga namn på dina medspelare, ingen chatt, inget av det ni delade i samtalet.</p>
-        <p class="fb-error" id="fb-error" hidden></p>
+        <p class="fb-error" id="fb-error" role="alert" hidden></p>
         <button id="btn-fb-send" class="btn btn-primary full">Skicka</button>
         <button id="btn-fb-close" class="btn btn-glass full">Inte nu</button>
       </div>
-      <div id="fb-done" class="fb-done" hidden>
+      <div id="fb-done" class="fb-done" role="status" hidden>
         <div class="fb-done-mark" aria-hidden="true">🌊</div>
         <h3 class="sheet-title">Tack, det betyder mycket</h3>
         <p class="sheet-note">Din feedback är på väg till oss. Den hjälper djupdyk att bli lite bättre för nästa grupp som dyker.</p>
@@ -6174,7 +6177,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
 
     function appVersion() {
       const el = $('app-version'); const t = ((el && el.textContent) || '').replace(/^\s*version\s*/i, '').trim();
-      return t && !/2026-07-10 15:13/.test(t) ? t : '';
+      return t && !/2026-07-10 15:20/.test(t) ? t : '';
     }
     function platform() {
       const ua = navigator.userAgent || '';
@@ -6216,7 +6219,16 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
     function showForm() { form.hidden = false; done.hidden = true; sendBtn.disabled = false; sendBtn.textContent = 'Skicka'; }
     function reset() { rating = 0; paintDots(); $('fb-best').value = ''; $('fb-worse').value = ''; $('fb-change').value = ''; $('fb-name').value = ''; err.hidden = true; showForm(); }
     let lastFocus = null;
-    const onKey = (e) => { if (e.key === 'Escape') close(); };
+    const onKey = (e) => {
+      if (e.key === 'Escape') { close(); return; }
+      if (e.key !== 'Tab') return;
+      // Fokus-fälla: Tab cyklar inuti dialogen, hoppar aldrig ut till bakgrunden.
+      const f = Array.from(sheet.querySelectorAll('a[href],button:not([disabled]),textarea,input,[tabindex]:not([tabindex="-1"])')).filter((el) => el.offsetParent !== null);
+      if (!f.length) return;
+      const first = f[0], last = f[f.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    };
     function open() {
       reset();
       lastFocus = document.activeElement;
@@ -6249,8 +6261,8 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
       }
       err.hidden = true; sendBtn.disabled = true; sendBtn.textContent = 'Skickar …';
       Net.feedback(payload)
-        .then(() => { form.hidden = true; done.hidden = false; })
-        .catch(() => { sendBtn.disabled = false; sendBtn.textContent = 'Skicka'; err.textContent = 'Kunde inte skicka just nu. Kolla nätet och försök igen.'; err.hidden = false; });
+        .then(() => { form.hidden = true; done.hidden = false; const cb = $('btn-fb-close2'); if (cb) { try { cb.focus(); } catch (_) {} } })
+        .catch(() => { sendBtn.disabled = false; sendBtn.textContent = 'Skicka'; err.textContent = 'Kunde inte skicka just nu. Kolla nätet och försök igen.'; err.hidden = false; try { err.focus(); } catch (_) {} });
     };
 
     const openBtn = $('btn-feedback-game'); if (openBtn) openBtn.onclick = () => { closeSheet(); open(); };

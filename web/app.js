@@ -1515,7 +1515,16 @@
     function showForm() { form.hidden = false; done.hidden = true; sendBtn.disabled = false; sendBtn.textContent = 'Skicka'; }
     function reset() { rating = 0; paintDots(); $('fb-best').value = ''; $('fb-worse').value = ''; $('fb-change').value = ''; $('fb-name').value = ''; err.hidden = true; showForm(); }
     let lastFocus = null;
-    const onKey = (e) => { if (e.key === 'Escape') close(); };
+    const onKey = (e) => {
+      if (e.key === 'Escape') { close(); return; }
+      if (e.key !== 'Tab') return;
+      // Fokus-fälla: Tab cyklar inuti dialogen, hoppar aldrig ut till bakgrunden.
+      const f = Array.from(sheet.querySelectorAll('a[href],button:not([disabled]),textarea,input,[tabindex]:not([tabindex="-1"])')).filter((el) => el.offsetParent !== null);
+      if (!f.length) return;
+      const first = f[0], last = f[f.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    };
     function open() {
       reset();
       lastFocus = document.activeElement;
@@ -1548,8 +1557,8 @@
       }
       err.hidden = true; sendBtn.disabled = true; sendBtn.textContent = 'Skickar …';
       Net.feedback(payload)
-        .then(() => { form.hidden = true; done.hidden = false; })
-        .catch(() => { sendBtn.disabled = false; sendBtn.textContent = 'Skicka'; err.textContent = 'Kunde inte skicka just nu. Kolla nätet och försök igen.'; err.hidden = false; });
+        .then(() => { form.hidden = true; done.hidden = false; const cb = $('btn-fb-close2'); if (cb) { try { cb.focus(); } catch (_) {} } })
+        .catch(() => { sendBtn.disabled = false; sendBtn.textContent = 'Skicka'; err.textContent = 'Kunde inte skicka just nu. Kolla nätet och försök igen.'; err.hidden = false; try { err.focus(); } catch (_) {} });
     };
 
     const openBtn = $('btn-feedback-game'); if (openBtn) openBtn.onclick = () => { closeSheet(); open(); };

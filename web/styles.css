@@ -1201,3 +1201,6 @@ body.iab-open #app { padding-top: 62px; }
 
 /* Panelen fokuseras programmatiskt vid öppning (a11y) — ingen synlig ram. */
 .sheet-panel:focus { outline: none; }
+
+/* Respektera minskad rörelse: stäng av tack-markörens animation. */
+@media (prefers-reduced-motion: reduce) { .fb-done-mark { animation: none; } }
