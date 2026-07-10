@@ -1273,6 +1273,7 @@
   bindChips();
   $('btn-leave-lobby').onclick = leave;
   $('lobby-code-pill').onclick = copyCode;
+  $('lobby-code-pill').addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); copyCode(); } });
   $('btn-share').onclick = shareInvite;
   $('btn-invite').onclick = shareInvite;
 
@@ -1742,6 +1743,51 @@
       // Dynamisk topp-padding: bannerns höjd varierar med radbrytning + safe-area (notch).
       if (app) app.style.paddingTop = banner.offsetHeight + 'px';
     } catch (_) { /* får aldrig blockera boot() */ }
+  })();
+
+  // ---- Dialog-tillgänglighet: fokusfälla + Escape + fokus-retur ------------
+  // Additivt: observerar aria-hidden (som alla öppna/stäng-funktioner redan växlar),
+  // flyttar in fokus vid öppning, fällan håller Tab inuti, Escape kör dialogens egen
+  // close (så sidoeffekter bevaras), och fokus återgår dit man kom ifrån.
+  function attachDialog(el, close) {
+    if (!el || !window.MutationObserver) return;
+    let lastFocus = null;
+    document.addEventListener('keydown', (e) => {
+      if (el.getAttribute('aria-hidden') !== 'false') return;
+      if (e.key === 'Escape') { e.preventDefault(); close(); return; }
+      if (e.key !== 'Tab') return;
+      const f = Array.from(el.querySelectorAll('a[href],button:not([disabled]),textarea,input,select,[tabindex]:not([tabindex="-1"])')).filter((x) => x.offsetParent !== null);
+      if (!f.length) return;
+      const first = f[0], last = f[f.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    });
+    new MutationObserver(() => {
+      const open = el.getAttribute('aria-hidden') === 'false';
+      if (open && lastFocus === null) {
+        lastFocus = document.activeElement;
+        const panel = el.querySelector('.sheet-panel, .intro-panel') || el;
+        if (!panel.hasAttribute('tabindex')) panel.setAttribute('tabindex', '-1');
+        setTimeout(() => { try { panel.focus(); } catch (_) {} }, 40);
+      } else if (!open && lastFocus) {
+        const lf = lastFocus; lastFocus = null;
+        try { lf.focus(); } catch (_) {}
+      }
+    }).observe(el, { attributes: true, attributeFilter: ['aria-hidden'] });
+  }
+  attachDialog($('sheet'), closeSheet);
+  attachDialog($('intro'), closeIntro);
+  attachDialog($('depthpick'), closeDepthPicker);
+  attachDialog($('tvpanel'), closeTvPanel);
+
+  // Rotate-overlayn styrs av CSS-media (liggande). Synka aria-hidden så en skärmläsare
+  // får veta varför appen "försvann" när man vänt enheten.
+  (function rotateAria() {
+    const el = $('rotate'); if (!el) return;
+    const sync = () => { const shown = getComputedStyle(el).display !== 'none'; el.setAttribute('aria-hidden', shown ? 'false' : 'true'); };
+    window.addEventListener('resize', sync);
+    window.addEventListener('orientationchange', sync);
+    sync();
   })();
 
   boot();

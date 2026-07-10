@@ -1215,3 +1215,13 @@ body.iab-open #app { padding-top: 62px; }
   color: var(--ink-soft); font-size: 0.95rem; line-height: 1; cursor: pointer;
 }
 .intro-skip:hover, .intro-skip:focus-visible { background: rgba(255,255,255,0.12); color: var(--ink); }
+
+/* Synlig fokusindikator för tangentbords-/switch-navigering (WCAG 2.4.7).
+   :focus-visible → syns bara vid tangentbord, aldrig vid touch/mus. */
+.btn:focus-visible, .chip:focus-visible, .lvl:focus-visible, .icon-btn:focus-visible,
+.help-link:focus-visible, .code-pill:focus-visible, .code-mini:focus-visible,
+.sheet-card:focus-visible, .lobby-help-btn:focus-visible, .manual-link:focus-visible,
+.install-hint:focus-visible, .tvp-cast-btn:focus-visible, .fb-dot:focus-visible,
+a:focus-visible, [tabindex="0"]:focus-visible, input:focus-visible, textarea:focus-visible {
+  outline: 2px solid var(--depth, #7fe3ef); outline-offset: 2px;
+}
