@@ -21,9 +21,10 @@ if (DECK && typeof globalThis !== 'undefined' && !globalThis.DECK) globalThis.DE
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, OPTIONS',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type',
 };
+const JSON_CORS = { ...CORS, 'content-type': 'application/json; charset=utf-8' };
 
 // Rate limit per IP via Workers ratelimit-binding (JOIN_RL i wrangler.toml, delad inom
 // colo). Hotbilden är kod-gissning mot känsliga rum (32^4 kombinationer), inte data.
@@ -42,12 +43,13 @@ export default {
     if (request.method === 'OPTIONS') return new Response(null, { headers: CORS });
 
     // Användnings-dashboard på en svårgissad URL.
-    const dm = url.pathname.match(/^\/dash\/([a-zA-Z0-9]+)(\/reset)?\/?$/);
+    const dm = url.pathname.match(/^\/dash\/([a-zA-Z0-9]+)(\/reset|\/feedback-reset)?\/?$/);
     if (dm) {
       const token = env.DASH_TOKEN || '';
       if (!token || dm[1] !== token) return new Response('Not found', { status: 404 });
       const reg = env.REGISTRY.get(env.REGISTRY.idFromName('global'));
-      return reg.fetch(new Request(dm[2] ? 'https://reg/reset' : 'https://reg/view'));
+      const path = dm[2] === '/reset' ? 'https://reg/reset' : dm[2] === '/feedback-reset' ? 'https://reg/feedback-reset' : 'https://reg/view';
+      return reg.fetch(new Request(path));
     }
 
     const m = url.pathname.match(/^\/room\/([A-Za-z0-9]{1,12})\/?$/);
@@ -58,6 +60,44 @@ export default {
       const code = m[1].toUpperCase();
       const id = env.ROOM.idFromName(code);
       return env.ROOM.get(id).fetch(request);
+    }
+    // Feedback från testare: skrivs in i registret och syns i dashboarden.
+    if (url.pathname === '/feedback' && request.method === 'POST') {
+      if (await rateLimited(env, request.headers.get('cf-connecting-ip') || '')) {
+        return new Response(JSON.stringify({ ok: false, error: 'rate' }), { status: 429, headers: JSON_CORS });
+      }
+      let body = {};
+      try { body = await request.json(); } catch (_) {}
+      const clean = (v, n) => String(v == null ? '' : v).slice(0, n).trim();
+      const num = (v) => Math.max(0, Math.min(100000, Math.round(Number(v) || 0)));
+      // Metadatan whitelistas fält för fält (aldrig råa klientnycklar rakt in i lagringen).
+      const raw = (body.meta && typeof body.meta === 'object') ? body.meta : {};
+      const STR = { var: 60, lage: 40, traffas: 40, relation: 40, langd: 40, startdjup: 40, djupNu: 40, djupast: 40, spelare: 40, plats: 80, version: 40 };
+      const meta = {};
+      for (const k in STR) if (raw[k] != null && raw[k] !== '') meta[k] = clean(raw[k], STR[k]);
+      if (raw.minuter != null) meta.minuter = num(raw.minuter);
+      if (raw.kortTotalt != null) meta.kortTotalt = num(raw.kortTotalt);
+      if (Array.isArray(raw.kortVisade)) {
+        meta.kortVisade = raw.kortVisade.slice(0, 50).map((c) => ({ t: clean(c && c.t, 90), src: clean(c && c.src, 20), lvl: clean(c && c.lvl, 20) }));
+      }
+      const entry = {
+        best: clean(body.best, 2000),
+        worse: clean(body.worse, 2000),
+        change: clean(body.change, 2000),
+        rating: Math.max(0, Math.min(5, Math.round(Number(body.rating) || 0))),
+        name: clean(body.name, 80),
+        meta,
+      };
+      if (!entry.best && !entry.worse && !entry.change && !entry.name && !entry.rating) {
+        return new Response(JSON.stringify({ ok: false, error: 'tom' }), { status: 400, headers: JSON_CORS });
+      }
+      const cf = request.cf || {};
+      entry.ip = request.headers.get('cf-connecting-ip') || '';
+      entry.country = cf.country || '';
+      entry.city = cf.city || '';
+      const reg = env.REGISTRY.get(env.REGISTRY.idFromName('global'));
+      await reg.fetch(new Request('https://reg/feedback', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(entry) }));
+      return new Response(JSON.stringify({ ok: true }), { headers: JSON_CORS });
     }
     if (url.pathname === '/' || url.pathname === '/health') {
       return new Response('Vitalisera djupdyk realtidsserver är uppe.', { status: 200, headers: CORS });
@@ -385,10 +425,12 @@ export class Registry {
     this.ctx = state;
     this.rooms = {};
     this.stats = null;   // långsiktiga totaler
+    this.feedback = [];  // testarnas feedback (bevaras även vid stats-reset)
     this.ctx.blockConcurrencyWhile(async () => {
       this.rooms = (await this.ctx.storage.get('rooms')) || {};
       this.stats = (await this.ctx.storage.get('stats')) || this.freshStats();
       this.seen = (await this.ctx.storage.get('seen')) || { codes: {}, players: {} };
+      this.feedback = (await this.ctx.storage.get('feedback')) || [];
       // Migrera in ev. saknade fält i en äldre stats-post.
       const f = this.freshStats(); for (const k in f) if (this.stats[k] == null) this.stats[k] = f[k];
     });
@@ -427,6 +469,20 @@ export class Registry {
       }
       await this.ctx.storage.put('stats', s);
       return new Response('ok');
+    }
+    if (url.pathname.endsWith('/feedback') && request.method === 'POST') {
+      let e = {};
+      try { e = await request.json(); } catch (_) {}
+      e.ts = Date.now();
+      this.feedback.push(e);
+      if (this.feedback.length > 300) this.feedback = this.feedback.slice(-300);   // behåll de senaste
+      await this.ctx.storage.put('feedback', this.feedback);
+      return new Response('ok');
+    }
+    if (url.pathname.endsWith('/feedback-reset')) {
+      this.feedback = [];
+      await this.ctx.storage.put('feedback', this.feedback);
+      return new Response('feedback nollställd', { headers: { 'content-type': 'text/plain; charset=utf-8' } });
     }
     if (url.pathname.endsWith('/update') && request.method === 'POST') {
       let b = {};
@@ -471,13 +527,41 @@ export class Registry {
     this.prune();
     await this.ctx.storage.put('rooms', this.rooms);
     await this.ctx.storage.put('stats', this.stats);
-    return new Response(renderDashboard(this.rooms, this.stats), { headers: { 'content-type': 'text/html; charset=utf-8' } });
+    return new Response(renderDashboard(this.rooms, this.stats, this.feedback), { headers: { 'content-type': 'text/html; charset=utf-8' } });
   }
 }
 
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
 
-function renderDashboard(rooms, stats) {
+function renderFeedback(feedback) {
+  const fb = (feedback || []).slice().reverse();   // senaste först
+  if (!fb.length) return '<h2>Feedback</h2><div class="panel"><span class="meta">Ingen feedback än. Den dyker upp här så fort en testare skickar in.</span></div>';
+  const when = (t) => { try { const d = new Date(t); const p = (n) => String(n).padStart(2, '0'); return `${d.getUTCFullYear()}-${p(d.getUTCMonth() + 1)}-${p(d.getUTCDate())} ${p(d.getUTCHours())}:${p(d.getUTCMinutes())} UTC`; } catch (_) { return ''; } };
+  const LBL = { var: 'Var i appen', lage: 'Läge', traffas: 'Träffas', relation: 'Relation', langd: 'Längd', startdjup: 'Startdjup', djupNu: 'Djup nu', djupast: 'Djupast', spelare: 'Spelare', minuter: 'Minuter', kortTotalt: 'Kort totalt', plats: 'Enhet', version: 'Version' };
+  const ORDER = ['var', 'lage', 'traffas', 'relation', 'langd', 'startdjup', 'djupNu', 'djupast', 'spelare', 'minuter', 'kortTotalt', 'plats', 'version'];
+  const item = (e) => {
+    const m = e.meta || {};
+    const stars = e.rating ? `<span class="fb-rate" title="${e.rating} av 5">${'●'.repeat(e.rating)}<span class="fb-rate-off">${'●'.repeat(5 - e.rating)}</span></span>` : '';
+    const who = [e.name ? esc(e.name) : '', [e.city, e.country].filter(Boolean).map(esc).join(', ')].filter(Boolean).join(' · ');
+    const ans = [];
+    if (e.best) ans.push(`<div class="fb-a fb-best"><span class="fb-q">Bäst</span><p>${esc(e.best)}</p></div>`);
+    if (e.worse) ans.push(`<div class="fb-a fb-worse"><span class="fb-q">Skavde eller oklart</span><p>${esc(e.worse)}</p></div>`);
+    if (e.change) ans.push(`<div class="fb-a fb-change"><span class="fb-q">Skulle ändra</span><p>${esc(e.change)}</p></div>`);
+    const chips = ORDER.filter((k) => m[k] != null && m[k] !== '').map((k) => `<span class="fb-chip"><em>${esc(LBL[k])}</em>${esc(m[k])}</span>`).join('');
+    const cards = Array.isArray(m.kortVisade) && m.kortVisade.length
+      ? `<details class="fb-cards"><summary>${m.kortVisade.length} kort de såg (i ordning)</summary><ol>${m.kortVisade.map((c) => `<li><span class="fb-src">${esc(c.src || 'kort')}</span>${esc(c.t || '')}</li>`).join('')}</ol></details>`
+      : '';
+    return `<div class="fb">
+      <div class="fb-top"><span class="fb-when">${esc(when(e.ts))}</span>${stars}${who ? `<span class="fb-who">${who}</span>` : ''}</div>
+      <div class="fb-ans">${ans.join('') || '<span class="meta">(endast betyg/namn)</span>'}</div>
+      ${chips ? `<div class="fb-chips">${chips}</div>` : ''}
+      ${cards}
+    </div>`;
+  };
+  return `<h2>Feedback · ${fb.length}</h2><div class="fb-list">${fb.map(item).join('')}</div>`;
+}
+
+function renderDashboard(rooms, stats, feedback) {
   const list = Object.values(rooms || {}).sort((a, b) => (b.updated || 0) - (a.updated || 0));
   const totalPlayers = list.reduce((n, r) => n + (r.count || 0), 0);
   const LV = { ytan: 'Ytan', grundvatten: 'Grundvatten', revet: 'Revet', djupvatten: 'Djupvatten', djuphavet: 'Djuphavet' };
@@ -584,6 +668,27 @@ function renderDashboard(rooms, stats) {
   .bar em{font-size:.6rem;color:var(--dim);font-style:normal}
   .kv{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.05)}
   .kv b{color:var(--acc)}
+  .fb-list{display:grid;gap:14px;margin-top:4px}
+  .fb{background:var(--card);border-radius:14px;padding:16px 18px;border-left:3px solid var(--acc)}
+  .fb-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:11px}
+  .fb-when{font-size:.78rem;color:var(--dim)}
+  .fb-who{font-size:.82rem;color:var(--soft);font-weight:600}
+  .fb-rate{letter-spacing:3px;color:var(--acc);font-size:.8rem}
+  .fb-rate-off{color:rgba(127,227,239,.20)}
+  .fb-ans{display:grid;gap:10px}
+  .fb-a{padding-left:11px}
+  .fb-q{display:block;font-size:.67rem;text-transform:uppercase;letter-spacing:.09em;color:var(--soft);margin-bottom:2px}
+  .fb-a p{margin:0;font-size:.95rem;line-height:1.5;white-space:pre-wrap}
+  .fb-best{border-left:2px solid rgba(78,201,176,.55)}
+  .fb-worse{border-left:2px solid rgba(251,113,133,.55)}
+  .fb-change{border-left:2px solid rgba(127,227,239,.55)}
+  .fb-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:13px}
+  .fb-chip{font-size:.72rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:3px 9px}
+  .fb-chip em{color:var(--dim);font-style:normal;margin-right:5px}
+  .fb-cards{margin-top:11px}
+  .fb-cards summary{cursor:pointer;font-size:.78rem;color:var(--soft)}
+  .fb-cards ol{margin:8px 0 0;padding-left:22px;color:var(--soft);font-size:.8rem;display:grid;gap:3px}
+  .fb-src{display:inline-block;min-width:56px;color:var(--dim);font-size:.7rem;margin-right:6px;text-transform:uppercase;letter-spacing:.04em}
 </style></head><body>
   <h1>Djupdyk · aktiva dyk</h1>
   <p class="sub">Live-översikt. Sidan uppdateras var 15:e sekund.</p>
@@ -592,6 +697,7 @@ function renderDashboard(rooms, stats) {
     <div class="stat"><div class="n">${totalPlayers}</div><div class="l">dykare uppkopplade</div></div>
   </div>
   ${list.length ? `<table><thead><tr><th>Kod</th><th>Status</th><th>Djup</th><th>Läge</th><th>Antal</th><th>Dykare (plats · ip · utm)</th><th>Senast</th></tr></thead><tbody>${rows}</tbody></table>` : '<div class="empty">Inga aktiva dyk just nu.</div>'}
+  ${renderFeedback(feedback)}
   ${totalsBlock}
   <p class="foot">Innehåller personuppgifter (namn, IP, plats). Behandla varsamt. Endast åtkomlig via den hemliga adressen. Totaler sparas, men ingen rad-historik per spelare.</p>
 </body></html>`;

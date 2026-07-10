@@ -1174,3 +1174,27 @@ body.display-mode #app { max-width: none; }
 .iab-x:hover, .iab-x:focus-visible { background: rgba(255,255,255,0.12); color: var(--ink); }
 body.iab-open #app { padding-top: 62px; }
 @media (max-width: 380px) { .iab-text { font-size: 0.76rem; } .iab-btn { padding: 7px 10px; } }
+
+/* Feedback-ruta: styrda frågor + betyg, i samma glas-/djuphavston som resten. */
+.fb-rate { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 6px 0 18px; }
+.fb-rate-lbl { font-size: 0.92rem; color: var(--ink-soft); }
+.fb-dots { display: flex; gap: 9px; }
+.fb-dot { width: 27px; height: 27px; border-radius: 50%; padding: 0; cursor: pointer;
+  border: 1.6px solid var(--depth); background: transparent; transition: transform 0.12s var(--ease), background 0.15s; }
+.fb-dot:hover, .fb-dot:focus-visible { transform: scale(1.12); outline: none; }
+.fb-dot.on { background: var(--depth); box-shadow: 0 0 12px rgba(111,190,203,0.45); }
+.fb-field { display: block; margin: 0 0 13px; text-align: left; }
+.fb-field > span { display: block; font-size: 0.9rem; font-weight: 600; color: var(--ink); margin: 0 0 6px; }
+.fb-field > span em { font-weight: 400; color: var(--ink-dim); font-style: normal; }
+.fb-field textarea, .fb-field input {
+  width: 100%; box-sizing: border-box; font: inherit; font-size: 0.95rem; color: var(--ink);
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 12px;
+  padding: 11px 13px; -webkit-appearance: none; }
+.fb-field textarea { min-height: 52px; line-height: 1.45; resize: vertical; }
+.fb-field textarea::placeholder, .fb-field input::placeholder { color: var(--ink-dim); }
+.fb-field textarea:focus, .fb-field input:focus { outline: none; border-color: var(--depth); background: rgba(255,255,255,0.08); }
+.fb-privacy { font-size: 0.78rem; line-height: 1.5; color: var(--ink-dim); margin: 2px 0 14px; }
+.fb-error { font-size: 0.86rem; color: var(--danger, #fb7185); margin: 0 0 10px; text-align: center; }
+.fb-done { text-align: center; padding: 10px 0 2px; }
+.fb-done-mark { font-size: 2.7rem; margin: 4px 0 6px; animation: fb-rise 0.6s var(--ease) both; }
+@keyframes fb-rise { from { transform: translateY(8px); opacity: 0; } to { transform: none; opacity: 1; } }

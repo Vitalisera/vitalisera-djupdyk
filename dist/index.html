@@ -1208,6 +1208,30 @@ body.display-mode #app { max-width: none; }
 body.iab-open #app { padding-top: 62px; }
 @media (max-width: 380px) { .iab-text { font-size: 0.76rem; } .iab-btn { padding: 7px 10px; } }
 
+/* Feedback-ruta: styrda frågor + betyg, i samma glas-/djuphavston som resten. */
+.fb-rate { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 6px 0 18px; }
+.fb-rate-lbl { font-size: 0.92rem; color: var(--ink-soft); }
+.fb-dots { display: flex; gap: 9px; }
+.fb-dot { width: 27px; height: 27px; border-radius: 50%; padding: 0; cursor: pointer;
+  border: 1.6px solid var(--depth); background: transparent; transition: transform 0.12s var(--ease), background 0.15s; }
+.fb-dot:hover, .fb-dot:focus-visible { transform: scale(1.12); outline: none; }
+.fb-dot.on { background: var(--depth); box-shadow: 0 0 12px rgba(111,190,203,0.45); }
+.fb-field { display: block; margin: 0 0 13px; text-align: left; }
+.fb-field > span { display: block; font-size: 0.9rem; font-weight: 600; color: var(--ink); margin: 0 0 6px; }
+.fb-field > span em { font-weight: 400; color: var(--ink-dim); font-style: normal; }
+.fb-field textarea, .fb-field input {
+  width: 100%; box-sizing: border-box; font: inherit; font-size: 0.95rem; color: var(--ink);
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 12px;
+  padding: 11px 13px; -webkit-appearance: none; }
+.fb-field textarea { min-height: 52px; line-height: 1.45; resize: vertical; }
+.fb-field textarea::placeholder, .fb-field input::placeholder { color: var(--ink-dim); }
+.fb-field textarea:focus, .fb-field input:focus { outline: none; border-color: var(--depth); background: rgba(255,255,255,0.08); }
+.fb-privacy { font-size: 0.78rem; line-height: 1.5; color: var(--ink-dim); margin: 2px 0 14px; }
+.fb-error { font-size: 0.86rem; color: var(--danger, #fb7185); margin: 0 0 10px; text-align: center; }
+.fb-done { text-align: center; padding: 10px 0 2px; }
+.fb-done-mark { font-size: 2.7rem; margin: 4px 0 6px; animation: fb-rise 0.6s var(--ease) both; }
+@keyframes fb-rise { from { transform: translateY(8px); opacity: 0; } to { transform: none; opacity: 1; } }
+
 </style>
 </head>
 <body>
@@ -1558,6 +1582,7 @@ body.iab-open #app { padding-top: 62px; }
           <button id="btn-postcard" class="btn btn-glass full">📷 Dela vykort från djupet</button>
         </div>
 
+        <button id="btn-feedback-summary" class="btn btn-ghost full">💬 Berätta vad du tyckte</button>
         <a class="site-link" href="https://vitalisera.se" target="_blank" rel="noopener">Mer från Vitalisera · vitalisera.se ↗</a>
       </div>
       <div class="bottom-dock">
@@ -1610,13 +1635,14 @@ body.iab-open #app { padding-top: 62px; }
           <button id="btn-help-game" class="btn btn-glass full">❓ Så funkar det</button>
           <button id="btn-manual-game" class="btn btn-glass full">📖 Hela manualen</button>
           <button id="btn-video-game" class="btn btn-glass full">▶ Se filmen</button>
+          <button id="btn-feedback-game" class="btn btn-glass full">💬 Dela din feedback</button>
         </div>
 
         <button id="btn-leave-game" class="btn btn-ghost full danger">Lämna dyket</button>
       </div>
       <button id="btn-close-sheet" class="btn btn-primary full">Klar</button>
       <a class="site-link" href="https://vitalisera.se" target="_blank" rel="noopener">Mer från Vitalisera · vitalisera.se ↗</a>
-      <div style="text-align:center;font-size:0.68rem;color:var(--ink-dim);opacity:0.65;margin-top:6px;letter-spacing:0.04em;">version 2026-07-10 07:55</div>
+      <div id="app-version" style="text-align:center;font-size:0.68rem;color:var(--ink-dim);opacity:0.65;margin-top:6px;letter-spacing:0.04em;">version 2026-07-10 14:55</div>
     </div>
   </div>
 
@@ -1818,6 +1844,7 @@ body.iab-open #app { padding-top: 62px; }
       <section class="manual-section">
         <h3 class="intro-h"><span class="intro-n">11</span> Om Vitalisera</h3>
         <p class="intro-p">Djupdyk är skapat av Vitalisera. Mer om oss finns på <a href="https://vitalisera.se" target="_blank" rel="noopener">vitalisera.se</a>.</p>
+        <p class="intro-p">Vi håller på att göra djupdyk bättre och lyssnar gärna på dig. Under menyn <b>⋯</b>, och när ni stiger upp efter ett dyk, finns <b>Dela din feedback</b>. Ett par rader hjälper mer än du tror.</p>
       </section>
 
       <button id="btn-manual-close" class="btn btn-primary full" type="button">Stäng</button>
@@ -1880,6 +1907,48 @@ body.iab-open #app { padding-top: 62px; }
       </div>
 
       <button id="btn-close-install" class="btn btn-glass full">Inte nu</button>
+    </div>
+  </div>
+
+  <!-- ============ FEEDBACK ============ -->
+  <div id="feedback" class="sheet" aria-hidden="true">
+    <div class="sheet-panel glass">
+      <div class="sheet-handle"></div>
+      <div id="fb-form">
+        <h3 class="sheet-title">Berätta hur det kändes</h3>
+        <p class="sheet-note">Din upplevelse hjälper oss göra djupdyk bättre. Skriv så mycket eller lite du vill, och hoppa över det som inte känns relevant.</p>
+
+        <div class="fb-rate" role="group" aria-label="Helhetskänsla">
+          <span class="fb-rate-lbl">Hur var stunden i stort?</span>
+          <div class="fb-dots" id="fb-dots">
+            <button type="button" class="fb-dot" data-v="1" aria-label="1 av 5"></button>
+            <button type="button" class="fb-dot" data-v="2" aria-label="2 av 5"></button>
+            <button type="button" class="fb-dot" data-v="3" aria-label="3 av 5"></button>
+            <button type="button" class="fb-dot" data-v="4" aria-label="4 av 5"></button>
+            <button type="button" class="fb-dot" data-v="5" aria-label="5 av 5"></button>
+          </div>
+        </div>
+
+        <label class="fb-field"><span>Vad var bäst?</span>
+          <textarea id="fb-best" rows="2" maxlength="2000" placeholder="En stämning, en fråga som landade, något som gav något …"></textarea></label>
+        <label class="fb-field"><span>Vad skavde eller kändes oklart?</span>
+          <textarea id="fb-worse" rows="2" maxlength="2000" placeholder="Något som störde, förvirrade eller kändes fel …"></textarea></label>
+        <label class="fb-field"><span>Om du fick ändra en enda sak?</span>
+          <textarea id="fb-change" rows="2" maxlength="2000" placeholder="Den där grejen du skulle göra annorlunda …"></textarea></label>
+        <label class="fb-field"><span>Namn <em>(valfritt)</em></span>
+          <input id="fb-name" type="text" maxlength="80" placeholder="Om vi får återkomma till dig" autocomplete="name"></label>
+
+        <p class="fb-privacy">Vi skickar med lite anonym kontext om din session (läge, längd, vilka kort ni sett) så vi förstår svaret bättre. Inga namn på dina medspelare, ingen chatt, inget av det ni delade i samtalet.</p>
+        <p class="fb-error" id="fb-error" hidden></p>
+        <button id="btn-fb-send" class="btn btn-primary full">Skicka</button>
+        <button id="btn-fb-close" class="btn btn-glass full">Inte nu</button>
+      </div>
+      <div id="fb-done" class="fb-done" hidden>
+        <div class="fb-done-mark" aria-hidden="true">🌊</div>
+        <h3 class="sheet-title">Tack, det betyder mycket</h3>
+        <p class="sheet-note">Din feedback är på väg till oss. Den hjälper djupdyk att bli lite bättre för nästa grupp som dyker.</p>
+        <button id="btn-fb-close2" class="btn btn-primary full">Stäng</button>
+      </div>
     </div>
   </div>
 
@@ -3428,6 +3497,14 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
     on(event, fn) { this.handlers[event] = fn; return this; },
     _emit(event, payload) { if (this.handlers[event]) this.handlers[event](payload); },
 
+    // ---- Feedback: POST till workern, oberoende av rum/uppkoppling ----------
+    feedback(payload) {
+      const url = WS_BASE.replace(/^ws/, 'http') + '/feedback';   // wss→https, ws→http
+      const opts = { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload || {}) };
+      try { if (typeof AbortSignal !== 'undefined' && AbortSignal.timeout) opts.signal = AbortSignal.timeout(12000); } catch (_) {}   // fastnar aldrig vid tyst nät
+      return fetch(url, opts).then((r) => { if (!r.ok) throw new Error('http ' + r.status); return r.json().catch(() => ({ ok: true })); });
+    },
+
     // ---- Persistens (resume vid omladdning) --------------------------------
     _saveSession() {
       if (this.role === 'display') return;   // display resumas ur ?visa-länken, inte ur sessionen
@@ -4636,6 +4713,25 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
   let lastTurnId = null;          // för turbyte-ljud
   let displayMode = false;        // "Visa på TV": passiv display-vy (ingen styrning)
 
+  // Sessions-journal: vad DEN HÄR enheten sett och valt, som kontext till feedback.
+  // Rör aldrig spel-staten, broadcastas aldrig, innehåller inget medspelarna delat.
+  const Journal = {
+    startedAt: null, startLevel: null, cards: [],
+    track(s) {
+      if (!s || s.phase !== 'playing') return;
+      if (!this.startedAt) this.startedAt = Date.now();
+      if (!this.startLevel && s.levelId) this.startLevel = s.levelId;
+      const c = s.card; if (!c) return;
+      const t = String(c.text || '').slice(0, 80);
+      const src = c.source || 'deck';
+      const last = this.cards[this.cards.length - 1];
+      if (last && last.t === t && last.src === src) return;   // hoppa dubbletter i rad
+      this.cards.push({ t, src, lvl: c.levelId || s.levelId || '' });
+      if (this.cards.length > 50) this.cards.shift();
+    },
+    reset() { this.startedAt = null; this.startLevel = null; this.cards = []; },
+  };
+
   // ---- Ljud (valbart) -----------------------------------------------------
   // Subtila toner via WebAudio. Obs: på iOS spelas inget om telefonens
   // ringknapp står på tyst (en webbegränsning), och första ljudet kräver att
@@ -4791,6 +4887,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
   // ---- Rendering -----------------------------------------------------------
   function render(state) {
     if (!state) return;
+    Journal.track(state);
     if (state.phase !== 'playing') { toggleOverlay('ritual', false); toggleOverlay('pause', false); stopSilence(); $('handoff').hidden = true; }
     if (state.phase === 'lobby') {
       // Runt bordet har ingen nätlobby. "Spela igen" (restart → lobby) ska bara
@@ -4903,6 +5000,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
   }
 
   function paintDisplay(s) {
+    Journal.track(s);
     showScreen('display');
     $('tv-code').textContent = Net.code || '••••';
     updateTvQr(s);
@@ -6061,6 +6159,85 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
     refresh();
   })();
 
+  // ---- Feedback ------------------------------------------------------------
+  (function feedbackModule() {
+    const sheet = $('feedback');
+    if (!sheet) return;
+    const form = $('fb-form'), done = $('fb-done'), err = $('fb-error'), sendBtn = $('btn-fb-send');
+    let rating = 0;
+    const dots = Array.from(sheet.querySelectorAll('.fb-dot'));
+    const paintDots = () => dots.forEach((d) => d.classList.toggle('on', Number(d.dataset.v) <= rating));
+    dots.forEach((d) => { d.onclick = () => { const v = Number(d.dataset.v); rating = rating === v ? 0 : v; paintDots(); }; });
+
+    function appVersion() {
+      const el = $('app-version'); const t = ((el && el.textContent) || '').replace(/^\s*version\s*/i, '').trim();
+      return t && !/2026-07-10 14:55/.test(t) ? t : '';
+    }
+    function platform() {
+      const ua = navigator.userAgent || '';
+      const os = /iphone/i.test(ua) ? 'iPhone'
+        : (/ipad/i.test(ua) || (/macintosh/i.test(ua) && navigator.maxTouchPoints > 1)) ? 'iPad'
+        : /android/i.test(ua) ? 'Android' : /macintosh/i.test(ua) ? 'Mac'
+        : /windows/i.test(ua) ? 'Windows' : /linux/i.test(ua) ? 'Linux' : 'Okänd enhet';
+      const br = /crios/i.test(ua) ? 'Chrome' : /fxios|firefox/i.test(ua) ? 'Firefox'
+        : /edgi?os|edg\//i.test(ua) ? 'Edge' : /chrome/i.test(ua) ? 'Chrome' : /safari/i.test(ua) ? 'Safari' : '';
+      const iab = /FBAN|FBAV|FB_IAB|Instagram|Messenger|Line\/|TikTok|LinkedInApp/i.test(ua) ? ' (in-app)' : '';
+      return os + (br ? ' · ' + br : '') + iab;
+    }
+    function collectMeta() {
+      const s = _state;
+      const SESS = { snorkel: 'Snorkling', dyk: 'Dyk', expedition: 'Expedition' };
+      const REL = { oppen: 'Blandat', par: 'Par', familj: 'Familj', vanner: 'Nära vänner', nya: 'Nya bekanta', kollegor: 'Kollegor' };
+      const SCREEN = { 'screen-home': 'Start', 'screen-lobby': 'Lobby', 'screen-game': 'I spelet', 'screen-summary': 'Avslut', 'screen-display': 'TV-skärm', 'screen-local': 'Runt bordet-uppsättning', 'screen-tv-entry': 'TV-entré' };
+      const scr = document.querySelector('.screen.active');
+      const m = { version: appVersion(), plats: platform(), var: SCREEN[scr && scr.id] || (scr && scr.id) || '' };
+      m.lage = Net.role === 'local' ? 'Runt bordet' : displayMode ? 'Visa på TV'
+        : Net.role === 'host' ? 'Nät · värd' : Net.role === 'client' ? 'Nät · deltagare' : 'Utanför dyk';
+      if (s) {
+        const players = s.players || [];
+        const online = players.filter((p) => p.connected).length;
+        if (players.length) m.spelare = String(players.length) + (online && online !== players.length ? ' (' + online + ' online)' : '');
+        if (s.duet != null) m.traffas = s.duet ? 'På distans' : 'I samma rum';
+        if (s.session) m.langd = SESS[s.session] || s.session;
+        if (s.mode) m.relation = REL[s.mode] || s.mode;
+        try { if (Journal.startLevel) m.startdjup = levelMeta(Journal.startLevel).name; } catch (_) {}
+        try { if (s.levelId) m.djupNu = levelMeta(s.levelId).name; } catch (_) {}
+        if (s.deepest != null && LEVELS[s.deepest]) m.djupast = LEVELS[s.deepest].name;
+        if (s.summary && s.summary.cards != null) m.kortTotalt = s.summary.cards;
+      }
+      if (Journal.startedAt) m.minuter = Math.max(1, Math.round((Date.now() - Journal.startedAt) / 60000));
+      if (Journal.cards.length) m.kortVisade = Journal.cards.slice(-40);
+      return m;
+    }
+
+    function showForm() { form.hidden = false; done.hidden = true; sendBtn.disabled = false; sendBtn.textContent = 'Skicka'; }
+    function reset() { rating = 0; paintDots(); $('fb-best').value = ''; $('fb-worse').value = ''; $('fb-change').value = ''; $('fb-name').value = ''; err.hidden = true; showForm(); }
+    function open() { reset(); sheet.classList.add('open'); sheet.setAttribute('aria-hidden', 'false'); }
+    function close() { sheet.classList.remove('open'); sheet.setAttribute('aria-hidden', 'true'); }
+
+    $('btn-fb-close').onclick = close;
+    $('btn-fb-close2').onclick = close;
+    sheet.addEventListener('click', (e) => { if (e.target.id === 'feedback') close(); });
+
+    sendBtn.onclick = () => {
+      const payload = {
+        rating,
+        best: $('fb-best').value.trim(), worse: $('fb-worse').value.trim(), change: $('fb-change').value.trim(),
+        name: $('fb-name').value.trim(), meta: collectMeta(),
+      };
+      if (!payload.rating && !payload.best && !payload.worse && !payload.change && !payload.name) {
+        err.textContent = 'Skriv något eller sätt ett betyg först.'; err.hidden = false; return;
+      }
+      err.hidden = true; sendBtn.disabled = true; sendBtn.textContent = 'Skickar …';
+      Net.feedback(payload)
+        .then(() => { form.hidden = true; done.hidden = false; })
+        .catch(() => { sendBtn.disabled = false; sendBtn.textContent = 'Skicka'; err.textContent = 'Kunde inte skicka just nu. Kolla nätet och försök igen.'; err.hidden = false; });
+    };
+
+    const openBtn = $('btn-feedback-game'); if (openBtn) openBtn.onclick = () => { closeSheet(); open(); };
+    const sumBtn = $('btn-feedback-summary'); if (sumBtn) sumBtn.onclick = open;
+  })();
+
   // ---- Dela / kopiera ------------------------------------------------------
   function inviteUrl() { return location.origin + location.pathname + '?join=' + (Net.code || ''); }
   function copyCode() {
@@ -6078,6 +6255,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
 
   function leave() {
     Net.leave();
+    Journal.reset();
     try { localStorage.removeItem('vd_last'); } catch (_) {}
     _state = null; lastCardKey = null; closeSheet(); stopSilence();
     toggleOverlay('ritual', false); toggleOverlay('pause', false);

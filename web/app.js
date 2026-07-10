@@ -15,6 +15,25 @@
   let lastTurnId = null;          // för turbyte-ljud
   let displayMode = false;        // "Visa på TV": passiv display-vy (ingen styrning)
 
+  // Sessions-journal: vad DEN HÄR enheten sett och valt, som kontext till feedback.
+  // Rör aldrig spel-staten, broadcastas aldrig, innehåller inget medspelarna delat.
+  const Journal = {
+    startedAt: null, startLevel: null, cards: [],
+    track(s) {
+      if (!s || s.phase !== 'playing') return;
+      if (!this.startedAt) this.startedAt = Date.now();
+      if (!this.startLevel && s.levelId) this.startLevel = s.levelId;
+      const c = s.card; if (!c) return;
+      const t = String(c.text || '').slice(0, 80);
+      const src = c.source || 'deck';
+      const last = this.cards[this.cards.length - 1];
+      if (last && last.t === t && last.src === src) return;   // hoppa dubbletter i rad
+      this.cards.push({ t, src, lvl: c.levelId || s.levelId || '' });
+      if (this.cards.length > 50) this.cards.shift();
+    },
+    reset() { this.startedAt = null; this.startLevel = null; this.cards = []; },
+  };
+
   // ---- Ljud (valbart) -----------------------------------------------------
   // Subtila toner via WebAudio. Obs: på iOS spelas inget om telefonens
   // ringknapp står på tyst (en webbegränsning), och första ljudet kräver att
@@ -170,6 +189,7 @@
   // ---- Rendering -----------------------------------------------------------
   function render(state) {
     if (!state) return;
+    Journal.track(state);
     if (state.phase !== 'playing') { toggleOverlay('ritual', false); toggleOverlay('pause', false); stopSilence(); $('handoff').hidden = true; }
     if (state.phase === 'lobby') {
       // Runt bordet har ingen nätlobby. "Spela igen" (restart → lobby) ska bara
@@ -282,6 +302,7 @@
   }
 
   function paintDisplay(s) {
+    Journal.track(s);
     showScreen('display');
     $('tv-code').textContent = Net.code || '••••';
     updateTvQr(s);
@@ -1440,6 +1461,85 @@
     refresh();
   })();
 
+  // ---- Feedback ------------------------------------------------------------
+  (function feedbackModule() {
+    const sheet = $('feedback');
+    if (!sheet) return;
+    const form = $('fb-form'), done = $('fb-done'), err = $('fb-error'), sendBtn = $('btn-fb-send');
+    let rating = 0;
+    const dots = Array.from(sheet.querySelectorAll('.fb-dot'));
+    const paintDots = () => dots.forEach((d) => d.classList.toggle('on', Number(d.dataset.v) <= rating));
+    dots.forEach((d) => { d.onclick = () => { const v = Number(d.dataset.v); rating = rating === v ? 0 : v; paintDots(); }; });
+
+    function appVersion() {
+      const el = $('app-version'); const t = ((el && el.textContent) || '').replace(/^\s*version\s*/i, '').trim();
+      return t && !/__BUILD__/.test(t) ? t : '';
+    }
+    function platform() {
+      const ua = navigator.userAgent || '';
+      const os = /iphone/i.test(ua) ? 'iPhone'
+        : (/ipad/i.test(ua) || (/macintosh/i.test(ua) && navigator.maxTouchPoints > 1)) ? 'iPad'
+        : /android/i.test(ua) ? 'Android' : /macintosh/i.test(ua) ? 'Mac'
+        : /windows/i.test(ua) ? 'Windows' : /linux/i.test(ua) ? 'Linux' : 'Okänd enhet';
+      const br = /crios/i.test(ua) ? 'Chrome' : /fxios|firefox/i.test(ua) ? 'Firefox'
+        : /edgi?os|edg\//i.test(ua) ? 'Edge' : /chrome/i.test(ua) ? 'Chrome' : /safari/i.test(ua) ? 'Safari' : '';
+      const iab = /FBAN|FBAV|FB_IAB|Instagram|Messenger|Line\/|TikTok|LinkedInApp/i.test(ua) ? ' (in-app)' : '';
+      return os + (br ? ' · ' + br : '') + iab;
+    }
+    function collectMeta() {
+      const s = _state;
+      const SESS = { snorkel: 'Snorkling', dyk: 'Dyk', expedition: 'Expedition' };
+      const REL = { oppen: 'Blandat', par: 'Par', familj: 'Familj', vanner: 'Nära vänner', nya: 'Nya bekanta', kollegor: 'Kollegor' };
+      const SCREEN = { 'screen-home': 'Start', 'screen-lobby': 'Lobby', 'screen-game': 'I spelet', 'screen-summary': 'Avslut', 'screen-display': 'TV-skärm', 'screen-local': 'Runt bordet-uppsättning', 'screen-tv-entry': 'TV-entré' };
+      const scr = document.querySelector('.screen.active');
+      const m = { version: appVersion(), plats: platform(), var: SCREEN[scr && scr.id] || (scr && scr.id) || '' };
+      m.lage = Net.role === 'local' ? 'Runt bordet' : displayMode ? 'Visa på TV'
+        : Net.role === 'host' ? 'Nät · värd' : Net.role === 'client' ? 'Nät · deltagare' : 'Utanför dyk';
+      if (s) {
+        const players = s.players || [];
+        const online = players.filter((p) => p.connected).length;
+        if (players.length) m.spelare = String(players.length) + (online && online !== players.length ? ' (' + online + ' online)' : '');
+        if (s.duet != null) m.traffas = s.duet ? 'På distans' : 'I samma rum';
+        if (s.session) m.langd = SESS[s.session] || s.session;
+        if (s.mode) m.relation = REL[s.mode] || s.mode;
+        try { if (Journal.startLevel) m.startdjup = levelMeta(Journal.startLevel).name; } catch (_) {}
+        try { if (s.levelId) m.djupNu = levelMeta(s.levelId).name; } catch (_) {}
+        if (s.deepest != null && LEVELS[s.deepest]) m.djupast = LEVELS[s.deepest].name;
+        if (s.summary && s.summary.cards != null) m.kortTotalt = s.summary.cards;
+      }
+      if (Journal.startedAt) m.minuter = Math.max(1, Math.round((Date.now() - Journal.startedAt) / 60000));
+      if (Journal.cards.length) m.kortVisade = Journal.cards.slice(-40);
+      return m;
+    }
+
+    function showForm() { form.hidden = false; done.hidden = true; sendBtn.disabled = false; sendBtn.textContent = 'Skicka'; }
+    function reset() { rating = 0; paintDots(); $('fb-best').value = ''; $('fb-worse').value = ''; $('fb-change').value = ''; $('fb-name').value = ''; err.hidden = true; showForm(); }
+    function open() { reset(); sheet.classList.add('open'); sheet.setAttribute('aria-hidden', 'false'); }
+    function close() { sheet.classList.remove('open'); sheet.setAttribute('aria-hidden', 'true'); }
+
+    $('btn-fb-close').onclick = close;
+    $('btn-fb-close2').onclick = close;
+    sheet.addEventListener('click', (e) => { if (e.target.id === 'feedback') close(); });
+
+    sendBtn.onclick = () => {
+      const payload = {
+        rating,
+        best: $('fb-best').value.trim(), worse: $('fb-worse').value.trim(), change: $('fb-change').value.trim(),
+        name: $('fb-name').value.trim(), meta: collectMeta(),
+      };
+      if (!payload.rating && !payload.best && !payload.worse && !payload.change && !payload.name) {
+        err.textContent = 'Skriv något eller sätt ett betyg först.'; err.hidden = false; return;
+      }
+      err.hidden = true; sendBtn.disabled = true; sendBtn.textContent = 'Skickar …';
+      Net.feedback(payload)
+        .then(() => { form.hidden = true; done.hidden = false; })
+        .catch(() => { sendBtn.disabled = false; sendBtn.textContent = 'Skicka'; err.textContent = 'Kunde inte skicka just nu. Kolla nätet och försök igen.'; err.hidden = false; });
+    };
+
+    const openBtn = $('btn-feedback-game'); if (openBtn) openBtn.onclick = () => { closeSheet(); open(); };
+    const sumBtn = $('btn-feedback-summary'); if (sumBtn) sumBtn.onclick = open;
+  })();
+
   // ---- Dela / kopiera ------------------------------------------------------
   function inviteUrl() { return location.origin + location.pathname + '?join=' + (Net.code || ''); }
   function copyCode() {
@@ -1457,6 +1557,7 @@
 
   function leave() {
     Net.leave();
+    Journal.reset();
     try { localStorage.removeItem('vd_last'); } catch (_) {}
     _state = null; lastCardKey = null; closeSheet(); stopSilence();
     toggleOverlay('ritual', false); toggleOverlay('pause', false);

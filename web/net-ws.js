@@ -50,6 +50,14 @@
     on(event, fn) { this.handlers[event] = fn; return this; },
     _emit(event, payload) { if (this.handlers[event]) this.handlers[event](payload); },
 
+    // ---- Feedback: POST till workern, oberoende av rum/uppkoppling ----------
+    feedback(payload) {
+      const url = WS_BASE.replace(/^ws/, 'http') + '/feedback';   // wss→https, ws→http
+      const opts = { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload || {}) };
+      try { if (typeof AbortSignal !== 'undefined' && AbortSignal.timeout) opts.signal = AbortSignal.timeout(12000); } catch (_) {}   // fastnar aldrig vid tyst nät
+      return fetch(url, opts).then((r) => { if (!r.ok) throw new Error('http ' + r.status); return r.json().catch(() => ({ ok: true })); });
+    },
+
     // ---- Persistens (resume vid omladdning) --------------------------------
     _saveSession() {
       if (this.role === 'display') return;   // display resumas ur ?visa-länken, inte ur sessionen
