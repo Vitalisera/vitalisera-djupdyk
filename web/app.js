@@ -1563,6 +1563,7 @@
 
     const openBtn = $('btn-feedback-game'); if (openBtn) openBtn.onclick = () => { closeSheet(); open(); };
     const sumBtn = $('btn-feedback-summary'); if (sumBtn) sumBtn.onclick = open;
+    const homeBtn = $('btn-feedback-home'); if (homeBtn) homeBtn.onclick = open;
   })();
 
   // ---- Dela / kopiera ------------------------------------------------------

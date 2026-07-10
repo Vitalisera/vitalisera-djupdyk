@@ -1289,6 +1289,7 @@ body.iab-open #app { padding-top: 62px; }
         <p class="fineprint">I samma rum eller på distans. Den som skapar dyket delar koden, sedan ser alla samma kort i realtid.</p>
         <button id="btn-help-home" class="help-link" type="button">Hur funkar det? ›</button>
         <button id="btn-tv-home" class="help-link" type="button">📺 Använd som TV-skärm ›</button>
+        <button id="btn-feedback-home" class="help-link" type="button">💬 Dela din feedback ›</button>
         <button id="btn-install" class="install-hint" type="button" hidden>
           <span class="install-ico" aria-hidden="true">⤓</span>
           <span>Lägg till på hemskärmen</span>
@@ -1648,7 +1649,7 @@ body.iab-open #app { padding-top: 62px; }
       </div>
       <button id="btn-close-sheet" class="btn btn-primary full">Klar</button>
       <a class="site-link" href="https://vitalisera.se" target="_blank" rel="noopener">Mer från Vitalisera · vitalisera.se ↗</a>
-      <div id="app-version" style="text-align:center;font-size:0.68rem;color:var(--ink-dim);opacity:0.65;margin-top:6px;letter-spacing:0.04em;">version 2026-07-10 15:20</div>
+      <div id="app-version" style="text-align:center;font-size:0.68rem;color:var(--ink-dim);opacity:0.65;margin-top:6px;letter-spacing:0.04em;">version 2026-07-10 17:02</div>
     </div>
   </div>
 
@@ -6177,7 +6178,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
 
     function appVersion() {
       const el = $('app-version'); const t = ((el && el.textContent) || '').replace(/^\s*version\s*/i, '').trim();
-      return t && !/2026-07-10 15:20/.test(t) ? t : '';
+      return t && !/2026-07-10 17:02/.test(t) ? t : '';
     }
     function platform() {
       const ua = navigator.userAgent || '';
@@ -6267,6 +6268,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
 
     const openBtn = $('btn-feedback-game'); if (openBtn) openBtn.onclick = () => { closeSheet(); open(); };
     const sumBtn = $('btn-feedback-summary'); if (sumBtn) sumBtn.onclick = open;
+    const homeBtn = $('btn-feedback-home'); if (homeBtn) homeBtn.onclick = open;
   })();
 
   // ---- Dela / kopiera ------------------------------------------------------
