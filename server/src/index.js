@@ -232,6 +232,15 @@ export class Room {
     if (issuedSecret) { try { server.send(JSON.stringify({ type: 'secret', secret: issuedSecret })); } catch (_) {} }
 
     if (!this.game) {
+      // Bara den som SKAPAR dyket (host=1) får skapa rummet. En joiner mot en kod som
+      // ingen startat (t.ex. feltajpad kod) ska INTE tyst hamna i ett eget tomt rum med
+      // fel kod — säg att rummet inte finns så klienten kan visa det.
+      if (url.searchParams.get('host') !== '1') {
+        const np = new WebSocketPair();
+        np[1].accept();
+        try { np[1].send(JSON.stringify({ type: 'noroom' })); np[1].close(4404, 'noroom'); } catch (_) {}
+        return new Response(null, { status: 101, webSocket: np[0] });
+      }
       this.game = Game.create(code, playerId); this.code = code; this.created = Date.now();
       // Ett riktigt spel tar över rummet: släng ev. gammal mirror-state (t.ex. en
       // återvunnen rumskod som tidigare kört Runt bordet-spegling).

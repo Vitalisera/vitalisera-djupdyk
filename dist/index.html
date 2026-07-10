@@ -1670,7 +1670,7 @@ a:focus-visible, [tabindex="0"]:focus-visible, input:focus-visible, textarea:foc
       </div>
       <button id="btn-close-sheet" class="btn btn-primary full">Klar</button>
       <a class="site-link" href="https://vitalisera.se" target="_blank" rel="noopener">Mer från Vitalisera · vitalisera.se ↗</a>
-      <div id="app-version" style="text-align:center;font-size:0.68rem;color:var(--ink-dim);opacity:0.65;margin-top:6px;letter-spacing:0.04em;">version 2026-07-10 21:54</div>
+      <div id="app-version" style="text-align:center;font-size:0.68rem;color:var(--ink-dim);opacity:0.65;margin-top:6px;letter-spacing:0.04em;">version 2026-07-10 21:59</div>
     </div>
   </div>
 
@@ -3597,6 +3597,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
         + '?id=' + encodeURIComponent(this.me.id)
         + '&name=' + encodeURIComponent(this.me.name)
         + (this.role === 'display' ? '&display=1' : '')
+        + (this.role === 'host' ? '&host=1' : '')   // bara den som SKAPAR får skapa rummet
         + (sec ? '&s=' + encodeURIComponent(sec) : '')
         + (this._utm ? '&utm=' + encodeURIComponent(this._utm) : '');
       let ws;
@@ -3627,6 +3628,14 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
           clearTimeout(this._retryTimer); this._retryTimer = null;
           this.clearSession();
           this._emit('denied', { reason: msg.reason || '' });
+        }
+        else if (msg && msg.type === 'noroom') {
+          // Rummet finns inte (joiner mot en kod ingen skapat, t.ex. feltajpad kod).
+          // Sluta försöka och berätta det, i stället för att sitta i ett tomt rum.
+          this._alive = false;
+          clearTimeout(this._retryTimer); this._retryTimer = null;
+          this.clearSession();
+          this._emit('noroom', { code: this.code });
         }
       };
       ws.onclose = () => {
@@ -5785,6 +5794,14 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
       : 'Ditt spelar-id används redan i det här rummet från en annan enhet.');
     leave();
   });
+  Net.on('noroom', (d) => {
+    if (displayMode) return;   // TV-vägen hanteras separat (den väntar in ett dyk)
+    const code = (d && d.code) || '';
+    leave();
+    if (code) codeInput.value = code;   // förifyll så man ser och kan rätta koden
+    toast('Ingen väntar på koden ' + code + '. Dubbelkolla den med den som bjöd in dig.');
+    try { codeInput.focus(); } catch (_) {}
+  });
   let droppedT = 0;
   Net.on('dropped', () => { const now = Date.now(); if (now - droppedT > 2500) { droppedT = now; toast('Inte ansluten just nu. Det du valde skickas så snart du är inne igen.'); } });
 
@@ -6218,7 +6235,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
 
     function appVersion() {
       const el = $('app-version'); const t = ((el && el.textContent) || '').replace(/^\s*version\s*/i, '').trim();
-      return t && !/2026-07-10 21:54/.test(t) ? t : '';
+      return t && !/2026-07-10 21:59/.test(t) ? t : '';
     }
     function platform() {
       const ua = navigator.userAgent || '';

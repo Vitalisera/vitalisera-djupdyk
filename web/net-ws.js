@@ -122,6 +122,7 @@
         + '?id=' + encodeURIComponent(this.me.id)
         + '&name=' + encodeURIComponent(this.me.name)
         + (this.role === 'display' ? '&display=1' : '')
+        + (this.role === 'host' ? '&host=1' : '')   // bara den som SKAPAR får skapa rummet
         + (sec ? '&s=' + encodeURIComponent(sec) : '')
         + (this._utm ? '&utm=' + encodeURIComponent(this._utm) : '');
       let ws;
@@ -152,6 +153,14 @@
           clearTimeout(this._retryTimer); this._retryTimer = null;
           this.clearSession();
           this._emit('denied', { reason: msg.reason || '' });
+        }
+        else if (msg && msg.type === 'noroom') {
+          // Rummet finns inte (joiner mot en kod ingen skapat, t.ex. feltajpad kod).
+          // Sluta försöka och berätta det, i stället för att sitta i ett tomt rum.
+          this._alive = false;
+          clearTimeout(this._retryTimer); this._retryTimer = null;
+          this.clearSession();
+          this._emit('noroom', { code: this.code });
         }
       };
       ws.onclose = () => {

@@ -1059,6 +1059,14 @@
       : 'Ditt spelar-id används redan i det här rummet från en annan enhet.');
     leave();
   });
+  Net.on('noroom', (d) => {
+    if (displayMode) return;   // TV-vägen hanteras separat (den väntar in ett dyk)
+    const code = (d && d.code) || '';
+    leave();
+    if (code) codeInput.value = code;   // förifyll så man ser och kan rätta koden
+    toast('Ingen väntar på koden ' + code + '. Dubbelkolla den med den som bjöd in dig.');
+    try { codeInput.focus(); } catch (_) {}
+  });
   let droppedT = 0;
   Net.on('dropped', () => { const now = Date.now(); if (now - droppedT > 2500) { droppedT = now; toast('Inte ansluten just nu. Det du valde skickas så snart du är inne igen.'); } });
 
