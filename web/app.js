@@ -1468,7 +1468,7 @@
     const form = $('fb-form'), done = $('fb-done'), err = $('fb-error'), sendBtn = $('btn-fb-send');
     let rating = 0;
     const dots = Array.from(sheet.querySelectorAll('.fb-dot'));
-    const paintDots = () => dots.forEach((d) => d.classList.toggle('on', Number(d.dataset.v) <= rating));
+    const paintDots = () => dots.forEach((d) => { const on = Number(d.dataset.v) <= rating; d.classList.toggle('on', on); d.setAttribute('aria-pressed', on ? 'true' : 'false'); });
     dots.forEach((d) => { d.onclick = () => { const v = Number(d.dataset.v); rating = rating === v ? 0 : v; paintDots(); }; });
 
     function appVersion() {

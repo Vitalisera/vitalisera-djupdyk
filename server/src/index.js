@@ -558,7 +558,14 @@ function renderFeedback(feedback) {
       ${cards}
     </div>`;
   };
-  return `<h2>Feedback · ${fb.length}</h2><div class="fb-list">${fb.map(item).join('')}</div>`;
+  const rated = fb.filter((e) => e.rating > 0);
+  let summary = '';
+  if (rated.length) {
+    const avg = rated.reduce((n, e) => n + e.rating, 0) / rated.length;
+    const r = Math.round(avg);
+    summary = `<div class="fb-summary">Snittbetyg <b>${esc(avg.toFixed(1).replace('.', ','))}</b> <span class="fb-rate">${'●'.repeat(r)}<span class="fb-rate-off">${'●'.repeat(5 - r)}</span></span> <span class="meta">· ${rated.length} av ${fb.length} satte betyg</span></div>`;
+  }
+  return `<h2>Feedback · ${fb.length}</h2>${summary}<div class="fb-list">${fb.map(item).join('')}</div>`;
 }
 
 function renderDashboard(rooms, stats, feedback) {
@@ -668,6 +675,8 @@ function renderDashboard(rooms, stats, feedback) {
   .bar em{font-size:.6rem;color:var(--dim);font-style:normal}
   .kv{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.05)}
   .kv b{color:var(--acc)}
+  .fb-summary{background:var(--card);border-radius:12px;padding:11px 16px;margin:0 0 14px;font-size:.95rem}
+  .fb-summary b{color:var(--acc);font-size:1.15rem}
   .fb-list{display:grid;gap:14px;margin-top:4px}
   .fb{background:var(--card);border-radius:14px;padding:16px 18px;border-left:3px solid var(--acc)}
   .fb-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:11px}
