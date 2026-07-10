@@ -708,11 +708,11 @@
   </div>
 
   <!-- ============ FEEDBACK ============ -->
-  <div id="feedback" class="sheet" aria-hidden="true">
-    <div class="sheet-panel glass">
+  <div id="feedback" class="sheet" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="fb-title">
+    <div class="sheet-panel glass" tabindex="-1">
       <div class="sheet-handle"></div>
       <div id="fb-form">
-        <h3 class="sheet-title">Berätta hur det kändes</h3>
+        <h3 class="sheet-title" id="fb-title">Berätta hur det kändes</h3>
         <p class="sheet-note">Din upplevelse hjälper oss göra djupdyk bättre. Skriv så mycket eller lite du vill, och hoppa över det som inte känns relevant.</p>
 
         <div class="fb-rate" role="group" aria-label="Helhetskänsla">

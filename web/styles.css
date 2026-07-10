@@ -1198,3 +1198,6 @@ body.iab-open #app { padding-top: 62px; }
 .fb-done { text-align: center; padding: 10px 0 2px; }
 .fb-done-mark { font-size: 2.7rem; margin: 4px 0 6px; animation: fb-rise 0.6s var(--ease) both; }
 @keyframes fb-rise { from { transform: translateY(8px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* Panelen fokuseras programmatiskt vid öppning (a11y) — ingen synlig ram. */
+.sheet-panel:focus { outline: none; }

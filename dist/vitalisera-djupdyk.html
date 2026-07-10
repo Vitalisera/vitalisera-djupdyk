@@ -1232,6 +1232,9 @@ body.iab-open #app { padding-top: 62px; }
 .fb-done-mark { font-size: 2.7rem; margin: 4px 0 6px; animation: fb-rise 0.6s var(--ease) both; }
 @keyframes fb-rise { from { transform: translateY(8px); opacity: 0; } to { transform: none; opacity: 1; } }
 
+/* Panelen fokuseras programmatiskt vid öppning (a11y) — ingen synlig ram. */
+.sheet-panel:focus { outline: none; }
+
 </style>
 </head>
 <body>
@@ -1642,7 +1645,7 @@ body.iab-open #app { padding-top: 62px; }
       </div>
       <button id="btn-close-sheet" class="btn btn-primary full">Klar</button>
       <a class="site-link" href="https://vitalisera.se" target="_blank" rel="noopener">Mer från Vitalisera · vitalisera.se ↗</a>
-      <div id="app-version" style="text-align:center;font-size:0.68rem;color:var(--ink-dim);opacity:0.65;margin-top:6px;letter-spacing:0.04em;">version 2026-07-10 14:55</div>
+      <div id="app-version" style="text-align:center;font-size:0.68rem;color:var(--ink-dim);opacity:0.65;margin-top:6px;letter-spacing:0.04em;">version 2026-07-10 15:04</div>
     </div>
   </div>
 
@@ -1911,11 +1914,11 @@ body.iab-open #app { padding-top: 62px; }
   </div>
 
   <!-- ============ FEEDBACK ============ -->
-  <div id="feedback" class="sheet" aria-hidden="true">
-    <div class="sheet-panel glass">
+  <div id="feedback" class="sheet" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="fb-title">
+    <div class="sheet-panel glass" tabindex="-1">
       <div class="sheet-handle"></div>
       <div id="fb-form">
-        <h3 class="sheet-title">Berätta hur det kändes</h3>
+        <h3 class="sheet-title" id="fb-title">Berätta hur det kändes</h3>
         <p class="sheet-note">Din upplevelse hjälper oss göra djupdyk bättre. Skriv så mycket eller lite du vill, och hoppa över det som inte känns relevant.</p>
 
         <div class="fb-rate" role="group" aria-label="Helhetskänsla">
@@ -6171,7 +6174,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
 
     function appVersion() {
       const el = $('app-version'); const t = ((el && el.textContent) || '').replace(/^\s*version\s*/i, '').trim();
-      return t && !/2026-07-10 14:55/.test(t) ? t : '';
+      return t && !/2026-07-10 15:04/.test(t) ? t : '';
     }
     function platform() {
       const ua = navigator.userAgent || '';
@@ -6212,8 +6215,24 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
 
     function showForm() { form.hidden = false; done.hidden = true; sendBtn.disabled = false; sendBtn.textContent = 'Skicka'; }
     function reset() { rating = 0; paintDots(); $('fb-best').value = ''; $('fb-worse').value = ''; $('fb-change').value = ''; $('fb-name').value = ''; err.hidden = true; showForm(); }
-    function open() { reset(); sheet.classList.add('open'); sheet.setAttribute('aria-hidden', 'false'); }
-    function close() { sheet.classList.remove('open'); sheet.setAttribute('aria-hidden', 'true'); }
+    let lastFocus = null;
+    const onKey = (e) => { if (e.key === 'Escape') close(); };
+    function open() {
+      reset();
+      lastFocus = document.activeElement;
+      sheet.classList.add('open'); sheet.setAttribute('aria-hidden', 'false');
+      // Fokusera panelen (inte ett textfält) → skärmläsare får kontext utan att mobilens
+      // tangentbord slår upp innan man hunnit läsa frågorna.
+      const panel = sheet.querySelector('.sheet-panel');
+      if (panel) setTimeout(() => { try { panel.focus(); } catch (_) {} }, 40);
+      document.addEventListener('keydown', onKey);
+    }
+    function close() {
+      sheet.classList.remove('open'); sheet.setAttribute('aria-hidden', 'true');
+      document.removeEventListener('keydown', onKey);
+      if (lastFocus && lastFocus.focus) { try { lastFocus.focus(); } catch (_) {} }
+      lastFocus = null;
+    }
 
     $('btn-fb-close').onclick = close;
     $('btn-fb-close2').onclick = close;

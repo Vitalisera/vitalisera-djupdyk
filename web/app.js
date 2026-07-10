@@ -1514,8 +1514,24 @@
 
     function showForm() { form.hidden = false; done.hidden = true; sendBtn.disabled = false; sendBtn.textContent = 'Skicka'; }
     function reset() { rating = 0; paintDots(); $('fb-best').value = ''; $('fb-worse').value = ''; $('fb-change').value = ''; $('fb-name').value = ''; err.hidden = true; showForm(); }
-    function open() { reset(); sheet.classList.add('open'); sheet.setAttribute('aria-hidden', 'false'); }
-    function close() { sheet.classList.remove('open'); sheet.setAttribute('aria-hidden', 'true'); }
+    let lastFocus = null;
+    const onKey = (e) => { if (e.key === 'Escape') close(); };
+    function open() {
+      reset();
+      lastFocus = document.activeElement;
+      sheet.classList.add('open'); sheet.setAttribute('aria-hidden', 'false');
+      // Fokusera panelen (inte ett textfält) → skärmläsare får kontext utan att mobilens
+      // tangentbord slår upp innan man hunnit läsa frågorna.
+      const panel = sheet.querySelector('.sheet-panel');
+      if (panel) setTimeout(() => { try { panel.focus(); } catch (_) {} }, 40);
+      document.addEventListener('keydown', onKey);
+    }
+    function close() {
+      sheet.classList.remove('open'); sheet.setAttribute('aria-hidden', 'true');
+      document.removeEventListener('keydown', onKey);
+      if (lastFocus && lastFocus.focus) { try { lastFocus.focus(); } catch (_) {} }
+      lastFocus = null;
+    }
 
     $('btn-fb-close').onclick = close;
     $('btn-fb-close2').onclick = close;
