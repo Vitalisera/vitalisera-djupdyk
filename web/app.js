@@ -1017,6 +1017,12 @@
     clearTimeout(statusTimer);
     if (st.phase === 'connected') { netbar(null); return; }
     const render = () => {
+      // Utan nät: säg det rakt ut i stället för ett vilseledande "Återansluter…"
+      // (man har kanske aldrig varit ansluten). online-eventet triggar ny status sen.
+      if (!navigator.onLine && (st.phase === 'connecting' || st.phase === 'reconnecting')) {
+        netbar('<span class="spin"></span> Ingen internetanslutning. Vi försöker igen så fort du är online.', null);
+        return;
+      }
       const map = {
         connecting: '<span class="spin"></span> Ansluter…',
         reconnecting: '<span class="spin"></span> Återansluter…',
@@ -1084,8 +1090,14 @@
   nameInput.value = (Net._persistName && Net._persistName()) || '';
 
   function currentName() { return nameInput.value.trim() || 'Gäst'; }
+  // Namnet syns för alla andra i ett dyk → be om det i stället för att tyst bli "Gäst".
+  function requireName() {
+    const n = nameInput.value.trim();
+    if (!n) { toast('Vad ska de andra kalla dig?'); try { nameInput.focus(); } catch (_) {} return null; }
+    return n;
+  }
 
-  $('btn-create').onclick = () => { Snd.resume(); Net.host(currentName()); };
+  $('btn-create').onclick = () => { const n = requireName(); if (!n) return; Snd.resume(); Net.host(n); };
   $('btn-join').onclick = () => { Snd.resume(); doJoin(); };
   codeInput.addEventListener('input', (e) => { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''); });
   codeInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') doJoin(); });
@@ -1094,7 +1106,8 @@
   function doJoin(prefCode) {
     const code = (prefCode || codeInput.value).trim().toUpperCase();
     if (code.length < 4) return toast('Skriv in koden på fyra tecken.');
-    Net.join(code, currentName());
+    const n = requireName(); if (!n) return;
+    Net.join(code, n);
   }
 
   // ---- Runt bordet (lokalt läge, en telefon) -------------------------------
@@ -1312,6 +1325,8 @@
     // Lås dyket: bara meningsfullt i nätläge (lokalt finns inga anslutningar att stänga ute).
     $('btn-lock').hidden = isLocal;
     $('btn-lock').textContent = s.locked ? '🔓 Öppna dyket för nya igen' : '🔒 Lås dyket för nya';
+    // Runt bordet har ingen lobby att gå till: knappen startar bara om med samma sällskap.
+    $('btn-restart').textContent = isLocal ? '↺ Börja om (samma sällskap)' : '↩ Tillbaka till lobbyn';
     updateSoundLabel();
     $('game-invite-code').textContent = s.code;
     $('sheet').classList.add('open'); $('sheet').setAttribute('aria-hidden', 'false');

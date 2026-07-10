@@ -1125,8 +1125,9 @@ body.display-mode #app { max-width: none; }
 .tv-players .pchip { font-size: clamp(0.85rem, 1.6vw, 1.2rem); }
 .tv-foot { color: var(--ink-dim); font-size: clamp(0.72rem, 1.2vw, 0.95rem); margin: 18px 0 0; letter-spacing: 0.04em; }
 /* Diskret väg ut ur TV-läget (fjärrkontroll/mus i hörnet). */
-.tv-exit { position: absolute; top: max(10px, env(safe-area-inset-top)); left: 14px; z-index: 5; width: 42px; height: 42px; border-radius: 50%; border: 0; background: rgba(255,255,255,0.06); color: var(--ink-soft); font-size: 1rem; cursor: pointer; opacity: 0.3; transition: opacity 0.2s; }
-.tv-fs { position: absolute; top: max(10px, env(safe-area-inset-top)); right: 14px; z-index: 5; width: 42px; height: 42px; border-radius: 50%; border: 0; background: rgba(255,255,255,0.06); color: var(--ink-soft); font-size: 1.05rem; cursor: pointer; opacity: 0.3; transition: opacity 0.2s; }
+/* Vilo-opacitet höjd: på en riktig TV finns ingen muspekare/hover, så 0.3 var i praktiken osynligt. */
+.tv-exit { position: absolute; top: max(10px, env(safe-area-inset-top)); left: 14px; z-index: 5; width: 42px; height: 42px; border-radius: 50%; border: 0; background: rgba(255,255,255,0.06); color: var(--ink-soft); font-size: 1rem; cursor: pointer; opacity: 0.55; transition: opacity 0.2s; }
+.tv-fs { position: absolute; top: max(10px, env(safe-area-inset-top)); right: 14px; z-index: 5; width: 42px; height: 42px; border-radius: 50%; border: 0; background: rgba(255,255,255,0.06); color: var(--ink-soft); font-size: 1.05rem; cursor: pointer; opacity: 0.55; transition: opacity 0.2s; }
 .tv-exit:hover, .tv-exit:focus-visible, .tv-fs:hover, .tv-fs:focus-visible { opacity: 1; }
 :fullscreen .tv-fs { display: none; }   /* redan i helskärm → dölj knappen */
 
