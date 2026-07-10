@@ -44,6 +44,17 @@
       turn() { if (muted) return; this.resume(); tone(440, 0.14, 0, 0.035); tone(587.33, 0.16, 0.06, 0.03); },
       // Mjukt sjunkande svep vid nytt djup.
       descend() { if (muted) return; this.resume(); tone(330, 0.5, 0, 0.06); tone(220, 0.7, 0.09, 0.05); tone(160, 0.95, 0.18, 0.045); },
+      // Klangskål när tystnaden är över: grundton + inharmoniska deltoner (som en riktig
+      // skål), en lätt svävning och lång, mjuk utklingning.
+      bowl() {
+        if (muted) return; this.resume();
+        const f = 330;
+        tone(f, 3.8, 0, 0.11, 'sine');
+        tone(f * 1.004, 3.8, 0, 0.075, 'sine');   // svag svävning (~1,3 Hz) för levande klang
+        tone(f * 2.76, 2.9, 0.01, 0.05, 'sine');  // inharmonisk överton
+        tone(f * 5.40, 1.9, 0.02, 0.022, 'sine'); // skimmer
+        tone(f * 8.90, 1.1, 0.03, 0.010, 'sine'); // luftigt anslag
+      },
     };
   })();
   // Lås upp ljudet vid första interaktionen (krav på iOS/Safari).
@@ -712,7 +723,7 @@
     let n = 20; const el = $('silence-count'); el.textContent = n;
     silenceTimer = setInterval(() => {
       n -= 1;
-      if (n <= 0) { el.textContent = '✓'; stopSilence(); } else el.textContent = n;
+      if (n <= 0) { el.textContent = '✓'; stopSilence(); Snd.bowl(); } else el.textContent = n;
     }, 1000);
   }
   function stopSilence() { if (silenceTimer) { clearInterval(silenceTimer); silenceTimer = null; } }

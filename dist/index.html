@@ -1616,7 +1616,7 @@ body.iab-open #app { padding-top: 62px; }
       </div>
       <button id="btn-close-sheet" class="btn btn-primary full">Klar</button>
       <a class="site-link" href="https://vitalisera.se" target="_blank" rel="noopener">Mer från Vitalisera · vitalisera.se ↗</a>
-      <div style="text-align:center;font-size:0.68rem;color:var(--ink-dim);opacity:0.65;margin-top:6px;letter-spacing:0.04em;">version 2026-07-09 21:05</div>
+      <div style="text-align:center;font-size:0.68rem;color:var(--ink-dim);opacity:0.65;margin-top:6px;letter-spacing:0.04em;">version 2026-07-10 07:55</div>
     </div>
   </div>
 
@@ -1776,7 +1776,7 @@ body.iab-open #app { padding-top: 62px; }
           <div class="manual-card-row"><span class="mc-ic">✨</span><span><b class="mc-nm">Spegling.</b> <span class="mc-desc">Du målar upp en inre scen (ett berg, en bro …) och beskriver den; sedan finns en tolkning att ta fram av vad den kan spegla hos dig.</span></span></div>
           <div class="manual-card-row"><span class="mc-ic">✦</span><span><b class="mc-nm">Bläckbild.</b> <span class="mc-desc">En bild tonar fram och var och en låser i smyg in ett par ord om vad hen ser. När alla låst avtäcks orden samtidigt: skillnaderna mellan era tolkningar är samtalet. Den vars ord ligger längst från uppläsarens börjar berätta. På grundare djup är frågorna lekfulla, längre ner mer utforskande.</span></span></div>
           <div class="manual-card-row"><span class="mc-ic">🌊</span><span><b class="mc-nm">Para ihop två.</b> <span class="mc-desc">Den vars tur det är bjuder in en annan deltagare; ni två får ett kort bara för er, något ömsesidigt att säga eller göra. <i>(Minst två deltagare, och att ni nått Revet.)</i></span></span></div>
-          <div class="manual-card-row"><span class="mc-ic">🤫</span><span><b class="mc-nm">Tystnad.</b> <span class="mc-desc">En kort stund tillsammans, helt utan ord. <i>(Minst två deltagare.)</i></span></span></div>
+          <div class="manual-card-row"><span class="mc-ic">🤫</span><span><b class="mc-nm">Tystnad.</b> <span class="mc-desc">En kort stund tillsammans, helt utan ord. En mjuk klangskål ljuder när stunden är över. <i>(Minst två deltagare.)</i></span></span></div>
           <div class="manual-card-row"><span class="mc-ic">🪷</span><span><b class="mc-nm">Visdomsberättelse.</b> <span class="mc-desc">En kort sedelärande berättelse ur zen, taoism, sufism och liknande källor. Den vars tur det är läser den högt, sedan finns en eftertanke att samtala kring.</span></span></div>
           <div class="manual-card-row"><span class="mc-ic">💬</span><span><b class="mc-nm">Diskussionskort.</b> <span class="mc-desc">Ett tänkvärt citat eller påstående att bryta tankar kring, med en öppen diskussionspunkt. Här får ni gärna tycka olika.</span></span></div>
           <div class="manual-card-row"><span class="mc-ic">💞</span><span><b class="mc-nm">Par-kort.</b> <span class="mc-desc">En liten sak för er två, något ömsesidigt att säga eller göra. Dyker upp när ni valt Par som sällskap.</span></span></div>
@@ -4665,6 +4665,17 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
       turn() { if (muted) return; this.resume(); tone(440, 0.14, 0, 0.035); tone(587.33, 0.16, 0.06, 0.03); },
       // Mjukt sjunkande svep vid nytt djup.
       descend() { if (muted) return; this.resume(); tone(330, 0.5, 0, 0.06); tone(220, 0.7, 0.09, 0.05); tone(160, 0.95, 0.18, 0.045); },
+      // Klangskål när tystnaden är över: grundton + inharmoniska deltoner (som en riktig
+      // skål), en lätt svävning och lång, mjuk utklingning.
+      bowl() {
+        if (muted) return; this.resume();
+        const f = 330;
+        tone(f, 3.8, 0, 0.11, 'sine');
+        tone(f * 1.004, 3.8, 0, 0.075, 'sine');   // svag svävning (~1,3 Hz) för levande klang
+        tone(f * 2.76, 2.9, 0.01, 0.05, 'sine');  // inharmonisk överton
+        tone(f * 5.40, 1.9, 0.02, 0.022, 'sine'); // skimmer
+        tone(f * 8.90, 1.1, 0.03, 0.010, 'sine'); // luftigt anslag
+      },
     };
   })();
   // Lås upp ljudet vid första interaktionen (krav på iOS/Safari).
@@ -5333,7 +5344,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
     let n = 20; const el = $('silence-count'); el.textContent = n;
     silenceTimer = setInterval(() => {
       n -= 1;
-      if (n <= 0) { el.textContent = '✓'; stopSilence(); } else el.textContent = n;
+      if (n <= 0) { el.textContent = '✓'; stopSilence(); Snd.bowl(); } else el.textContent = n;
     }, 1000);
   }
   function stopSilence() { if (silenceTimer) { clearInterval(silenceTimer); silenceTimer = null; } }
