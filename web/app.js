@@ -328,7 +328,7 @@
       const n = (s.players || []).filter((p) => p.connected).length;
       textEl.textContent = n
         ? (n === 1 ? 'En dykare är med. Vänta in de andra, och starta sedan från en telefon.' : `${n} dykare är med. Starta dyket från en telefon när ni är samlade.`)
-        : 'Gå med med koden ovan från era telefoner.';
+        : 'Gå med från era telefoner med koden ovan.';
       syncPlayers($('tv-players'), s.players, {});
       return;
     }
@@ -1203,7 +1203,7 @@
     const st = $('tvpanel-status'); if (!st) return;
     if (Net.local) {
       const on = tvMirrorPhase === 'on';
-      st.textContent = on ? '✓ Klart — koden visar ert dyk på TV:n.' : 'Kopplar upp speglingen …';
+      st.textContent = on ? '✓ Klart, koden visar nu ert dyk på TV:n.' : 'Kopplar upp speglingen …';
       st.className = 'tvp-status' + (on ? ' ok' : '');
     } else {
       st.textContent = 'Skriv koden på TV:n, så följer den ert dyk.';
@@ -1366,16 +1366,19 @@
   // ---- Onboarding ----------------------------------------------------------
   const INTRO_KEY = 'vd_intro_hidden';
   function introHidden() { try { return JSON.parse(localStorage.getItem(INTRO_KEY)) === true; } catch (_) { return false; } }
+  function markIntroSeen() { try { localStorage.setItem(INTRO_KEY, JSON.stringify(true)); } catch (_) {} }
   function openIntro() {
-    $('intro-hide').checked = introHidden();
     $('intro').classList.add('open'); $('intro').setAttribute('aria-hidden', 'false');
   }
   function closeIntro() {
     $('intro').classList.remove('open'); $('intro').setAttribute('aria-hidden', 'true');
-    try { localStorage.setItem(INTRO_KEY, JSON.stringify(!!$('intro-hide').checked)); } catch (_) {}
+    markIntroSeen();
   }
-  function maybeShowIntro() { if (!introHidden()) openIntro(); }
+  // Auto-visa bara EN gång (första besöket). Markera som sedd direkt vid öppning, så den
+  // aldrig tvingas fram igen även om man stänger fliken. Går alltid att läsa via "Hur funkar det?".
+  function maybeShowIntro() { if (!introHidden()) { openIntro(); markIntroSeen(); } }
   $('btn-intro-start').onclick = closeIntro;
+  $('btn-intro-skip').onclick = closeIntro;
   $('intro').addEventListener('click', (e) => { if (e.target.id === 'intro') closeIntro(); });
   $('btn-help-home').onclick = openIntro;
   $('btn-help-game').onclick = () => { closeSheet(); openIntro(); };

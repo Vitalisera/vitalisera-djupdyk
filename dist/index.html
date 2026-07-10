@@ -1179,7 +1179,7 @@ body.display-mode #app { max-width: none; }
 
 /* In-app-browser-banner (Facebook/Instagram m.fl.): guidar ut till riktig webbläsare. */
 .iab-banner {
-  position: fixed; top: 0; left: 0; right: 0; z-index: 60;
+  position: fixed; top: 0; left: 0; right: 0; z-index: 66;   /* över intron (60): vanligaste vägen in är en delad social länk */
   background: linear-gradient(180deg, rgba(8,50,63,0.97), rgba(6,34,44,0.95));
   border-bottom: 1px solid rgba(111,190,203,0.35);
   box-shadow: 0 6px 22px rgba(0,0,0,0.35);
@@ -1237,6 +1237,16 @@ body.iab-open #app { padding-top: 62px; }
 
 /* Respektera minskad rörelse: stäng av tack-markörens animation. */
 @media (prefers-reduced-motion: reduce) { .fb-done-mark { animation: none; } }
+
+/* Onboardingens skippa-knapp (✕ högst upp). */
+.intro-panel { position: relative; }
+.intro-skip {
+  position: absolute; top: 10px; right: 12px; z-index: 2;
+  width: 34px; height: 34px; border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.06);
+  color: var(--ink-soft); font-size: 0.95rem; line-height: 1; cursor: pointer;
+}
+.intro-skip:hover, .intro-skip:focus-visible { background: rgba(255,255,255,0.12); color: var(--ink); }
 
 </style>
 </head>
@@ -1649,7 +1659,7 @@ body.iab-open #app { padding-top: 62px; }
       </div>
       <button id="btn-close-sheet" class="btn btn-primary full">Klar</button>
       <a class="site-link" href="https://vitalisera.se" target="_blank" rel="noopener">Mer från Vitalisera · vitalisera.se ↗</a>
-      <div id="app-version" style="text-align:center;font-size:0.68rem;color:var(--ink-dim);opacity:0.65;margin-top:6px;letter-spacing:0.04em;">version 2026-07-10 17:02</div>
+      <div id="app-version" style="text-align:center;font-size:0.68rem;color:var(--ink-dim);opacity:0.65;margin-top:6px;letter-spacing:0.04em;">version 2026-07-10 21:47</div>
     </div>
   </div>
 
@@ -1696,6 +1706,7 @@ body.iab-open #app { padding-top: 62px; }
   <!-- ============ ONBOARDING / SÅ FUNKAR DET ============ -->
   <div id="intro" class="intro" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="intro-title">
     <div class="intro-panel glass">
+      <button id="btn-intro-skip" class="intro-skip" type="button" aria-label="Hoppa över">✕</button>
       <div class="intro-mark"></div>
       <h2 class="intro-title" id="intro-title">Så funkar det</h2>
       <p class="intro-lede">Ett samtal som börjar lätt och sjunker djupare. Ni turas om att läsa kort högt och pratar er ner genom fem djup, var och en på sin egen telefon.</p>
@@ -1726,7 +1737,7 @@ body.iab-open #app { padding-top: 62px; }
 
       <section class="intro-block">
         <h3 class="intro-h"><span class="intro-n">3</span> Fem djup</h3>
-        <p class="intro-p">Från lätt småprat vid ytan till det som verkligen betyder något i djuphavet. Byt djup när ni vill via menyn <b>⋯</b>, och runda av med ett avslutningskort när det känns rätt.</p>
+        <p class="intro-p">Från lätt småprat vid ytan till det som verkligen betyder något i djuphavet. Byt djup när ni vill via menyn <b>☰</b>, och runda av med ett avslutningskort när det känns rätt.</p>
       </section>
 
       <section class="intro-block">
@@ -1741,7 +1752,6 @@ body.iab-open #app { padding-top: 62px; }
       </section>
 
       <p class="intro-safe">Här finns inga rätta svar. Du delar det du vill, i din takt, och får alltid säga pass. Behöver ni pausa kan vem som helst hissa <b>bojen</b> 🛟.</p>
-      <label class="intro-hide"><input type="checkbox" id="intro-hide" /> Visa inte det här igen</label>
       <button id="btn-intro-start" class="btn btn-primary full">Sätt igång</button>
       <button id="btn-video-intro" class="manual-link" type="button">▶ Se filmen</button>
       <button id="btn-manual-intro" class="manual-link" type="button">📖 Läs hela manualen</button>
@@ -1792,7 +1802,7 @@ body.iab-open #app { padding-top: 62px; }
 
       <section class="manual-section">
         <h3 class="intro-h"><span class="intro-n">5</span> De fem djupen</h3>
-        <p class="intro-p">Ni kan byta djup när som helst via menyn ⋯, och börja på vilket djup ni vill.</p>
+        <p class="intro-p">Ni kan byta djup när som helst via menyn ☰, och börja på vilket djup ni vill.</p>
         <div class="manual-depths">
           <div class="manual-depth"><span class="d-meta"><span class="d-name">Ytan</span><span class="d-depth">0 m · Uppvärmning</span></span><span class="d-desc">Vi börjar där det känns tryggt. Inga djupdyk än, bara ett första andetag tillsammans. Du delar det du vill, i din takt.</span></div>
           <div class="manual-depth"><span class="d-meta"><span class="d-name">Grundvatten</span><span class="d-depth">10 m · Lite djupare</span></span><span class="d-desc">Här under ytan finns det som formar oss utan att vi märker det. Vi sänker oss långsamt. Känn efter i kroppen, inte bara i huvudet.</span></div>
@@ -1845,13 +1855,13 @@ body.iab-open #app { padding-top: 62px; }
       <section class="manual-section">
         <h3 class="intro-h"><span class="intro-n">10</span> Runt bordet och Visa på TV</h3>
         <p class="intro-p"><b>Runt bordet.</b> Vill ni dela en enda telefon i stället för att ha var sin? Välj Runt bordet på startsidan, skriv in namnen och börja. Telefonen visar kortet och vems tur det är. Ni turas om att hålla den, eller låter den ligga i mitten. Inget internet och ingen kod behövs.</p>
-        <p class="intro-p"><b>Visa på TV.</b> Vill ni se kortet stort på en TV eller dator? Tryck Visa på TV, i menyn ⋯ eller i lobbyn, så får ni en kod. Öppna sedan djupdyk.vitalisera.se på TV:n eller datorn, tryck Använd som TV-skärm och skriv in koden. En telefon i rummet styr spelet medan alla andra tittar upp på samma kort. Har ni Chromecast eller AirPlay kan ni i stället spegla telefonen dit. Panelen på telefonen visar hur.</p>
+        <p class="intro-p"><b>Visa på TV.</b> Vill ni se kortet stort på en TV eller dator? Tryck Visa på TV, i menyn ☰ eller i lobbyn, så får ni en kod. Öppna sedan djupdyk.vitalisera.se på TV:n eller datorn, tryck Använd som TV-skärm och skriv in koden. En telefon i rummet styr spelet medan alla andra tittar upp på samma kort. Har ni Chromecast eller AirPlay kan ni i stället spegla telefonen dit. Panelen på telefonen visar hur.</p>
       </section>
 
       <section class="manual-section">
         <h3 class="intro-h"><span class="intro-n">11</span> Om Vitalisera</h3>
         <p class="intro-p">Djupdyk är skapat av Vitalisera. Mer om oss finns på <a href="https://vitalisera.se" target="_blank" rel="noopener">vitalisera.se</a>.</p>
-        <p class="intro-p">Vi håller på att göra djupdyk bättre och lyssnar gärna på dig. Under menyn <b>⋯</b>, och när ni stiger upp efter ett dyk, finns <b>Dela din feedback</b>. Ett par rader hjälper mer än du tror.</p>
+        <p class="intro-p">Vi håller på att göra djupdyk bättre och lyssnar gärna på dig. Under menyn <b>☰</b>, och när ni stiger upp efter ett dyk, finns <b>Dela din feedback</b>. Ett par rader hjälper mer än du tror.</p>
       </section>
 
       <button id="btn-manual-close" class="btn btn-primary full" type="button">Stäng</button>
@@ -5033,7 +5043,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
       const n = (s.players || []).filter((p) => p.connected).length;
       textEl.textContent = n
         ? (n === 1 ? 'En dykare är med. Vänta in de andra, och starta sedan från en telefon.' : `${n} dykare är med. Starta dyket från en telefon när ni är samlade.`)
-        : 'Gå med med koden ovan från era telefoner.';
+        : 'Gå med från era telefoner med koden ovan.';
       syncPlayers($('tv-players'), s.players, {});
       return;
     }
@@ -5908,7 +5918,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
     const st = $('tvpanel-status'); if (!st) return;
     if (Net.local) {
       const on = tvMirrorPhase === 'on';
-      st.textContent = on ? '✓ Klart — koden visar ert dyk på TV:n.' : 'Kopplar upp speglingen …';
+      st.textContent = on ? '✓ Klart, koden visar nu ert dyk på TV:n.' : 'Kopplar upp speglingen …';
       st.className = 'tvp-status' + (on ? ' ok' : '');
     } else {
       st.textContent = 'Skriv koden på TV:n, så följer den ert dyk.';
@@ -6071,16 +6081,19 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
   // ---- Onboarding ----------------------------------------------------------
   const INTRO_KEY = 'vd_intro_hidden';
   function introHidden() { try { return JSON.parse(localStorage.getItem(INTRO_KEY)) === true; } catch (_) { return false; } }
+  function markIntroSeen() { try { localStorage.setItem(INTRO_KEY, JSON.stringify(true)); } catch (_) {} }
   function openIntro() {
-    $('intro-hide').checked = introHidden();
     $('intro').classList.add('open'); $('intro').setAttribute('aria-hidden', 'false');
   }
   function closeIntro() {
     $('intro').classList.remove('open'); $('intro').setAttribute('aria-hidden', 'true');
-    try { localStorage.setItem(INTRO_KEY, JSON.stringify(!!$('intro-hide').checked)); } catch (_) {}
+    markIntroSeen();
   }
-  function maybeShowIntro() { if (!introHidden()) openIntro(); }
+  // Auto-visa bara EN gång (första besöket). Markera som sedd direkt vid öppning, så den
+  // aldrig tvingas fram igen även om man stänger fliken. Går alltid att läsa via "Hur funkar det?".
+  function maybeShowIntro() { if (!introHidden()) { openIntro(); markIntroSeen(); } }
   $('btn-intro-start').onclick = closeIntro;
+  $('btn-intro-skip').onclick = closeIntro;
   $('intro').addEventListener('click', (e) => { if (e.target.id === 'intro') closeIntro(); });
   $('btn-help-home').onclick = openIntro;
   $('btn-help-game').onclick = () => { closeSheet(); openIntro(); };
@@ -6178,7 +6191,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
 
     function appVersion() {
       const el = $('app-version'); const t = ((el && el.textContent) || '').replace(/^\s*version\s*/i, '').trim();
-      return t && !/2026-07-10 17:02/.test(t) ? t : '';
+      return t && !/2026-07-10 21:47/.test(t) ? t : '';
     }
     function platform() {
       const ua = navigator.userAgent || '';

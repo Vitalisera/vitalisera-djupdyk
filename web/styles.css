@@ -1146,7 +1146,7 @@ body.display-mode #app { max-width: none; }
 
 /* In-app-browser-banner (Facebook/Instagram m.fl.): guidar ut till riktig webbläsare. */
 .iab-banner {
-  position: fixed; top: 0; left: 0; right: 0; z-index: 60;
+  position: fixed; top: 0; left: 0; right: 0; z-index: 66;   /* över intron (60): vanligaste vägen in är en delad social länk */
   background: linear-gradient(180deg, rgba(8,50,63,0.97), rgba(6,34,44,0.95));
   border-bottom: 1px solid rgba(111,190,203,0.35);
   box-shadow: 0 6px 22px rgba(0,0,0,0.35);
@@ -1204,3 +1204,13 @@ body.iab-open #app { padding-top: 62px; }
 
 /* Respektera minskad rörelse: stäng av tack-markörens animation. */
 @media (prefers-reduced-motion: reduce) { .fb-done-mark { animation: none; } }
+
+/* Onboardingens skippa-knapp (✕ högst upp). */
+.intro-panel { position: relative; }
+.intro-skip {
+  position: absolute; top: 10px; right: 12px; z-index: 2;
+  width: 34px; height: 34px; border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.06);
+  color: var(--ink-soft); font-size: 0.95rem; line-height: 1; cursor: pointer;
+}
+.intro-skip:hover, .intro-skip:focus-visible { background: rgba(255,255,255,0.12); color: var(--ink); }
