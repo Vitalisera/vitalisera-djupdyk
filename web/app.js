@@ -506,7 +506,13 @@
     if (myTurn) {
       $('turn-avatar').style.cssText = '';
       $('turn-avatar').textContent = s.duet ? '💞' : '🤿';
-      $('turn-text').textContent = s.duet ? 'Din tur att börja' : 'Din tur, läs frågan högt';
+      const src = s.card && s.card.source;
+      // Anpassa efter kort: Tystnad och Uppstigning har ingen fråga att "läsa högt".
+      $('turn-text').textContent =
+        src === 'silence' ? 'Din tur'
+          : src === 'ascent' ? 'Din tur att dela'
+            : s.duet ? 'Din tur att börja'
+              : 'Din tur, läs frågan högt';
     } else {
       $('turn-avatar').style.cssText = turnP ? `background:${avatarBg(turnP.name)}` : '';
       $('turn-avatar').textContent = turnP ? initials(turnP.name) : '…';
@@ -1735,6 +1741,7 @@
         openBtn.hidden = false;
         textEl.innerHTML = lead + 'Öppna djupdyk i Chrome för att kunna installera appen och få full funktion.';
       } else {
+        if (openBtn) openBtn.hidden = true;   // iOS kan inte tvingas ut → ingen knapp (undvik fel "Öppna i Chrome"-text)
         textEl.innerHTML = lead + 'Öppna i Safari för full funktion: tryck på <b>•••</b> och välj <b>Öppna i webbläsare</b>.';
       }
 

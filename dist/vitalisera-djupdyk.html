@@ -1302,7 +1302,7 @@ a:focus-visible, [tabindex="0"]:focus-visible, input:focus-visible, textarea:foc
             <button id="btn-join" class="btn btn-glass">Gå med</button>
           </div>
 
-          <div class="or"><span>eller en telefon</span></div>
+          <div class="or"><span>eller dela en telefon i samma rum</span></div>
 
           <button id="btn-local" class="btn btn-glass btn-lg">🍵 Runt bordet</button>
         </div>
@@ -1651,7 +1651,7 @@ a:focus-visible, [tabindex="0"]:focus-visible, input:focus-visible, textarea:foc
           <span class="sheet-group-h">Spelledaren</span>
           <button id="btn-lock" class="btn btn-glass full">🔒 Lås dyket för nya</button>
           <button id="btn-closing" class="btn btn-glass full">🍃 Dra ett avslutningskort</button>
-          <button id="btn-finish" class="btn btn-glass full">🫧 Stig upp och avsluta</button>
+          <button id="btn-finish" class="btn btn-glass full">🫧 Påbörja uppstigningen</button>
           <button id="btn-restart" class="btn btn-glass full">↩ Tillbaka till lobbyn</button>
         </div>
 
@@ -1670,7 +1670,7 @@ a:focus-visible, [tabindex="0"]:focus-visible, input:focus-visible, textarea:foc
       </div>
       <button id="btn-close-sheet" class="btn btn-primary full">Klar</button>
       <a class="site-link" href="https://vitalisera.se" target="_blank" rel="noopener">Mer från Vitalisera · vitalisera.se ↗</a>
-      <div id="app-version" style="text-align:center;font-size:0.68rem;color:var(--ink-dim);opacity:0.65;margin-top:6px;letter-spacing:0.04em;">version 2026-07-10 21:59</div>
+      <div id="app-version" style="text-align:center;font-size:0.68rem;color:var(--ink-dim);opacity:0.65;margin-top:6px;letter-spacing:0.04em;">version 2026-07-10 22:03</div>
     </div>
   </div>
 
@@ -5241,7 +5241,13 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
     if (myTurn) {
       $('turn-avatar').style.cssText = '';
       $('turn-avatar').textContent = s.duet ? '💞' : '🤿';
-      $('turn-text').textContent = s.duet ? 'Din tur att börja' : 'Din tur, läs frågan högt';
+      const src = s.card && s.card.source;
+      // Anpassa efter kort: Tystnad och Uppstigning har ingen fråga att "läsa högt".
+      $('turn-text').textContent =
+        src === 'silence' ? 'Din tur'
+          : src === 'ascent' ? 'Din tur att dela'
+            : s.duet ? 'Din tur att börja'
+              : 'Din tur, läs frågan högt';
     } else {
       $('turn-avatar').style.cssText = turnP ? `background:${avatarBg(turnP.name)}` : '';
       $('turn-avatar').textContent = turnP ? initials(turnP.name) : '…';
@@ -6235,7 +6241,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
 
     function appVersion() {
       const el = $('app-version'); const t = ((el && el.textContent) || '').replace(/^\s*version\s*/i, '').trim();
-      return t && !/2026-07-10 21:59/.test(t) ? t : '';
+      return t && !/2026-07-10 22:03/.test(t) ? t : '';
     }
     function platform() {
       const ua = navigator.userAgent || '';
@@ -6470,6 +6476,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = DECK;
         openBtn.hidden = false;
         textEl.innerHTML = lead + 'Öppna djupdyk i Chrome för att kunna installera appen och få full funktion.';
       } else {
+        if (openBtn) openBtn.hidden = true;   // iOS kan inte tvingas ut → ingen knapp (undvik fel "Öppna i Chrome"-text)
         textEl.innerHTML = lead + 'Öppna i Safari för full funktion: tryck på <b>•••</b> och välj <b>Öppna i webbläsare</b>.';
       }
 
