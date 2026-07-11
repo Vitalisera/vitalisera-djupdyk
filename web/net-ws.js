@@ -162,6 +162,13 @@
           this.clearSession();
           this._emit('noroom', { code: this.code });
         }
+        else if (msg && msg.type === 'overloaded') {
+          // Servern (Durable Objects) är tillfälligt otillgänglig. Sluta hamra på retry
+          // och berätta det, så användaren kan prova igen strax eller spela Runt bordet.
+          this._alive = false;
+          clearTimeout(this._retryTimer); this._retryTimer = null;
+          this._emit('overloaded', {});
+        }
       };
       ws.onclose = () => {
         this._open = false;

@@ -1073,6 +1073,18 @@
     toast('Ingen väntar på koden ' + code + '. Dubbelkolla den med den som bjöd in dig.');
     try { codeInput.focus(); } catch (_) {}
   });
+  Net.on('overloaded', () => {
+    if (displayMode) {
+      showScreen('display');
+      $('tv-turn').hidden = true; $('tv-blot').hidden = true; $('tv-qr').hidden = true;
+      $('tv-eyebrow').textContent = ''; $('tv-depth').textContent = ''; $('tv-players').innerHTML = '';
+      $('tv-text').textContent = 'Vi har ovanligt högt tryck just nu. Försök igen om en liten stund.';
+      fitTvText();
+      return;
+    }
+    leave();
+    netbar('Ovanligt högt tryck just nu. Prova igen om en liten stund, eller spela "Runt bordet" på en telefon så länge.', null);
+  });
   let droppedT = 0;
   Net.on('dropped', () => { const now = Date.now(); if (now - droppedT > 2500) { droppedT = now; toast('Inte ansluten just nu. Det du valde skickas så snart du är inne igen.'); } });
 

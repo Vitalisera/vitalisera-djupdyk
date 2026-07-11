@@ -59,7 +59,20 @@ export default {
       }
       const code = m[1].toUpperCase();
       const id = env.ROOM.idFromName(code);
-      return env.ROOM.get(id).fetch(request);
+      try {
+        return await env.ROOM.get(id).fetch(request);
+      } catch (_) {
+        // Durable Object otillgänglig (t.ex. kontots DO-dygnstak sprängt). Ge klienten
+        // ett TYDLIGT besked i stället för en rå 1101/500 → den kan visa "överbelastad"
+        // och hänvisa till Runt bordet, i stället för att hänga i evig "Ansluter…".
+        if (request.headers.get('Upgrade') === 'websocket') {
+          const op = new WebSocketPair();
+          op[1].accept();
+          try { op[1].send(JSON.stringify({ type: 'overloaded' })); op[1].close(1013, 'overloaded'); } catch (_) {}
+          return new Response(null, { status: 101, webSocket: op[0] });
+        }
+        return new Response('Tjänsten är tillfälligt överbelastad. Försök igen om en stund.', { status: 503, headers: { ...CORS, 'Retry-After': '120' } });
+      }
     }
     // Feedback från testare: skrivs in i registret och syns i dashboarden.
     if (url.pathname === '/feedback' && request.method === 'POST') {
