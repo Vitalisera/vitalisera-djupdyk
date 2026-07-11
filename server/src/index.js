@@ -264,7 +264,7 @@ export class Room {
 
     await this.persist();
     this.broadcast();
-    await this.report();   // dyk + dykare räknas i Registry utifrån summary (konsekvent med peak, reset-rent)
+    await this.report(true);   // strypt (8 s): dashboard-rapporten belastar inte reläet i onödan under hög last
     // TTL: rensa bort övergivna rum (och deras IP/geo-metadata) efter ett dygn utan nya anslutningar.
     try { await this.ctx.storage.setAlarm(Date.now() + 24 * 3600 * 1000); } catch (_) {}
 
@@ -386,7 +386,7 @@ export class Room {
       const ended = JSON.stringify({ type: 'ended' });
       for (const s of this.ctx.getWebSockets('display')) { try { s.send(ended); } catch (_) {} }
     }
-    await this.report(false, !anyOnline, played);
+    await this.report(true, !anyOnline, played);
   }
 
   broadcast() {
