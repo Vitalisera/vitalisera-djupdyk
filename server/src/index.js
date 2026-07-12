@@ -43,10 +43,11 @@ export default {
     if (request.method === 'OPTIONS') return new Response(null, { headers: CORS });
 
     // Användnings-dashboard på en svårgissad URL.
-    const dm = url.pathname.match(/^\/dash\/([a-zA-Z0-9]+)(\/reset|\/feedback-reset)?\/?$/);
+    const dm = url.pathname.match(/^\/dash\/([a-zA-Z0-9]+)(\/reset|\/feedback-reset|\/funnel)?\/?$/);
     if (dm) {
       const token = env.DASH_TOKEN || '';
       if (!token || dm[1] !== token) return new Response('Not found', { status: 404 });
+      if (dm[2] === '/funnel') return renderFunnel(env);   // tratt-vyn (Analytics Engine), skild från Registry-DO
       const reg = env.REGISTRY.get(env.REGISTRY.idFromName('global'));
       const path = dm[2] === '/reset' ? 'https://reg/reset' : dm[2] === '/feedback-reset' ? 'https://reg/feedback-reset' : 'https://reg/view';
       return reg.fetch(new Request(path));
@@ -605,6 +606,52 @@ function renderFeedback(feedback) {
     summary = `<div class="fb-summary">Snittbetyg <b>${esc(avg.toFixed(1).replace('.', ','))}</b> <span class="fb-rate">${'●'.repeat(r)}<span class="fb-rate-off">${'●'.repeat(5 - r)}</span></span> <span class="meta">· ${rated.length} av ${fb.length} satte betyg</span></div>`;
   }
   return `<h2>Feedback · ${fb.length}</h2>${summary}<div class="fb-list">${fb.map(item).join('')}</div>`;
+}
+
+// Anonym tratt-vy från Analytics Engine (frågas via SQL API med en läs-token).
+async function renderFunnel(env) {
+  const H = { 'content-type': 'text/html; charset=utf-8' };
+  const wrap = (body) => `<!doctype html><html lang="sv"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Djupdyk · tratt</title><style>body{margin:0;background:#04141b;color:#eaf6f8;font:15px/1.5 -apple-system,Segoe UI,Roboto,sans-serif;padding:24px}h1{font-size:1.4rem}h2{color:#9fc5cf;font-size:1rem;margin:26px 0 10px}table{width:100%;max-width:640px;border-collapse:collapse;background:#0c2430;border-radius:12px;overflow:hidden}td,th{text-align:left;padding:9px 14px;border-bottom:1px solid rgba(255,255,255,.06)}th{color:#9fc5cf;font-size:.78rem;text-transform:uppercase}b{color:#7fe3ef}code{background:#0c2430;padding:2px 6px;border-radius:6px;color:#7fe3ef}a{color:#7fe3ef}.hint{color:#6f95a0;font-size:.85rem}</style></head><body>${body}</body></html>`;
+  const token = env.AE_TOKEN;
+  const account = env.CF_ACCOUNT || 'c56907e0c41b8b77494a27972b941076';
+  if (!token) {
+    return new Response(wrap(`<h1>Tratt-vyn behöver en läs-token (engångs)</h1>
+      <p>Datainsamlingen är redan i gång och anonym. För att se den här:</p>
+      <ol>
+        <li>Cloudflare-dashboarden → <b>My Profile → API Tokens → Create Token</b> → mallen <b>"Read Analytics and Logs"</b> (eller custom med <b>Account Analytics: Read</b>).</li>
+        <li>I terminalen: <code>cd server &amp;&amp; npx wrangler secret put AE_TOKEN</code> och klistra in token.</li>
+        <li>Ladda om den här sidan.</li>
+      </ol>
+      <p class="hint">Vill du se datan direkt utan detta: kör SQL i Cloudflares Analytics Engine-konsol, t.ex.<br>
+      <code>SELECT blob1 AS event, SUM(_sample_interval) n FROM djupdyk_funnel WHERE timestamp &gt; NOW() - INTERVAL '7' DAY GROUP BY event ORDER BY n DESC</code></p>`), { headers: H });
+  }
+  const q = async (sql) => {
+    const r = await fetch(`https://api.cloudflare.com/client/v4/accounts/${account}/analytics_engine/sql`, { method: 'POST', headers: { Authorization: 'Bearer ' + token }, body: sql });
+    const j = await r.json().catch(() => ({}));
+    return (j && j.data) || [];
+  };
+  try {
+    const D = "timestamp > NOW() - INTERVAL '7' DAY";
+    const ev = await q(`SELECT blob1 AS event, SUM(_sample_interval) AS n FROM djupdyk_funnel WHERE ${D} GROUP BY event ORDER BY n DESC`);
+    const utm = await q(`SELECT blob2 AS utm, SUM(_sample_interval) AS n FROM djupdyk_funnel WHERE blob1='landing' AND ${D} GROUP BY utm ORDER BY n DESC`);
+    const left = await q(`SELECT blob4 AS last, SUM(_sample_interval) AS n, AVG(double1) AS dur FROM djupdyk_funnel WHERE blob1='session_end' AND ${D} GROUP BY last ORDER BY n DESC`);
+    const get = (rows, key) => { const r = rows.find((x) => x.event === key); return r ? Math.round(r.n) : 0; };
+    const land = get(ev, 'landing'), dive = get(ev, 'dive_start');
+    const conv = land ? Math.round(dive / land * 100) : 0;
+    const rowsOf = (rows, cols) => rows.map((r) => '<tr>' + cols.map((c) => `<td>${esc(c.fmt ? c.fmt(r[c.k]) : (r[c.k] == null ? '' : r[c.k]))}</td>`).join('') + '</tr>').join('') || '<tr><td colspan="9" class="hint">Ingen data än (kan dröja någon minut efter första besöket).</td></tr>';
+    const n = (v) => Math.round(v || 0);
+    return new Response(wrap(`<h1>Djupdyk · tratt (senaste 7 dygn)</h1>
+      <p><b>${land}</b> landade · <b>${dive}</b> startade ett dyk · konvertering <b>${conv}%</b></p>
+      <h2>Steg (antal sessioner som nådde)</h2>
+      <table><tr><th>Händelse</th><th>Antal</th></tr>${rowsOf(ev, [{ k: 'event' }, { k: 'n', fmt: n }])}</table>
+      <h2>Landningar per källa (utm)</h2>
+      <table><tr><th>Källa</th><th>Antal</th></tr>${rowsOf(utm, [{ k: 'utm', fmt: (v) => v || 'direkt' }, { k: 'n', fmt: n }])}</table>
+      <h2>Var de lämnade (sista skärm) + snitt-tid</h2>
+      <table><tr><th>Sista skärm</th><th>Antal</th><th>Snitt-tid</th></tr>${rowsOf(left, [{ k: 'last' }, { k: 'n', fmt: n }, { k: 'dur', fmt: (v) => n(v) + ' s' }])}</table>
+      <p class="hint">Händelser: landing, intro_done/intro_skip, howto, manual, video, create/join/local_click, dive_start.</p>`), { headers: H });
+  } catch (e) {
+    return new Response(wrap(`<h1>Kunde inte hämta tratten</h1><p class="hint">${esc(String(e))}. Kontrollera att AE_TOKEN har Account Analytics: Read och att kontot stämmer.</p>`), { headers: H });
+  }
 }
 
 function renderDashboard(rooms, stats, feedback) {
