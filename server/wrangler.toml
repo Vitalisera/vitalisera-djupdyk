@@ -17,6 +17,12 @@ class_name = "Room"
 name = "REGISTRY"
 class_name = "Registry"
 
+# Anonym tratt-/besöksmätning (helt skilt från Durable Objects → ingen DO-last).
+# Analytics Engine är byggt för event-loggning i stor skala, spottbilligt.
+[[analytics_engine_datasets]]
+binding = "FUNNEL"
+dataset = "djupdyk_funnel"
+
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["Room"]

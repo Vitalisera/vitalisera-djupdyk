@@ -58,6 +58,17 @@
       return fetch(url, opts).then((r) => { if (!r.ok) throw new Error('http ' + r.status); return r.json().catch(() => ({ ok: true })); });
     },
 
+    // ---- Anonym tratt-mätning: fire-and-forget till /event -------------------
+    event(payload, beacon) {
+      const url = WS_BASE.replace(/^ws/, 'http') + '/event';
+      const body = JSON.stringify(payload || {});
+      // sendBeacon överlever sid-stängning (för session_end vid unload).
+      if (beacon && typeof navigator !== 'undefined' && navigator.sendBeacon) {
+        try { navigator.sendBeacon(url, body); return; } catch (_) {}
+      }
+      try { fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body, keepalive: true }).catch(() => {}); } catch (_) {}
+    },
+
     // ---- Persistens (resume vid omladdning) --------------------------------
     _saveSession() {
       if (this.role === 'display') return;   // display resumas ur ?visa-länken, inte ur sessionen

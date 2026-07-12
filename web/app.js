@@ -34,6 +34,35 @@
     reset() { this.startedAt = null; this.startLevel = null; this.cards = []; },
   };
 
+  // Anonym tratt-mätning: förstå hur många som landar, hur långt de kommer och var
+  // de lämnar. Helt anonymt (inget id, ingen IP, inget om vad någon skrivit),
+  // fire-and-forget till Analytics Engine (skilt från Durable Objects).
+  const Track = (function () {
+    const started = Date.now();
+    const fired = new Set();
+    let last = 'home', vid = 0, ended = false;
+    function plat() {
+      const ua = navigator.userAgent || '';
+      return /iphone/i.test(ua) ? 'iPhone'
+        : (/ipad/i.test(ua) || (/macintosh/i.test(ua) && navigator.maxTouchPoints > 1)) ? 'iPad'
+        : /android/i.test(ua) ? 'Android' : /macintosh/i.test(ua) ? 'Mac'
+        : /windows/i.test(ua) ? 'Windows' : /linux/i.test(ua) ? 'Linux' : 'Okänd';
+    }
+    const utm = () => { try { return (Net._readUtm && Net._readUtm()) || ''; } catch (_) { return ''; } };
+    const send = (t, extra) => { try { Net.event(Object.assign({ t, utm: utm(), screen: last, plat: plat() }, extra || {})); } catch (_) {} };
+    return {
+      hit(t, extra) { if (fired.has(t)) return; fired.add(t); send(t, extra); },   // en gång per session
+      ev(t, extra) { send(t, extra); },
+      screen(s) { if (s) last = s; },
+      video(sec) { vid = Math.max(vid, Math.round(sec || 0)); },
+      end() { if (ended) return; ended = true; try { Net.event({ t: 'session_end', utm: utm(), last, plat: plat(), dur: Math.round((Date.now() - started) / 1000), vid }, true); } catch (_) {} },
+    };
+  })();
+  Track.ev('landing');
+  // Session-slut (var/hur länge) med sendBeacon vid stängning + flikbyte på mobil.
+  window.addEventListener('pagehide', () => Track.end());
+  document.addEventListener('visibilitychange', () => { if (document.hidden) Track.end(); });
+
   // ---- Ljud (valbart) -----------------------------------------------------
   // Subtila toner via WebAudio. Obs: på iOS spelas inget om telefonens
   // ringknapp står på tyst (en webbegränsning), och första ljudet kräver att
@@ -133,6 +162,7 @@
     document.querySelectorAll('.screen').forEach((s) => s.classList.remove('active'));
     const el = $('screen-' + name);
     if (el) el.classList.add('active');
+    Track.screen(name);
   }
 
   let _state = null;
@@ -190,6 +220,7 @@
   function render(state) {
     if (!state) return;
     Journal.track(state);
+    if (state.phase === 'playing') Track.hit('dive_start');
     if (state.phase !== 'playing') { toggleOverlay('ritual', false); toggleOverlay('pause', false); stopSilence(); $('handoff').hidden = true; }
     if (state.phase === 'lobby') {
       // Runt bordet har ingen nätlobby. "Spela igen" (restart → lobby) ska bara
@@ -1123,7 +1154,7 @@
     return n;
   }
 
-  $('btn-create').onclick = () => { const n = requireName(); if (!n) return; Snd.resume(); Net.host(n); };
+  $('btn-create').onclick = () => { Track.hit('create_click'); const n = requireName(); if (!n) return; Snd.resume(); Net.host(n); };
   $('btn-join').onclick = () => { Snd.resume(); doJoin(); };
   codeInput.addEventListener('input', (e) => { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''); });
   codeInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') doJoin(); });
@@ -1133,6 +1164,7 @@
     const code = (prefCode || codeInput.value).trim().toUpperCase();
     if (code.length < 4) return toast('Skriv in koden på fyra tecken.');
     const n = requireName(); if (!n) return;
+    Track.hit('join_click');
     Net.join(code, n);
   }
 
@@ -1180,7 +1212,7 @@
     applyTheme(localLevel);
     showScreen('local');
   }
-  $('btn-local').onclick = () => { Snd.resume(); openLocalSetup(); };
+  $('btn-local').onclick = () => { Track.hit('local_click'); Snd.resume(); openLocalSetup(); };
   $('btn-local-add').onclick = addLocalRow;
   $('btn-local-back').onclick = () => { applyTheme(LEVELS[0].id); showScreen('home'); };
   $('local-session-chips').querySelectorAll('.chip').forEach((el) => {
@@ -1419,14 +1451,15 @@
   // Auto-visa bara EN gång (första besöket). Markera som sedd direkt vid öppning, så den
   // aldrig tvingas fram igen även om man stänger fliken. Går alltid att läsa via "Hur funkar det?".
   function maybeShowIntro() { if (!introHidden()) { openIntro(); markIntroSeen(); } }
-  $('btn-intro-start').onclick = closeIntro;
-  $('btn-intro-skip').onclick = closeIntro;
+  $('btn-intro-start').onclick = () => { Track.ev('intro_done'); closeIntro(); };
+  $('btn-intro-skip').onclick = () => { Track.ev('intro_skip'); closeIntro(); };
   $('intro').addEventListener('click', (e) => { if (e.target.id === 'intro') closeIntro(); });
-  $('btn-help-home').onclick = openIntro;
-  $('btn-help-game').onclick = () => { closeSheet(); openIntro(); };
+  $('btn-help-home').onclick = () => { Track.hit('howto'); openIntro(); };
+  $('btn-help-game').onclick = () => { Track.hit('howto'); closeSheet(); openIntro(); };
 
   // ---- Komplett manual + PDF-utskrift -------------------------------------
   function openManual() {
+    Track.hit('manual');
     $('manual').classList.add('open'); $('manual').setAttribute('aria-hidden', 'false');
     const p = $('manual').querySelector('.intro-panel'); if (p) p.scrollTop = 0;
   }
@@ -1436,7 +1469,8 @@
   $('btn-manual-intro').onclick = openManual;
 
   // ---- Instruktionsfilm -----------------------------------------------------
-  function openVideo() { const v = $('video'); v.classList.add('open'); v.setAttribute('aria-hidden', 'false'); }
+  function openVideo() { Track.hit('video'); const v = $('video'); v.classList.add('open'); v.setAttribute('aria-hidden', 'false'); }
+  { const ve = $('video-el'); if (ve) ve.addEventListener('timeupdate', () => Track.video(ve.currentTime)); }
   function closeVideo() {
     const v = $('video'); v.classList.remove('open'); v.setAttribute('aria-hidden', 'true');
     try { $('video-el').pause(); } catch (_) {}

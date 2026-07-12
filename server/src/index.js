@@ -112,6 +112,23 @@ export default {
       await reg.fetch(new Request('https://reg/feedback', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(entry) }));
       return new Response(JSON.stringify({ ok: true }), { headers: JSON_CORS });
     }
+    // Anonym tratt-/besöksmätning → Analytics Engine (INTE Durable Objects, ingen DO-last).
+    // Inget id, ingen IP, inget om vad någon skrivit. Bara vart/hur långt en session kom.
+    if (url.pathname === '/event' && request.method === 'POST') {
+      let e = {};
+      try { e = await request.json(); } catch (_) {}
+      const s = (v, n) => String(v == null ? '' : v).slice(0, n);
+      const num = (v) => { const n = Number(v); return Number.isFinite(n) ? Math.max(0, Math.min(1e7, n)) : 0; };
+      const cf = request.cf || {};
+      try {
+        if (env.FUNNEL) env.FUNNEL.writeDataPoint({
+          blobs: [s(e.t, 32), s(e.utm, 64), s(e.screen, 32), s(e.last, 32), s(e.plat, 48), s(cf.country, 8)],
+          doubles: [num(e.dur), num(e.vid)],
+          indexes: [s(e.utm || 'direkt', 32)],
+        });
+      } catch (_) {}
+      return new Response(null, { status: 204, headers: CORS });
+    }
     if (url.pathname === '/' || url.pathname === '/health') {
       return new Response('Vitalisera djupdyk realtidsserver är uppe.', { status: 200, headers: CORS });
     }
