@@ -611,7 +611,7 @@ function renderFeedback(feedback) {
 // Anonym tratt-vy från Analytics Engine (frågas via SQL API med en läs-token).
 async function renderFunnel(env) {
   const H = { 'content-type': 'text/html; charset=utf-8' };
-  const wrap = (body) => `<!doctype html><html lang="sv"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Djupdyk · tratt</title><style>body{margin:0;background:#04141b;color:#eaf6f8;font:15px/1.5 -apple-system,Segoe UI,Roboto,sans-serif;padding:24px}h1{font-size:1.4rem}h2{color:#9fc5cf;font-size:1rem;margin:26px 0 10px}table{width:100%;max-width:640px;border-collapse:collapse;background:#0c2430;border-radius:12px;overflow:hidden}td,th{text-align:left;padding:9px 14px;border-bottom:1px solid rgba(255,255,255,.06)}th{color:#9fc5cf;font-size:.78rem;text-transform:uppercase}b{color:#7fe3ef}code{background:#0c2430;padding:2px 6px;border-radius:6px;color:#7fe3ef}a{color:#7fe3ef}.hint{color:#6f95a0;font-size:.85rem}</style></head><body>${body}</body></html>`;
+  const wrap = (body) => `<!doctype html><html lang="sv"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Djupdyk · tratt</title><style>body{margin:0;background:#04141b;color:#eaf6f8;font:15px/1.5 -apple-system,Segoe UI,Roboto,sans-serif;padding:24px}h1{font-size:1.4rem}h2{color:#9fc5cf;font-size:1rem;margin:26px 0 10px}table{width:100%;max-width:640px;border-collapse:collapse;background:#0c2430;border-radius:12px;overflow:hidden}td,th{text-align:left;padding:9px 14px;border-bottom:1px solid rgba(255,255,255,.06)}th{color:#9fc5cf;font-size:.78rem;text-transform:uppercase}b{color:#7fe3ef}code{background:#0c2430;padding:2px 6px;border-radius:6px;color:#7fe3ef}a{color:#7fe3ef}.hint{color:#6f95a0;font-size:.85rem}</style></head><body><p><a id="back" href="#">← Tillbaka till dashboarden</a></p><script>(function(){var b=document.getElementById('back');if(!b)return;var p=location.pathname;if(p.charAt(p.length-1)==='/')p=p.slice(0,-1);if(p.slice(-7)==='/funnel')p=p.slice(0,-7);b.href=p||'/';})();</script>${body}</body></html>`;
   const token = env.AE_TOKEN;
   const account = env.CF_ACCOUNT || 'c56907e0c41b8b77494a27972b941076';
   if (!token) {
@@ -786,7 +786,8 @@ function renderDashboard(rooms, stats, feedback) {
   .fb-src{display:inline-block;min-width:56px;color:var(--dim);font-size:.7rem;margin-right:6px;text-transform:uppercase;letter-spacing:.04em}
 </style></head><body>
   <h1>Djupdyk · aktiva dyk</h1>
-  <p class="sub">Live-översikt. Sidan uppdateras var 15:e sekund.</p>
+  <p class="sub">Live-översikt. Sidan uppdateras var 15:e sekund. · <a id="funnel-link" href="#" style="color:var(--acc);font-weight:600">📊 Besöks- &amp; tratt-statistik →</a></p>
+  <script>(function(){var f=document.getElementById('funnel-link');if(!f)return;var p=location.pathname;if(p.charAt(p.length-1)==='/')p=p.slice(0,-1);f.href=p+'/funnel';})();</script>
   <div class="stats">
     <div class="stat"><div class="n">${list.length}</div><div class="l">aktiva dyk just nu</div></div>
     <div class="stat"><div class="n">${totalPlayers}</div><div class="l">dykare uppkopplade</div></div>
