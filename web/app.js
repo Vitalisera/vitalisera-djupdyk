@@ -149,6 +149,8 @@
     return h;
   }
   function avatarBg(name) { return `hsl(${hashHue(name || '?')} 62% 58%)`; }
+  // Svensk genitiv: namn som slutar på s/x/z får inget extra -s ("Max tur", inte "Maxs tur").
+  function possessive(name) { const n = String(name || ''); return /[sxzSXZ]$/.test(n) ? n : n + 's'; }
   function hashStr(str) { let h = 0; str = String(str); for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) | 0; return Math.abs(h); }
   const BLOT_COLOR = '#a6dbe1';
   function initials(name) {
@@ -221,7 +223,7 @@
     if (!state) return;
     Journal.track(state);
     if (state.phase === 'playing') Track.hit('dive_start');
-    if (state.phase !== 'playing') { toggleOverlay('ritual', false); toggleOverlay('pause', false); stopSilence(); $('handoff').hidden = true; }
+    if (state.phase !== 'playing') { toggleOverlay('ritual', false); toggleOverlay('pause', false); stopSilence(); $('handoff').hidden = true; const ta = $('turn-announce'); if (ta) { ta.classList.remove('show'); ta.hidden = true; } }
     if (state.phase === 'lobby') {
       // Runt bordet har ingen nätlobby. "Spela igen" (restart → lobby) ska bara
       // dela om med samma grupp och inställningar och gå rakt in i spelet igen.
@@ -523,31 +525,44 @@
 
     // Turbyte: en tydlig, vänlig klang (plus en liten vibration där det stöds)
     // när det blir DIN tur, en dämpad markering när den går till någon annan.
+    // Dessutom ett kort, lugnt besked på ALLAS skärmar ("Nu är det X:s tur"),
+    // så att ingen förväxlar ett turbyte med att en följdfråga dök upp.
     if (s.turnId && lastTurnId && s.turnId !== lastTurnId) {
       if (myTurn) { Snd.yourTurn(); if (navigator.vibrate) { try { navigator.vibrate([14, 40, 22]); } catch (_) {} } }
       else Snd.turn();
       // Mjuk glöd-svep över turbannern vid varje turbyte.
       const tb = $('turn'); if (tb) { tb.classList.remove('flash'); void tb.offsetWidth; tb.classList.add('flash'); }
+      announceTurn(myTurn ? null : turnP, myTurn);
     }
     lastTurnId = s.turnId;
 
-    // Turbanner
+    // Turbanner (spelets tydligaste ankare för vems tur det är)
     const turnEl = $('turn');
     turnEl.classList.toggle('you', myTurn);
+    const turnSrc = s.card && s.card.source;
+    const turnSub = $('turn-sub');
     if (myTurn) {
       $('turn-avatar').style.cssText = '';
       $('turn-avatar').textContent = s.duet ? '💞' : '🤿';
-      const src = s.card && s.card.source;
       // Anpassa efter kort: Tystnad och Uppstigning har ingen fråga att "läsa högt".
       $('turn-text').textContent =
-        src === 'silence' ? 'Din tur'
-          : src === 'ascent' ? 'Din tur att dela'
+        turnSrc === 'silence' ? 'Din tur'
+          : turnSrc === 'ascent' ? 'Din tur att dela'
             : s.duet ? 'Din tur att börja'
               : 'Din tur, läs frågan högt';
     } else {
       $('turn-avatar').style.cssText = turnP ? `background:${avatarBg(turnP.name)}` : '';
       $('turn-avatar').textContent = turnP ? initials(turnP.name) : '…';
       $('turn-text').textContent = turnP ? `${turnP.name} ${s.duet ? 'börjar' : 'har turen'}` : (s.duet ? 'Väntar på din partner…' : 'Väntar på dykare…');
+    }
+    // Diskret svarsordning under namnet: uppläsaren svarar först, sedan är ordet fritt.
+    // Bara för frågor med en uppläsare (inte tystnad/uppstigning/duett, som har egna flöden).
+    const showOrder = !!turnP && !s.duet && turnSrc !== 'silence' && turnSrc !== 'ascent';
+    turnSub.hidden = !showOrder;
+    if (showOrder) {
+      turnSub.textContent = myTurn
+        ? 'Du läser och svarar först, sedan är ordet fritt.'
+        : `${turnP.name} läser och svarar först, sedan är ordet fritt.`;
     }
 
     // Kort
@@ -654,6 +669,13 @@
           + (isReflection ? '<span class="fu-mirror">🪞 En spegel, ingen sanning</span>' : '');   // fast disclaimer (flyttad ur f-texterna)
         fu.classList.add('show'); fu.classList.toggle('reveal', !!isReflection);
       } else { fu.classList.remove('show'); fu.classList.remove('reveal'); fu.textContent = ''; }
+
+      // "Fortfarande X:s tur"-markör när en följdfråga visas, så ingen tror att
+      // turen gick vidare (en följdfråga byter inte kort och flyttar inte turen).
+      const still = $('fu-still-turn');
+      const showStill = !!s.card.followup && !isReflection && !isQuote && !isParable && !!turnP;
+      still.hidden = !showStill;
+      if (showStill) still.textContent = myTurn ? 'Fortfarande din tur' : `Fortfarande ${possessive(turnP.name)} tur`;
 
       // När en speglings tolkning avslöjas: skrolla fram den så hela texten syns.
       if (isReflection && s.card.followup) {
@@ -1028,6 +1050,29 @@
 
   function escapeHtml(s) {
     return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
+  // ---- Turbytes-besked -----------------------------------------------------
+  // Ett kort, lugnt besked på ALLAS skärmar när turen byter person, tydligt
+  // visuellt skilt från en följdfråga (som dyker upp under kortet, inte här).
+  // Den vars tur det BLIR får dessutom sin starkare klang/vibration som förut.
+  let announceT = null;
+  function announceTurn(nextP, mine) {
+    const el = $('turn-announce'); if (!el) return;
+    const av = $('turn-announce-avatar'), tx = $('turn-announce-text');
+    if (mine) {
+      av.style.cssText = ''; av.textContent = '🤿';
+      tx.textContent = 'Nu är det din tur';
+    } else {
+      if (!nextP) { el.hidden = true; return; }
+      av.style.cssText = `background:${avatarBg(nextP.name)}`;
+      av.textContent = initials(nextP.name);
+      tx.textContent = `Nu är det ${possessive(nextP.name)} tur`;
+    }
+    el.hidden = false;
+    el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+    clearTimeout(announceT);
+    announceT = setTimeout(() => { el.classList.remove('show'); el.hidden = true; }, 2600);
   }
 
   // ---- Toast & netbar ------------------------------------------------------

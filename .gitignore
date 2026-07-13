@@ -7,3 +7,10 @@ __*.html
 
 # Lokal code-review-state (review-gate-hook)
 .review-gates/
+
+# Demo-video byggartefakter (ej i repo)
+demo/node_modules/
+demo/shots/
+demo/audio/
+demo/narration/
+demo/*.mp4

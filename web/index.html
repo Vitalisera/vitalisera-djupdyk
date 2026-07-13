@@ -272,7 +272,17 @@
 
       <div class="turn" id="turn" aria-live="polite">
         <span class="turn-avatar" id="turn-avatar"></span>
-        <span class="turn-text" id="turn-text">Din tur</span>
+        <span class="turn-body">
+          <span class="turn-text" id="turn-text">Din tur</span>
+          <span class="turn-sub" id="turn-sub" hidden></span>
+        </span>
+      </div>
+
+      <!-- Turbytes-besked: syns kort på ALLAS skärmar när turen byter person,
+           tydligt skilt från när en följdfråga dyker upp. -->
+      <div class="turn-announce" id="turn-announce" aria-live="assertive" hidden>
+        <span class="turn-announce-avatar" id="turn-announce-avatar"></span>
+        <span class="turn-announce-text" id="turn-announce-text"></span>
       </div>
 
       <div class="card-stage">
@@ -283,6 +293,7 @@
               <p class="strom-pair" id="strom-pair" hidden></p>
               <p class="card-text" id="card-text">…</p>
               <span class="card-followup" id="card-followup"></span>
+              <span class="fu-still-turn" id="fu-still-turn" hidden></span>
               <div class="silence-ring" id="silence-ring" hidden><span class="silence-count" id="silence-count">20</span><small>sekunder</small></div>
               <div class="strom-pick" id="strom-pick" hidden>
                 <span class="strom-pick-label">Vem vill du bjuda in?</span>
